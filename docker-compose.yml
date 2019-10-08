@@ -1,0 +1,23 @@
+version: "3.7"
+
+services:
+  bot:
+    build:
+      context: . 
+      dockerfile: docker/bot/Dockerfile
+    volumes:
+    - "./bot:/home"
+  lint:
+    # directory with code
+    command: "bot"
+    build:
+      context: .
+      dockerfile: docker/lint/Dockerfile
+    # The volume with pylintrc configuration
+    volumes:
+    - "./:/home"
+
+networks:
+  default:
+    external:
+      name: alohomora_default
