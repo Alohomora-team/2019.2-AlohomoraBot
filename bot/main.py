@@ -5,7 +5,7 @@ from register import register, name, phone, email, cpf, apartment, block, voice_
 import os
 
 
-PATH = os.environ['PATH'] or 'http://api:8000/graphql/'
+PATH = os.environ['API_PATH'] or 'http://api:8000/graphql/'
 NAME, PHONE, EMAIL, CPF, BLOCK, APARTMENT, VOICE_REGISTER, REPEAT_VOICE = range(8)
 CPF_AUTH, VOICE_AUTH = range(2)
 
