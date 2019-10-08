@@ -5,11 +5,13 @@ import json
 import numpy
 import requests
 import subprocess
+
 import os
 
 CPF_AUTH, VOICE_AUTH = range(2)
 
-PATH = os.environ['API_PATH'] or 'http://api:8000/graphql/'
+
+PATH = os.environ['API_PATH']
 
 auth_chat = {}
 
@@ -25,6 +27,8 @@ def auth(update, context):
     return CPF_AUTH
 
 def cpf_auth(update, context):
+
+
     cpf = update.message.text
     chat_id = update.message.chat_id
 
@@ -71,6 +75,7 @@ def cpf_auth(update, context):
     return VOICE_AUTH
 
 def voice_auth(update, context):
+
     chat_id = update.message.chat_id
     voice_auth = update.message.voice
 

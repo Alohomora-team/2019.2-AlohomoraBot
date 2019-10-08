@@ -11,7 +11,7 @@ import os
 
 NAME, PHONE, EMAIL, CPF, BLOCK, APARTMENT, VOICE_REGISTER, REPEAT_VOICE = range(8)
 
-PATH = os.environ['API_PATH'] or 'http://api:8000/graphql/'
+PATH = os.environ['API_PATH']
 
 chat = {}
 

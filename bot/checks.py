@@ -1,7 +1,7 @@
 import requests
 import os
 
-PATH = os.environ['API_PATH'] or 'http://api:8000/graphql/'
+PATH = os.environ['API_PATH']
 
 def check_block(chat, chat_id):
     query = """
