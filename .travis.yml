@@ -3,7 +3,6 @@ python:
   - "3.7"
 
 stages:
-  - code_style
   - deploy
 
 env:
@@ -11,9 +10,6 @@ env:
 
 jobs:
   include:
-    - stage: code_style
-      script:
-        - docker-compose run lint
     - stage: deploy
       install: skip
       script: skip
