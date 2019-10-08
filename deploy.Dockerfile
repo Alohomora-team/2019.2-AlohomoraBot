@@ -21,4 +21,4 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 
 COPY bot/ .
 
-CMD ["python3", "main.py"]
+CMD ["python", "main.py"]

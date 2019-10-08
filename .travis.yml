@@ -13,7 +13,7 @@ jobs:
   include:
     - stage: code_style
       script:
-        - docker compose run lint
+        - docker-compose run lint
     - stage: deploy
       install: skip
       script: skip
