@@ -21,7 +21,7 @@ def start(update, context):
 
 if __name__ == '__main__':
 
-    token =  os.environ['TOKEN'] or '813023254:AAE63nv2xeKLJ1_SQOBHrRiNzNkSgtNSoB0'
+    token =  os.environ['TOKEN']
 
     updater = Updater(token, use_context=True)
 
