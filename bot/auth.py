@@ -9,7 +9,7 @@ import os
 
 CPF_AUTH, VOICE_AUTH = range(2)
 
-PATH = os.environ['PATH'] or 'http://api:8000/graphql/'
+PATH = os.environ['API_PATH'] or 'http://api:8000/graphql/'
 
 auth_chat = {}
 
