@@ -2,9 +2,9 @@ import logging
 import os
 from telegram.ext import Updater, CommandHandler, MessageHandler, ConversationHandler, Filters
 from auth import auth, cpf_auth, voice_auth, end_auth
-from register import register, name, phone, email, cpf, apartment, block, voice_register, repeat_voice, end
+from register import Register
 
-PATH = os.environ['API_PATH']
+PATH = "http://localhost:8000/graphql/"
 NAME, PHONE, EMAIL, CPF, BLOCK, APARTMENT, VOICE_REGISTER, REPEAT_VOICE = range(8)
 CPF_AUTH, VOICE_AUTH = range(2)
 
@@ -20,7 +20,7 @@ def start(update, context):
 
 if __name__ == '__main__':
 
-    token = os.environ['TOKEN']
+    token = "862578806:AAG_SMYXi3JGKShYE-lmfqyl6Xrc6JmxJ1s"
 
     updater = Updater(token, use_context=True)
 
@@ -32,20 +32,20 @@ if __name__ == '__main__':
 
     # Registration
     dp.add_handler(ConversationHandler(
-        entry_points=[CommandHandler('cadastrar', register, pass_args=True)],
+        entry_points=[CommandHandler('cadastrar', Register.index, pass_args=True)],
 
         states={
-            NAME:[MessageHandler(Filters.text, name)],
-            PHONE:[MessageHandler(Filters.text | Filters.contact, phone)],
-            EMAIL:[MessageHandler(Filters.text, email)],
-            CPF:[MessageHandler(Filters.text, cpf)],
-            APARTMENT:[MessageHandler(Filters.text, apartment)],
-            BLOCK:[MessageHandler(Filters.text, block)],
-            VOICE_REGISTER: [MessageHandler(Filters.voice, voice_register)],
-            REPEAT_VOICE:[MessageHandler(Filters.text, repeat_voice)]
+            NAME:[MessageHandler(Filters.text, Register.name)],
+            PHONE:[MessageHandler(Filters.text | Filters.contact, Register.phone)],
+            EMAIL:[MessageHandler(Filters.text, Register.email)],
+            CPF:[MessageHandler(Filters.text, Register.cpf)],
+            APARTMENT:[MessageHandler(Filters.text, Register.apartment)],
+            BLOCK:[MessageHandler(Filters.text, Register.block)],
+            VOICE_REGISTER: [MessageHandler(Filters.voice, Register.voice_register)],
+            REPEAT_VOICE:[MessageHandler(Filters.text, Register.repeat_voice)]
             },
 
-        fallbacks=[CommandHandler('cancelar', end)]
+        fallbacks=[CommandHandler('cancelar', Register.end)]
         ))
 
     # Authentication
