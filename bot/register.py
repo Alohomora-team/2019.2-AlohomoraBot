@@ -1,4 +1,3 @@
-from checks import check_email, check_cpf, check_block, check_apartment
 from python_speech_features import mfcc
 from scipy.io.wavfile import read
 from telegram import KeyboardButton, ReplyKeyboardMarkup
@@ -9,6 +8,8 @@ import requests
 import subprocess
 import os
 from validator import ValidateRegister
+
+from checks import CheckUser, CheckCondo
 
 NAME, PHONE, EMAIL, CPF, BLOCK, APARTMENT, VOICE_REGISTER, REPEAT_VOICE = range(8)
 
@@ -72,7 +73,7 @@ class Register:
 
         chat[chat_id]['email'] = email
 
-        check = check_email(chat, chat_id)
+        check = CheckUser.email(chat, chat_id)
 
         if 'errors' not in check.keys():
             update.message.reply_text('Já existe um morador com este email, tente novamente:')
@@ -93,7 +94,7 @@ class Register:
 
         chat[chat_id]['cpf'] = cpf
 
-        check = check_cpf(chat, chat_id)
+        check = CheckUser.cpf(chat, chat_id)
 
         if 'errors' not in check.keys():
             update.message.reply_text('Já existe um morador com este CPF, tente novamente:')
@@ -113,7 +114,7 @@ class Register:
 
         chat[chat_id]['block'] = block
 
-        check = check_block(chat, chat_id)
+        check = CheckCondo.block(chat, chat_id)
 
         if 'errors' in check.keys():
             update.message.reply_text('Por favor, digite um bloco existente:')
@@ -132,7 +133,7 @@ class Register:
 
         chat[chat_id]['apartment'] = apartment
 
-        check = check_apartment(chat, chat_id)
+        check = CheckCondo.apartment(chat, chat_id)
 
         if 'errors' in check.keys():
             update.message.reply_text('Por favor, digite um apartamento existente:')
