@@ -98,7 +98,7 @@ class ValidateRegister:
             update.message.reply_text('CPF inválido, tente novamente:')
             return False
 
-        return True
+        return cpf
 
     def block(block, update):
         if("bloco" in block.lower() or " " in block):

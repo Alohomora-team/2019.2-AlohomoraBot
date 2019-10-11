@@ -1,7 +1,8 @@
 import logging
 import os
 from telegram.ext import Updater, CommandHandler, MessageHandler, ConversationHandler, Filters
-from auth import auth, cpf_auth, voice_auth, end_auth
+
+from auth import Auth
 from register import Register
 
 PATH = "http://localhost:8000/graphql/"
@@ -50,14 +51,14 @@ if __name__ == '__main__':
 
     # Authentication
     dp.add_handler(ConversationHandler(
-        entry_points=[CommandHandler('autenticar', auth)],
+        entry_points=[CommandHandler('autenticar', Auth.index)],
 
         states={
-            CPF_AUTH:[MessageHandler(Filters.text, cpf_auth)],
-            VOICE_AUTH: [MessageHandler(Filters.voice, voice_auth)]
+            CPF_AUTH:[MessageHandler(Filters.text, Auth.cpf)],
+            VOICE_AUTH: [MessageHandler(Filters.voice, Auth.voice)]
             },
 
-        fallbacks=[CommandHandler('cancelar', end_auth)]
+        fallbacks=[CommandHandler('cancelar', Auth.end)]
         ))
 
 

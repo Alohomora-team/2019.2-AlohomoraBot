@@ -89,6 +89,8 @@ class Register:
         if not ValidateRegister.cpf(cpf, update):
             return CPF
 
+        cpf = ValidateRegister.cpf(cpf, update)
+
         chat[chat_id]['cpf'] = cpf
 
         check = check_cpf(chat, chat_id)
@@ -182,7 +184,7 @@ class Register:
             update.message.reply_text('Por favor, grave novamente:')
             return VOICE_REGISTER
 
-        response = self.register_user(chat_id)
+        response = Register.register_user(chat_id)
 
         if(response.status_code == 200 and 'errors' not in response.json().keys()):
             update.message.reply_text('Morador cadastrado no sistema!')
