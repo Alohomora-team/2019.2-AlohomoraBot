@@ -7,7 +7,7 @@ import numpy
 import requests
 import subprocess
 import os
-from validator import ValidateRegister
+from validator import ValidateForm
 
 from checks import CheckUser, CheckCondo
 
@@ -34,7 +34,7 @@ class Register:
         chat_id = update.message.chat_id
         name = update.message.text
 
-        if not ValidateRegister.name(name, update):
+        if not ValidateForm.name(name, update):
             return NAME
 
         chat[chat_id]['name'] = name
@@ -52,11 +52,11 @@ class Register:
         phone = update.message.text
         contact = update.effective_message.contact
 
-        if not ValidateRegister.phone(phone, contact, update):
+        if not ValidateForm.phone(phone, contact, update):
             update.message.reply_text('Dado incorreto. Digite novamente:')
             return PHONE
 
-        phone = ValidateRegister.phone(phone, contact, update)
+        phone = ValidateForm.phone(phone, contact, update)
 
         chat[chat_id]['phone'] = phone
 
@@ -68,7 +68,7 @@ class Register:
         chat_id = update.message.chat_id
         email = update.message.text
 
-        if not ValidateRegister.email(email, update):
+        if not ValidateForm.email(email, update):
             return EMAIL
 
         chat[chat_id]['email'] = email
@@ -87,10 +87,10 @@ class Register:
         chat_id = update.message.chat_id
         cpf = update.message.text
 
-        if not ValidateRegister.cpf(cpf, update):
+        if not ValidateForm.cpf(cpf, update):
             return CPF
 
-        cpf = ValidateRegister.cpf(cpf, update)
+        cpf = ValidateForm.cpf(cpf, update)
 
         chat[chat_id]['cpf'] = cpf
 
@@ -109,7 +109,7 @@ class Register:
         chat_id = update.message.chat_id
         block = update.message.text
 
-        if not ValidateRegister.block(block, update):
+        if not ValidateForm.block(block, update):
             return BLOCK
 
         chat[chat_id]['block'] = block
@@ -128,7 +128,7 @@ class Register:
         chat_id = update.message.chat_id
         apartment = update.message.text
 
-        if not ValidateRegister.apartment(apartment, update):
+        if not ValidateForm.apartment(apartment, update):
             return APARTMENT
 
         chat[chat_id]['apartment'] = apartment
@@ -148,7 +148,7 @@ class Register:
         chat_id = update.message.chat_id
         voice_register = update.message.voice
 
-        if not ValidateRegister.voice_register(voice_register, update):
+        if not ValidateForm.voice(voice_register, update):
             return VOICE_REGISTER
 
         f_reg = voice_register.get_file()

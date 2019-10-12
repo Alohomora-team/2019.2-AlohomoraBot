@@ -7,7 +7,7 @@ import requests
 import subprocess
 import os
 
-from validator import ValidateAuth
+from validator import ValidateForm
 
 CPF_AUTH, VOICE_AUTH = range(2)
 
@@ -35,10 +35,10 @@ class Auth:
         cpf = update.message.text
         chat_id = update.message.chat_id
 
-        if not ValidateAuth.cpf(cpf, update):
+        if not ValidateForm.cpf(cpf, update):
             return CPF_AUTH
 
-        cpf = ValidateAuth.cpf(cpf, update)
+        cpf = ValidateForm.cpf(cpf, update)
 
         auth_chat[chat_id]['cpf'] = cpf
 
@@ -51,7 +51,7 @@ class Auth:
         chat_id = update.message.chat_id
         voice_auth = update.message.voice
 
-        if not ValidateAuth.voice(voice_auth, update):
+        if not ValidateForm.voice(voice_auth, update):
             return VOICE_AUTH
 
         file_auth = voice_auth.get_file()
