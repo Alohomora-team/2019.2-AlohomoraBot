@@ -4,10 +4,12 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, ConversationHa
 
 from auth import Auth
 from register import Register
+from feedback import Feedback
 
 PATH = "http://localhost:8000/graphql/"
 NAME, PHONE, EMAIL, CPF, BLOCK, APARTMENT, VOICE_REGISTER, REPEAT_VOICE = range(8)
 CPF_AUTH, VOICE_AUTH = range(2)
+FEEDBACK = range(1)
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s', datefmt='%d/%m/%Y %I:%M:%S', level=logging.DEBUG)
 
@@ -56,6 +58,17 @@ if __name__ == '__main__':
         states={
             CPF_AUTH:[MessageHandler(Filters.text, Auth.cpf)],
             VOICE_AUTH: [MessageHandler(Filters.voice, Auth.voice)]
+            },
+
+        fallbacks=[CommandHandler('cancelar', Auth.end)]
+        ))
+
+    # Feedback
+    dp.add_handler(ConversationHandler(
+        entry_points=[CommandHandler('feedback', Feedback.index)],
+
+        states={
+            FEEDBACK: [MessageHandler(Filters.text, Feedback.store )]
             },
 
         fallbacks=[CommandHandler('cancelar', Auth.end)]
