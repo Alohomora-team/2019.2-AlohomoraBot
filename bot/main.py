@@ -69,7 +69,7 @@ if __name__ == '__main__':
         entry_points=[CommandHandler('feedback', Feedback.index)],
 
         states={
-            FEEDBACK: [MessageHandler(Filters.text, Feedback.store )]
+            FEEDBACK: [MessageHandler(Filters.text, Feedback.store)],
             },
 
         fallbacks=[CommandHandler('cancelar', Auth.end)]
