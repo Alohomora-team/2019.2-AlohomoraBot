@@ -8,8 +8,8 @@ feedback_chat = {}
 
 class Feedback:
 
-    def index:
+    def index(update, context):
         update.message.reply_text("Teste")
 
-    def store:
-        
+    def store(update, context):
+        update.message.reply_text("Teste store")

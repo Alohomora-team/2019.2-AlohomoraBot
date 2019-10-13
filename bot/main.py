@@ -19,6 +19,7 @@ def start(update, context):
     update.message.reply_text('Olá, bem vindo(a) ao bot do Alohomora!')
     update.message.reply_text('Digite /cadastrar para fazer o cadastro de um morador')
     update.message.reply_text('Caso deseje fazer a autenticação por voz, digite /autenticar')
+    update.message.reply_text('Caso queira dar um feedback pro nosso serviço, digite /feedback')
 
 
 if __name__ == '__main__':
