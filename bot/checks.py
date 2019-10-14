@@ -1,9 +1,13 @@
 import requests
-import os
+import logging
 
-PATH = os.environ['API_PATH']
+logger = logging.getLogger('Alohomora')
+
+PATH = 'http://api:8000/graphql/'
 
 def check_block(chat, chat_id):
+    logger.debug("Checking if the informed block exists in database")
+
     query = """
     query block($number: String!){
         block(number: $number){
@@ -18,9 +22,13 @@ def check_block(chat, chat_id):
 
     response = requests.post(PATH, json={'query': query, 'variables':variables})
 
+    logger.debug(f"Response: {response.json()}")
+
     return response.json()
 
 def check_apartment(chat, chat_id):
+    logger.debug("Checking if the informed apartment exists in database")
+
     query = """
     query apartment($number: String!, $block: String!){
         apartment(number: $number, block: $block){
@@ -39,9 +47,13 @@ def check_apartment(chat, chat_id):
 
     response = requests.post(PATH, json={'query': query, 'variables':variables})
 
+    logger.debug(f"Response: {response.json()}")
+
     return response.json()
 
 def check_email(chat, chat_id):
+    logger.debug("Checking if the informed email exists in database")
+
     query = """
     query user($email: String!){
         user(email: $email){
@@ -56,9 +68,13 @@ def check_email(chat, chat_id):
 
     response = requests.post(PATH, json={'query': query, 'variables':variables})
 
+    logger.debug(f"Response: {response.json()}")
+
     return response.json()
 
 def check_cpf(chat, chat_id):
+    logger.debug("Checking if the informed CPF exists in database")
+
     query = """
     query user($cpf: String!){
         user(cpf: $cpf){
@@ -72,6 +88,8 @@ def check_cpf(chat, chat_id):
             }
 
     response = requests.post(PATH, json={'query': query, 'variables':variables})
+
+    logger.debug(f"Response: {response.json()}")
 
     return response.json()
 
