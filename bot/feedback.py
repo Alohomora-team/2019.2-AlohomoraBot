@@ -12,10 +12,9 @@ class Feedback:
     def index(update, context):
         chat_id = update.message.chat_id
 
-        update.message.reply_text("Ok. Digite a mensagem que deseja enviar como feedback para o nosso sistema.")
-        update.message.reply_text("Feedback:")
+        update.message.reply_text("Ok. Digite a mensagem que deseja enviar como feedback para o nosso sistema:")
 
-        chat[chat_id] = {} 
+        chat[chat_id] = {}
 
         return FEEDBACK
 
@@ -24,7 +23,7 @@ class Feedback:
         feedback = update.message.text
 
         chat[chat_id]['message'] = feedback
-        
+
         query = """
         mutation createFeedback(
             $message: String!
