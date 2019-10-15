@@ -205,7 +205,7 @@ class Register:
 
     def register_user(chat_id):
         query = """
-        mutation createUser(
+        mutation createResident(
             $completeName: String!,
             $email: String!,
             $phone: String!,
@@ -215,7 +215,7 @@ class Register:
             $voiceData: String,
             $mfccData: String,
             ){
-            createUser(
+            createResident(
                 completeName: $completeName,
                 email: $email,
                 cpf: $cpf,
@@ -225,7 +225,7 @@ class Register:
                 voiceData: $voiceData
                 mfccData: $mfccData
             ){
-                user{
+                resident{
                     completeName
                     email
                     cpf

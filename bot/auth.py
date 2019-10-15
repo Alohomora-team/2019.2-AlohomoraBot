@@ -9,6 +9,7 @@ import numpy
 import os
 import requests
 import subprocess
+import logging
 
 chat = {}
 
@@ -64,7 +65,7 @@ class Auth:
 
         response = Auth.authenticate(chat_id)
 
-        valid = response['data']['voiceBelongsUser']
+        valid = response['data']['voiceBelongsResident']
 
         if valid:
             update.message.reply_text('Autenticado(a) com sucesso!')
@@ -85,11 +86,11 @@ class Auth:
 
     def authenticate(chat_id):
         query = """
-        query voiceBelongsUser(
+        query voiceBelongsResident(
             $cpf: String!,
             $mfccData: String
         ){
-            voiceBelongsUser(cpf: $cpf, mfccData: $mfccData)
+            voiceBelongsResident(cpf: $cpf, mfccData: $mfccData)
         }
         """
 
