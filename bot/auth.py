@@ -1,168 +1,121 @@
-from telegram.ext import ConversationHandler
 from python_speech_features import mfcc
 from scipy.io.wavfile import read
+from settings import CPF_AUTH, VOICE_AUTH
+from settings import PATH, LOG_NAME
+from telegram.ext import ConversationHandler
+from validator import ValidateForm
 import json
+import logging
 import numpy
+import os
 import requests
 import subprocess
-import logging
 
-logger = logging.getLogger('Alohomora')
+logger = logging.getLogger(LOG_NAME)
 
-CPF_AUTH, VOICE_AUTH = range(2)
+chat = {}
 
-PATH = 'http://api:8000/graphql/'
+class Auth:
 
-auth_chat = {}
+    def index(update, context):
+        chat_id = update.message.chat_id
 
-def auth(update, context):
-    chat_id = update.message.chat_id
-    logger.info("Introducing authentication session")
+        logger.info("Introducing authentication session")
+        update.message.reply_text("Ok, vamos te autenticar!")
+        update.message.reply_text("Caso deseje interromper o processo digite /cancelar")
+        update.message.reply_text("Por favor, informe seu CPF:")
 
-    update.message.reply_text("Ok, vamos te autenticar!")
-    update.message.reply_text("Caso deseje interromper o processo digite /cancelar")
-    update.message.reply_text("Por favor, informe seu CPF:")
+        logger.info("Asking for CPF")
 
-    logger.info("Asking for CPF")
+        chat[chat_id] = {}
+        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
 
-    auth_chat[chat_id] = {}
-    logger.debug("data['{chat_id}']: {auth_chat[chat_id]}")
-
-    return CPF_AUTH
-
-def cpf_auth(update, context):
-    cpf = update.message.text
-    chat_id = update.message.chat_id
-
-    if(len(cpf) > 11 and cpf[3] == "." and cpf[7] == "." and cpf[11] == "-"):
-        logger.debug("Removing dots and dash from CPF")
-        cpf = cpf.replace('.','').replace('-','')
-
-    if(any(i.isalpha() for i in cpf) or "." in cpf or "-" in cpf or len(cpf) != 11):
-        logger.error("CPF in wrong formatation - asking again")
-        update.message.reply_text('Por favor, digite o CPF com os 11 digitos: (Ex: 123.456.789-10)')
         return CPF_AUTH
 
-    authCPF_J = (int(cpf[0])*10 +
-                 int(cpf[1])*9 +
-                 int(cpf[2])*8 +
-                 int(cpf[3])*7 +
-                 int(cpf[4])*6 +
-                 int(cpf[5])*5 +
-                 int(cpf[6])*4 +
-                 int(cpf[7])*3 +
-                 int(cpf[8])*2) % 11
+    def cpf(update, context):
+        chat_id = update.message.chat_id
+        cpf = update.message.text
 
-    authCPF_K = (int(cpf[0])*11 +
-                 int(cpf[1])*10 +
-                 int(cpf[2])*9 +
-                 int(cpf[3])*8 +
-                 int(cpf[4])*7 +
-                 int(cpf[5])*6 +
-                 int(cpf[6])*5 +
-                 int(cpf[7])*4 +
-                 int(cpf[8])*3 +
-                 int(cpf[9])*2) % 11
+        if not ValidateForm.cpf(cpf, update):
+            return CPF_AUTH
 
-    if((int(cpf[9]) != 0 and authCPF_J != 0 and authCPF_J != 1) and (int(cpf[9]) != (11 - authCPF_J))):
-        logger.error("Invalid CPF - asking again")
-        update.message.reply_text('CPF inválido, tente novamente:')
-        return CPF_AUTH
+        cpf = ValidateForm.cpf(cpf, update)
 
-    if((int(cpf[10]) != 0 and authCPF_K != 0 and authCPF_K != 1) and (int(cpf[10]) != (11 - authCPF_K))):
-        logger.error("Invalid CPF - asking again")
-        update.message.reply_text('CPF inválido, tente novamente:')
-        return CPF_AUTH
+        chat[chat_id]['cpf'] = cpf
+        logger.debug(f"'auth-cpf': '{chat[chat_id]['cpf']}'")
 
-    auth_chat[chat_id]['cpf'] = cpf
-    logger.debug("'auth-cpf': '{auth_chat[chat_id]['cpf']}'")
+        update.message.reply_text('Grave um áudio de no mínimo 1 segundo dizendo "Juro que sou eu"')
+        logger.info("Requesting voice audio")
 
-    update.message.reply_text('Grave um áudio de no mínimo 1 segundo dizendo "Juro que sou eu"')
-    logger.info("Requesting voice audio")
-
-    return VOICE_AUTH
-
-def voice_auth(update, context):
-    chat_id = update.message.chat_id
-    voice_auth = update.message.voice
-
-    if((voice_auth.duration)<1.0):
-        logger.error("Audio too short - asking again")
-        update.message.reply_text('Muito curto...O áudio deve ter 1 segundo de duração.')
-        update.message.reply_text('Por favor, grave novamente:')
         return VOICE_AUTH
-    elif((voice_auth.duration)>2.0):
 
-        logger.error("Audio too long - asking again")
-        update.message.reply_text('Muito grande...O áudio deve ter 2 segundo de duração.')
-        update.message.reply_text('Por favor, grave novamente:')
-        return VOICE_AUTH
-    else:
-        update.message.reply_text('Ótimo!')
+    def voice(update, context):
+        chat_id = update.message.chat_id
+        voice_auth = update.message.voice
 
-    file_auth = voice_auth.get_file()
+        if not ValidateForm.voice(voice_auth, update):
+            return VOICE_AUTH
 
-    src = file_auth.download()
-    dest = src.split('.')[0] + ".wav"
+        file_auth = voice_auth.get_file()
 
-    subprocess.run(['ffmpeg', '-i', src, dest])
+        src = file_auth.download()
+        dest = src.split('.')[0] + ".wav"
 
-    samplerate, voice_data = read(dest)
+        subprocess.run(['ffmpeg', '-i', src, dest])
 
-    mfcc_data = mfcc(voice_data, samplerate=samplerate, nfft=1200, winfunc=numpy.hamming)
-    mfcc_data = mfcc_data.tolist()
-    mfcc_data = json.dumps(mfcc_data)
+        samplerate, voice_data = read(dest)
 
-    auth_chat[chat_id]['voice_mfcc'] = mfcc_data
-    logger.debug("'auth-voice-mfcc': '{auth_chat[chat_id]['voice_mfcc'][:1]}...{auth_chat[chat_id]['voice_mfcc'][-1:]}'")
+        mfcc_data = mfcc(voice_data, samplerate=samplerate, nfft=1200, winfunc=numpy.hamming)
+        mfcc_data = mfcc_data.tolist()
+        mfcc_data = json.dumps(mfcc_data)
 
-    response = authenticate(chat_id)
+        chat[chat_id]['voice_mfcc'] = mfcc_data
+        logger.debug(f"'auth-voice-mfcc': '{chat[chat_id]['voice_mfcc'][:1]}...{chat[chat_id]['voice_mfcc'][-1:]}'")
 
-    valid = response['data']['voiceBelongsResident']
+        response = Auth.authenticate(chat_id)
 
-    if valid:
-        logger.info("User has been authenticated")
-        update.message.reply_text('Autenticado(a) com sucesso!')
-    else:
-        logger.error("Authentication failed")
-        update.message.reply_text('Falha na autenticação!')
+        valid = response['data']['voiceBelongsResident']
 
-    auth_chat[chat_id] = {}
-    logger.debug("data['{chat_id}']: {auth_chat[chat_id]}")
+        if valid:
+            logger.info("User has been authenticated")
+            update.message.reply_text('Autenticado(a) com sucesso!')
+        else:
+            logger.error("Authentication failed")
+            update.message.reply_text('Falha na autenticação!')
 
-    return ConversationHandler.END
+        chat[chat_id] = {}
+        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
 
-def end_auth(update, context):
-    logger.info("Canceling authentication")
+        return ConversationHandler.END
 
-    chat_id = update.message.chat_id
-    update.message.reply_text('Autenticação cancelada!')
+    def end(update, context):
+        chat_id = update.message.chat_id
+        update.message.reply_text('Autenticação cancelada!')
+        logger.info("Canceling authentication")
 
-    auth_chat[chat_id] = {}
-    logger.debug("data['{chat_id}']: {auth_chat[chat_id]}")
+        chat[chat_id] = {}
+        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
 
-    return ConversationHandler.END
+        return ConversationHandler.END
 
-def authenticate(chat_id):
-    logger.info("Authenticating user")
+    def authenticate(chat_id):
+        logger.info("Authenticating user")
+        query = """
+        query voiceBelongsResident(
+            $cpf: String!,
+            $mfccData: String
+        ){
+            voiceBelongsResident(cpf: $cpf, mfccData: $mfccData)
+        }
+        """
 
-    query = """
-    query voiceBelongsResident(
-        $cpf: String!,
-        $mfccData: String
-    ){
-        voiceBelongsResident(cpf: $cpf, mfccData: $mfccData)
-    }
-    """
+        variables = {
+                'cpf': chat[chat_id]['cpf'],
+                'mfccData': chat[chat_id]['voice_mfcc']
+        }
 
-    variables = {
-            'cpf': auth_chat[chat_id]['cpf'],
-            'mfccData': auth_chat[chat_id]['voice_mfcc']
-    }
+        response = requests.post(PATH, json={'query':query, 'variables':variables})
 
-    response = requests.post(PATH, json={'query':query, 'variables':variables})
+        logger.debug(f"Response: {response.json()}")
 
-    logger.debug(f"Response: {response.json()}")
-
-    return response.json()
-
+        return response.json()
