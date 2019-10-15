@@ -1,19 +1,16 @@
+from checks import CheckUser, CheckCondo
 from python_speech_features import mfcc
 from scipy.io.wavfile import read
+from settings import NAME, PHONE, EMAIL, CPF, BLOCK, APARTMENT, VOICE_REGISTER, REPEAT_VOICE
+from settings import PATH
 from telegram import KeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import ConversationHandler
+from validator import ValidateForm
 import json
 import numpy
+import os
 import requests
 import subprocess
-import os
-from validator import ValidateForm
-
-from checks import CheckUser, CheckCondo
-
-NAME, PHONE, EMAIL, CPF, BLOCK, APARTMENT, VOICE_REGISTER, REPEAT_VOICE = range(8)
-
-PATH = "http://localhost:8000/graphql/"
 
 chat = {}
 

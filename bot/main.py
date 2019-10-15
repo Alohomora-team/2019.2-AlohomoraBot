@@ -1,15 +1,11 @@
-import logging
-import os
-from telegram.ext import Updater, CommandHandler, MessageHandler, ConversationHandler, Filters
-
 from auth import Auth
 from register import Register
+from settings import *
+from telegram.ext import Updater, CommandHandler, MessageHandler, ConversationHandler, Filters
+import logging
+import os
 
-PATH = "http://localhost:8000/graphql/"
-NAME, PHONE, EMAIL, CPF, BLOCK, APARTMENT, VOICE_REGISTER, REPEAT_VOICE = range(8)
-CPF_AUTH, VOICE_AUTH = range(2)
-
-logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s', datefmt='%d/%m/%Y %I:%M:%S', level=logging.DEBUG)
+logging.basicConfig(format=FORMAT, datefmt=DATEFMT, level=LEVEL)
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +17,7 @@ def start(update, context):
 
 if __name__ == '__main__':
 
-    token = "862578806:AAG_SMYXi3JGKShYE-lmfqyl6Xrc6JmxJ1s"
+    token = TOKEN
 
     updater = Updater(token, use_context=True)
 

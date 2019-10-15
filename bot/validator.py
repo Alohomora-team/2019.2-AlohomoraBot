@@ -41,7 +41,6 @@ class ValidateForm:
                 return False
 
         else:
-
             phone = contact.phone_number
             phone = phone.replace('+', '')
 

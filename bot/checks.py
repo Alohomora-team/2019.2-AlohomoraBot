@@ -1,7 +1,6 @@
-import requests
+from settings import PATH
 import os
-
-PATH = "http://localhost:8000/graphql/"
+import requests
 
 class CheckCondo:
 
@@ -44,7 +43,6 @@ class CheckCondo:
         return response.json()
 
 class CheckUser:
-    
 
     def email(chat, chat_id):
         query = """
@@ -79,4 +77,3 @@ class CheckUser:
         response = requests.post(PATH, json={'query': query, 'variables':variables})
 
         return response.json()
-

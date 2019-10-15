@@ -1,22 +1,18 @@
-from telegram.ext import ConversationHandler
 from python_speech_features import mfcc
 from scipy.io.wavfile import read
+from settings import CPF_AUTH, VOICE_AUTH
+from settings import PATH
+from telegram.ext import ConversationHandler
+from validator import ValidateForm
 import json
 import numpy
+import os
 import requests
 import subprocess
-import os
 
-from validator import ValidateForm
+chat = {}
 
-CPF_AUTH, VOICE_AUTH = range(2)
-
-
-PATH = "http://localhost:8000/graphql/"
-
-auth_chat = {}
-
-class Auth: 
+class Auth:
 
     def index(update, context):
         chat_id = update.message.chat_id
@@ -25,29 +21,26 @@ class Auth:
         update.message.reply_text("Caso deseje interromper o processo digite /cancelar")
         update.message.reply_text("Por favor, informe seu CPF:")
 
-        auth_chat[chat_id] = {}
+        chat[chat_id] = {}
 
         return CPF_AUTH
 
     def cpf(update, context):
-
-
-        cpf = update.message.text
         chat_id = update.message.chat_id
+        cpf = update.message.text
 
         if not ValidateForm.cpf(cpf, update):
             return CPF_AUTH
 
         cpf = ValidateForm.cpf(cpf, update)
 
-        auth_chat[chat_id]['cpf'] = cpf
+        chat[chat_id]['cpf'] = cpf
 
         update.message.reply_text('Grave um áudio de no mínimo 1 segundo dizendo "Juro que sou eu"')
 
         return VOICE_AUTH
 
     def voice(update, context):
-
         chat_id = update.message.chat_id
         voice_auth = update.message.voice
 
@@ -67,7 +60,7 @@ class Auth:
         mfcc_data = mfcc_data.tolist()
         mfcc_data = json.dumps(mfcc_data)
 
-        auth_chat[chat_id]['voice_mfcc'] = mfcc_data
+        chat[chat_id]['voice_mfcc'] = mfcc_data
 
         response = Auth.authenticate(chat_id)
 
@@ -78,7 +71,7 @@ class Auth:
         else:
             update.message.reply_text('Falha na autenticação!')
 
-        auth_chat[chat_id] = {}
+        chat[chat_id] = {}
 
         return ConversationHandler.END
 
@@ -86,7 +79,7 @@ class Auth:
         chat_id = update.message.chat_id
         update.message.reply_text('Autenticação cancelada!')
 
-        auth_chat[chat_id] = {}
+        chat[chat_id] = {}
 
         return ConversationHandler.END
 
@@ -101,11 +94,10 @@ class Auth:
         """
 
         variables = {
-                'cpf': auth_chat[chat_id]['cpf'],
-                'mfccData': auth_chat[chat_id]['voice_mfcc']
+                'cpf': chat[chat_id]['cpf'],
+                'mfccData': chat[chat_id]['voice_mfcc']
         }
 
         response = requests.post(PATH, json={'query':query, 'variables':variables})
 
         return response.json()
-
