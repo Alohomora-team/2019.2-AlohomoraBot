@@ -1,21 +1,28 @@
-import logging
-import os
-from telegram.ext import Updater, CommandHandler, MessageHandler, ConversationHandler, Filters
-
 from auth import Auth
 from register import Register
-from feedback import Feedback
+from settings import *
+from telegram.ext import Updater, CommandHandler, MessageHandler, ConversationHandler, Filters
+import logging
+import os
 
-PATH = "http://localhost:8000/graphql/"
-NAME, PHONE, EMAIL, CPF, BLOCK, APARTMENT, VOICE_REGISTER, REPEAT_VOICE = range(8)
-CPF_AUTH, VOICE_AUTH = range(2)
-FEEDBACK = range(1)
+# Remove logs from APIs
+logging.getLogger("telegram").setLevel(logging.CRITICAL)
+logging.getLogger("JobQueue").setLevel(logging.CRITICAL)
 
-logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s', datefmt='%d/%m/%Y %I:%M:%S', level=logging.DEBUG)
+# Logger
+logging.basicConfig(format=FORMAT, datefmt=DATEFMT)
+logger = logging.getLogger(LOG_NAME)
+logger.setLevel(LOG_LEVEL)
 
-logger = logging.getLogger(__name__)
+# FileHandler
+file_handler = logging.FileHandler(FILE_NAME)
+file_handler.setLevel(LOG_LEVEL)
+f_format = logging.Formatter(FORMAT, datefmt=DATEFMT)
+file_handler.setFormatter(f_format)
+logger.addHandler(file_handler)
 
 def start(update, context):
+    logger.info("Introducing the bot")
     update.message.reply_text('Olá, bem vindo(a) ao bot do Alohomora!')
     update.message.reply_text('Digite /cadastrar para fazer o cadastro de um morador')
     update.message.reply_text('Caso queira fazer a autenticação por voz, digite /autenticar')
@@ -24,11 +31,11 @@ def start(update, context):
 
 if __name__ == '__main__':
 
-    token = "862578806:AAG_SMYXi3JGKShYE-lmfqyl6Xrc6JmxJ1s"
+    token = TOKEN
 
     updater = Updater(token, use_context=True)
 
-    logging.info("Iniciando Bot")
+    logger.info("Starting Bot")
 
     dp = updater.dispatcher
 

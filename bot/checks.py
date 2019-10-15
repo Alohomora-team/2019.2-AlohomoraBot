@@ -1,11 +1,14 @@
-import requests
+from settings import PATH, LOG_NAME
 import os
+import requests
+import logging
 
-PATH = "http://localhost:8000/graphql/"
+logger = logging.getLogger(LOG_NAME)
 
 class CheckCondo:
 
     def block(chat, chat_id):
+        logger.debug("Checking if the informed block exists in database")
         query = """
         query block($number: String!){
             block(number: $number){
@@ -19,10 +22,12 @@ class CheckCondo:
                 }
 
         response = requests.post(PATH, json={'query': query, 'variables':variables})
+        logger.debug(f"Response: {response.json()}")
 
         return response.json()
 
     def apartment(chat, chat_id):
+        logger.debug("Checking if the informed apartment exists in database")
         query = """
         query apartment($number: String!, $block: String!){
             apartment(number: $number, block: $block){
@@ -40,13 +45,14 @@ class CheckCondo:
                 }
 
         response = requests.post(PATH, json={'query': query, 'variables':variables})
+        logger.debug(f"Response: {response.json()}")
 
         return response.json()
 
 class CheckUser:
-    
 
     def email(chat, chat_id):
+        logger.debug("Checking if the informed email exists in database")
         query = """
         query user($email: String!){
             user(email: $email){
@@ -60,10 +66,12 @@ class CheckUser:
                 }
 
         response = requests.post(PATH, json={'query': query, 'variables':variables})
+        logger.debug(f"Response: {response.json()}")
 
         return response.json()
 
     def cpf(chat, chat_id):
+        logger.debug("Checking if the informed CPF exists in database")
         query = """
         query user($cpf: String!){
             user(cpf: $cpf){
@@ -77,6 +85,6 @@ class CheckUser:
                 }
 
         response = requests.post(PATH, json={'query': query, 'variables':variables})
+        logger.debug(f"Response: {response.json()}")
 
         return response.json()
-

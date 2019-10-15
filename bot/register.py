@@ -1,32 +1,36 @@
+from checks import CheckUser, CheckCondo
 from python_speech_features import mfcc
 from scipy.io.wavfile import read
+from settings import LOG_NAME
+from settings import NAME, PHONE, EMAIL, CPF, BLOCK, APARTMENT, VOICE_REGISTER, REPEAT_VOICE
+from settings import PATH
 from telegram import KeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import ConversationHandler
+from validator import ValidateForm
 import json
+import logging
 import numpy
+import os
 import requests
 import subprocess
-import os
-from validator import ValidateForm
 
-from checks import CheckUser, CheckCondo
-
-NAME, PHONE, EMAIL, CPF, BLOCK, APARTMENT, VOICE_REGISTER, REPEAT_VOICE = range(8)
-
-PATH = "http://localhost:8000/graphql/"
+logger = logging.getLogger(LOG_NAME)
 
 chat = {}
 
 class Register:
 
     def index(update, context):
+        logger.info("Introducing registration session")
         chat_id = update.message.chat_id
 
         update.message.reply_text('Ok, vamos iniciar o cadastro!')
         update.message.reply_text('Caso deseje interromper o processo digite /cancelar')
         update.message.reply_text('Nome:')
+        logger.info("Asking for name")
 
         chat[chat_id] = {}
+        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
 
         return NAME
 
@@ -38,12 +42,14 @@ class Register:
             return NAME
 
         chat[chat_id]['name'] = name
+        logger.debug(f"'name': '{chat[chat_id]['name']}'")
 
         contact_keyboard = KeyboardButton('Enviar meu número de telefone', request_contact=True)
         custom_keyboard = [[ contact_keyboard ]]
         reply_markup = ReplyKeyboardMarkup(custom_keyboard, one_time_keyboard=True, resize_keyboard=True)
 
         update.message.reply_text('Telefone:', reply_markup=reply_markup)
+        logger.info("Asking for phone")
 
         return PHONE
 
@@ -59,8 +65,10 @@ class Register:
         phone = ValidateForm.phone(phone, contact, update)
 
         chat[chat_id]['phone'] = phone
+        logger.debug(f"'phone': '{chat[chat_id]['phone']}'")
 
         update.message.reply_text('Email:')
+        logger.info("Asking for email")
 
         return EMAIL
 
@@ -72,14 +80,19 @@ class Register:
             return EMAIL
 
         chat[chat_id]['email'] = email
+        logger.debug(f"'email': '{chat[chat_id]['email']}'")
 
         check = CheckUser.email(chat, chat_id)
 
         if 'errors' not in check.keys():
+            logger.error("Email already exists in database - asking again")
             update.message.reply_text('Já existe um morador com este email, tente novamente:')
             return EMAIL
 
+        logger.debug("Available email - proceed")
+
         update.message.reply_text('CPF:')
+        logger.info("Asking for CPF")
 
         return CPF
 
@@ -93,12 +106,18 @@ class Register:
         cpf = ValidateForm.cpf(cpf, update)
 
         chat[chat_id]['cpf'] = cpf
+        logger.debug(f"'cpf': '{chat[chat_id]['cpf']}'")
 
         check = CheckUser.cpf(chat, chat_id)
 
         if 'errors' not in check.keys():
+            logger.error("CPF already exists in database - asking again")
             update.message.reply_text('Já existe um morador com este CPF, tente novamente:')
             return CPF
+
+        logger.debug("Available CPF - proceed")
+
+        logger.info("Asking for block number")
 
         update.message.reply_text('Bloco:')
 
@@ -113,14 +132,19 @@ class Register:
             return BLOCK
 
         chat[chat_id]['block'] = block
+        logger.debug(f"'block': '{chat[chat_id]['block']}'")
 
         check = CheckCondo.block(chat, chat_id)
 
         if 'errors' in check.keys():
+            logger.error("Block not found - asking again")
             update.message.reply_text('Por favor, digite um bloco existente:')
             return BLOCK
 
+        logger.debug("Existing block - proceed")
+
         update.message.reply_text('Apartamento:')
+        logger.info("Asking for apartment number")
 
         return APARTMENT
 
@@ -132,15 +156,21 @@ class Register:
             return APARTMENT
 
         chat[chat_id]['apartment'] = apartment
+        logger.debug(f"'apartment': '{chat[chat_id]['apartment']}'")
 
         check = CheckCondo.apartment(chat, chat_id)
 
         if 'errors' in check.keys():
+            logger.error("Apartment not found - asking again")
             update.message.reply_text('Por favor, digite um apartamento existente:')
             return APARTMENT
 
+        logger.debug("Existing apartment - proceed")
+
         update.message.reply_text(
             'Vamos agora cadastrar a sua voz! Grave uma breve mensagem de voz dizendo "Juro que sou eu"')
+
+        logger.info("Requesting voice audio")
 
         return VOICE_REGISTER
 
@@ -167,6 +197,8 @@ class Register:
 
         chat[chat_id]['voice_reg'] = None
         chat[chat_id]['voice_mfcc'] = mfcc_data
+        logger.debug(f"'voice_reg': '{chat[chat_id]['voice_reg']}'")
+        logger.debug(f"'voice_mfcc': '{chat[chat_id]['voice_mfcc'][:1]}...{chat[chat_id]['voice_mfcc'][-1:]}'")
 
         # Repeat and confirm buttons
         repeat_keyboard = KeyboardButton('Repetir')
@@ -175,6 +207,8 @@ class Register:
         choice = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
         update.message.reply_text('Escute o seu áudio e confirme se está com boa qualidade', reply_markup = choice)
 
+        logger.info("Asking to confirm or repeat voice audio")
+
         return REPEAT_VOICE
 
     def repeat_voice(update, context):
@@ -182,33 +216,43 @@ class Register:
         choice = update.message.text
 
         if choice == "Repetir":
+            logger.debug("Repeating voice audio")
             update.message.reply_text('Por favor, grave novamente:')
             return VOICE_REGISTER
+
+        logger.debug("Confirming voice audio")
 
         response = Register.register_user(chat_id)
 
         if(response.status_code == 200 and 'errors' not in response.json().keys()):
+            logger.info("User registered in database")
             update.message.reply_text('Morador cadastrado no sistema!')
         else:
+            logger.error("Registration failed")
             update.message.reply_text('Falha ao cadastrar no sistema!')
+
+        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
 
         chat[chat_id] = {}
 
         return ConversationHandler.END
 
     def end(update, context):
+        logger.info("Canceling registration")
         chat_id = update.message.chat_id
 
         update.message.reply_text('Cadastro cancelado!')
 
         chat[chat_id] = {}
+        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
 
         return ConversationHandler.END
 
 
     def register_user(chat_id):
+        logger.info("Registering user")
         query = """
-        mutation createUser(
+        mutation createResident(
             $completeName: String!,
             $email: String!,
             $phone: String!,
@@ -218,7 +262,7 @@ class Register:
             $voiceData: String,
             $mfccData: String,
             ){
-            createUser(
+            createResident(
                 completeName: $completeName,
                 email: $email,
                 cpf: $cpf,
@@ -228,7 +272,7 @@ class Register:
                 voiceData: $voiceData
                 mfccData: $mfccData
             ){
-                user{
+                resident{
                     completeName
                     email
                     cpf
@@ -256,5 +300,7 @@ class Register:
                 }
 
         response = requests.post(PATH, json={'query':query, 'variables':variables})
+
+        logger.debug(f"Response: {response.json()}")
 
         return response
