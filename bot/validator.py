@@ -1,3 +1,8 @@
+from settings import LOG_NAME
+import logging
+
+logger = logging.getLogger(LOG_NAME)
+
 class ValidateForm:
 
     def name(name, update):

@@ -1,9 +1,9 @@
-from settings import PATH
+from settings import PATH, LOG_NAME
 import os
 import requests
 import logging
 
-logger = logging.getLogger('Alohomora')
+logger = logging.getLogger(LOG_NAME)
 
 class CheckCondo:
 

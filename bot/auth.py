@@ -1,15 +1,17 @@
 from python_speech_features import mfcc
 from scipy.io.wavfile import read
 from settings import CPF_AUTH, VOICE_AUTH
-from settings import PATH
+from settings import PATH, LOG_NAME
 from telegram.ext import ConversationHandler
 from validator import ValidateForm
 import json
+import logging
 import numpy
 import os
 import requests
 import subprocess
-import logging
+
+logger = logging.getLogger(LOG_NAME)
 
 chat = {}
 
@@ -26,7 +28,7 @@ class Auth:
         logger.info("Asking for CPF")
 
         chat[chat_id] = {}
-        logger.debug("data['{chat_id}']: {auth_chat[chat_id]}")
+        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
 
         return CPF_AUTH
 
@@ -40,7 +42,7 @@ class Auth:
         cpf = ValidateForm.cpf(cpf, update)
 
         chat[chat_id]['cpf'] = cpf
-        logger.debug("'auth-cpf': '{auth_chat[chat_id]['cpf']}'")
+        logger.debug(f"'auth-cpf': '{chat[chat_id]['cpf']}'")
 
         update.message.reply_text('Grave um áudio de no mínimo 1 segundo dizendo "Juro que sou eu"')
         logger.info("Requesting voice audio")
@@ -68,7 +70,7 @@ class Auth:
         mfcc_data = json.dumps(mfcc_data)
 
         chat[chat_id]['voice_mfcc'] = mfcc_data
-        logger.debug("'auth-voice-mfcc': '{auth_chat[chat_id]['voice_mfcc'][:1]}...{auth_chat[chat_id]['voice_mfcc'][-1:]}'")
+        logger.debug(f"'auth-voice-mfcc': '{chat[chat_id]['voice_mfcc'][:1]}...{chat[chat_id]['voice_mfcc'][-1:]}'")
 
         response = Auth.authenticate(chat_id)
 
@@ -82,7 +84,7 @@ class Auth:
             update.message.reply_text('Falha na autenticação!')
 
         chat[chat_id] = {}
-        logger.debug("data['{chat_id}']: {auth_chat[chat_id]}")
+        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
 
         return ConversationHandler.END
 
@@ -92,7 +94,7 @@ class Auth:
         logger.info("Canceling authentication")
 
         chat[chat_id] = {}
-        logger.debug("data['{chat_id}']: {auth_chat[chat_id]}")
+        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
 
         return ConversationHandler.END
 
@@ -113,7 +115,7 @@ class Auth:
         }
 
         response = requests.post(PATH, json={'query':query, 'variables':variables})
-        
+
         logger.debug(f"Response: {response.json()}")
 
         return response.json()

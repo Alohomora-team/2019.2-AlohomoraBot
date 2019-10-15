@@ -16,7 +16,13 @@ FORMAT = '%(asctime)s - %(levelname)s - %(name)s - %(message)s'
 DATEFMT = '%d/%m/%Y %I:%M:%S'
 
 # Log level
-LEVEL = logging.DEBUG
+LOG_LEVEL = logging.DEBUG
+
+#Log name
+LOG_NAME = 'Alohomora'
 
 # Bot token
 TOKEN = "862578806:AAG_SMYXi3JGKShYE-lmfqyl6Xrc6JmxJ1s"
+
+#Log file name
+FILE_NAME = 'file.log'

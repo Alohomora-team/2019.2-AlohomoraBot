@@ -1,19 +1,20 @@
 from checks import CheckUser, CheckCondo
 from python_speech_features import mfcc
 from scipy.io.wavfile import read
+from settings import LOG_NAME
 from settings import NAME, PHONE, EMAIL, CPF, BLOCK, APARTMENT, VOICE_REGISTER, REPEAT_VOICE
 from settings import PATH
 from telegram import KeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import ConversationHandler
 from validator import ValidateForm
-import logging
 import json
+import logging
 import numpy
 import os
 import requests
 import subprocess
 
-logger = logging.getLogger('Alohomora')
+logger = logging.getLogger(LOG_NAME)
 
 chat = {}
 

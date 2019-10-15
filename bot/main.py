@@ -5,17 +5,19 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, ConversationHa
 import logging
 import os
 
+# Remove logs from APIs
 logging.getLogger("telegram").setLevel(logging.CRITICAL)
 logging.getLogger("JobQueue").setLevel(logging.CRITICAL)
 
-logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%d/%m/%Y %I:%M:%S')
-logger = logging.getLogger('Alohomora')
-logger.setLevel(logging.DEBUG)
+# Logger
+logging.basicConfig(format=FORMAT, datefmt=DATEFMT)
+logger = logging.getLogger(LOG_NAME)
+logger.setLevel(LOG_LEVEL)
 
 # FileHandler
-file_handler = logging.FileHandler('file.log')
-file_handler.setLevel(logging.DEBUG)
-f_format = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%d/%m/%Y %I:%M:%S')
+file_handler = logging.FileHandler(FILE_NAME)
+file_handler.setLevel(LOG_LEVEL)
+f_format = logging.Formatter(FORMAT, datefmt=DATEFMT)
 file_handler.setFormatter(f_format)
 logger.addHandler(file_handler)
 
