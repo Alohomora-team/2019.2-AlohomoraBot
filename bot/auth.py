@@ -18,11 +18,15 @@ class Auth:
     def index(update, context):
         chat_id = update.message.chat_id
 
+        logger.info("Introducing authentication session")
         update.message.reply_text("Ok, vamos te autenticar!")
         update.message.reply_text("Caso deseje interromper o processo digite /cancelar")
         update.message.reply_text("Por favor, informe seu CPF:")
 
+        logger.info("Asking for CPF")
+
         chat[chat_id] = {}
+        logger.debug("data['{chat_id}']: {auth_chat[chat_id]}")
 
         return CPF_AUTH
 
@@ -36,8 +40,10 @@ class Auth:
         cpf = ValidateForm.cpf(cpf, update)
 
         chat[chat_id]['cpf'] = cpf
+        logger.debug("'auth-cpf': '{auth_chat[chat_id]['cpf']}'")
 
         update.message.reply_text('Grave um áudio de no mínimo 1 segundo dizendo "Juro que sou eu"')
+        logger.info("Requesting voice audio")
 
         return VOICE_AUTH
 
@@ -62,29 +68,36 @@ class Auth:
         mfcc_data = json.dumps(mfcc_data)
 
         chat[chat_id]['voice_mfcc'] = mfcc_data
+        logger.debug("'auth-voice-mfcc': '{auth_chat[chat_id]['voice_mfcc'][:1]}...{auth_chat[chat_id]['voice_mfcc'][-1:]}'")
 
         response = Auth.authenticate(chat_id)
 
         valid = response['data']['voiceBelongsResident']
 
         if valid:
+            logger.info("User has been authenticated")
             update.message.reply_text('Autenticado(a) com sucesso!')
         else:
+            logger.error("Authentication failed")
             update.message.reply_text('Falha na autenticação!')
 
         chat[chat_id] = {}
+        logger.debug("data['{chat_id}']: {auth_chat[chat_id]}")
 
         return ConversationHandler.END
 
     def end(update, context):
         chat_id = update.message.chat_id
         update.message.reply_text('Autenticação cancelada!')
+        logger.info("Canceling authentication")
 
         chat[chat_id] = {}
+        logger.debug("data['{chat_id}']: {auth_chat[chat_id]}")
 
         return ConversationHandler.END
 
     def authenticate(chat_id):
+        logger.info("Authenticating user")
         query = """
         query voiceBelongsResident(
             $cpf: String!,
@@ -100,5 +113,7 @@ class Auth:
         }
 
         response = requests.post(PATH, json={'query':query, 'variables':variables})
+        
+        logger.debug(f"Response: {response.json()}")
 
         return response.json()

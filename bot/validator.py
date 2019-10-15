@@ -61,10 +61,11 @@ class ValidateForm:
     def cpf(cpf, update):
         if(len(cpf) > 11 and cpf[3] == "." and cpf[7] == "." and cpf[11] == "-"):
             cpf = cpf.replace('.', '').replace('-', '')
+            logger.debug("Removing dots and dash from CPF")
 
         if(any(i.isalpha() for i in cpf) or "." in cpf or "-" in cpf or len(cpf) != 11):
-            update.message.reply_text(
-                'Por favor, digite o CPF com os 11 digitos: (Ex: 123.456.789-10)')
+            update.message.reply_text('Por favor, digite o CPF com os 11 digitos: (Ex: 123.456.789-10)')
+            logger.error("CPF in wrong formatation - asking again")
             return False
 
         authCPF_J = (int(cpf[0])*10 +
@@ -91,9 +92,11 @@ class ValidateForm:
         # Validating CPF
         if((int(cpf[9]) != 0 and authCPF_J != 0 and authCPF_J != 1) and (int(cpf[9]) != (11 - authCPF_J))):
             update.message.reply_text('CPF inválido, tente novamente:')
+            logger.error("Invalid CPF - asking again")
             return False
 
         if((int(cpf[10]) != 0 and authCPF_K != 0 and authCPF_K != 1) and (int(cpf[10]) != (11 - authCPF_K))):
+            logger.error("Invalid CPF - asking again")
             update.message.reply_text('CPF inválido, tente novamente:')
             return False
 
@@ -126,11 +129,13 @@ class ValidateForm:
 
     def voice(voice_register, update):
         if((voice_register.duration) < 1.0):
+            logger.error("Audio too short - asking again")
             update.message.reply_text(
                 'Muito curto...O áudio deve ter 1 segundo de duração.')
             update.message.reply_text('Por favor, grave novamente:')
             return False
         elif((voice_register.duration) > 2.0):
+            logger.error("Audio too long - asking again")
             update.message.reply_text(
                 'Muito grande...O áudio deve ter 2 segundo de duração.')
             update.message.reply_text('Por favor, grave novamente:')
