@@ -118,7 +118,7 @@ def voice_auth(update, context):
 
     response = authenticate(chat_id)
 
-    valid = response['data']['voiceBelongsUser']
+    valid = response['data']['voiceBelongsResident']
 
     if valid:
         logger.info("User has been authenticated")
@@ -147,11 +147,11 @@ def authenticate(chat_id):
     logger.info("Authenticating user")
 
     query = """
-    query voiceBelongsUser(
+    query voiceBelongsResident(
         $cpf: String!,
         $mfccData: String
     ){
-        voiceBelongsUser(cpf: $cpf, mfccData: $mfccData)
+        voiceBelongsResident(cpf: $cpf, mfccData: $mfccData)
     }
     """
 

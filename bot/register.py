@@ -347,7 +347,7 @@ def register_user(chat_id):
     logger.info("Registering user")
 
     query = """
-    mutation createUser(
+    mutation createResident(
         $completeName: String!,
         $email: String!,
         $phone: String!,
@@ -357,7 +357,7 @@ def register_user(chat_id):
         $voiceData: String,
         $mfccData: String,
         ){
-        createUser(
+        createResident(
             completeName: $completeName,
             email: $email,
             cpf: $cpf,
@@ -367,7 +367,7 @@ def register_user(chat_id):
             voiceData: $voiceData
             mfccData: $mfccData
         ){
-            user{
+            resident{
                 completeName
                 email
                 cpf
