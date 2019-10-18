@@ -1,9 +1,9 @@
+from settings import FEEDBACK
+from settings import PATH, LOG_NAME
 from telegram.ext import ConversationHandler
 import requests
 
-FEEDBACK = range(1)
-
-PATH = "http://localhost:8000/graphql/"
+logger = logging.getLogger(LOG_NAME)
 
 chat = {}
 
@@ -12,9 +12,11 @@ class Feedback:
     def index(update, context):
         chat_id = update.message.chat_id
 
+        logger.info("Introducing feedback session")
         update.message.reply_text("Ok. Digite a mensagem que deseja enviar como feedback para o nosso sistema:")
 
         chat[chat_id] = {}
+        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
 
         return FEEDBACK
 
@@ -23,7 +25,9 @@ class Feedback:
         feedback = update.message.text
 
         chat[chat_id]['message'] = feedback
+        logger.debug(f"'feedback-message': '{chat[chat_id]['message']}'")
 
+        logger.info("Sending feedback to database")
         query = """
         mutation createFeedback(
             $message: String!
@@ -41,13 +45,17 @@ class Feedback:
                 }
 
         response = requests.post(PATH, json={'query':query, 'variables':variables})
+        logger.debug(f"Response: {response.json()}")
 
         if(response.status_code == 200 and 'errors' not in response.json().keys()):
             update.message.reply_text('Seu feedback foi salvo no sistema, obrigado!')
+            logger.info("Feedback saved!")
         else:
             update.message.reply_text('Falha ao salvar no sistema!')
+            logger.error("Fail to save feedback")
 
         chat[chat_id] = {}
+        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
 
         return ConversationHandler.END
 
@@ -55,7 +63,9 @@ class Feedback:
         chat_id = update.message.chat_id
 
         update.message.reply_text('Feedback cancelado!')
+        logger.info("Canceling feedback")
 
         chat[chat_id] = {}
+        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
 
         return ConversationHandler.END
