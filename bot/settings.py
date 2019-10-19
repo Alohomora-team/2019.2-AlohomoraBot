@@ -18,11 +18,14 @@ DATEFMT = '%d/%m/%Y %I:%M:%S'
 # Log level
 LOG_LEVEL = logging.DEBUG
 
+# API Log level
+API_LOG_LEVEL = logging.CRITICAL
+
 #Log name
 LOG_NAME = 'Alohomora'
 
 # Bot token
-TOKEN = "862578806:AAG_SMYXi3JGKShYE-lmfqyl6Xrc6JmxJ1s"
+TOKEN = "724918697:AAF_CYQtfDtbrr8YpHU3K6RKvLJQXRJiHWY"
 
 #Log file name
 FILE_NAME = 'file.log'

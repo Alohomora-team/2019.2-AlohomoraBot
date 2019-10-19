@@ -163,6 +163,4 @@ class ValidateForm:
             update.message.reply_text('Por favor, grave novamente:')
             return False
 
-        update.message.reply_text('Ótimo!')
-
         return True
