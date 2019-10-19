@@ -12,7 +12,7 @@ services:
     - api
 
   api:
-    image: alohomorateam/api:latest
+    image: alohomorateam/api:devel
     ports: 
     - "8000:8000"
     env_file: ".env"
