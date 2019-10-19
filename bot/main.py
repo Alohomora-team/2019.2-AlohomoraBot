@@ -6,8 +6,8 @@ import logging
 import os
 
 # Remove logs from APIs
-logging.getLogger("telegram").setLevel(logging.DEBUG)
-logging.getLogger("JobQueue").setLevel(logging.DEBUG)
+logging.getLogger("telegram").setLevel(logging.CRITICAL)
+logging.getLogger("JobQueue").setLevel(logging.CRITICAL)
 
 # Logger
 logging.basicConfig(format=FORMAT, datefmt=DATEFMT)
