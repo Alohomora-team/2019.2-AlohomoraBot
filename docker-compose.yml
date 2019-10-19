@@ -1,7 +1,6 @@
 version: "3.7"
 
 services:
-
   bot:
     build:
       context: .
@@ -32,3 +31,8 @@ services:
     # The volume with pylintrc configuration
     volumes:
     - "./:/home"
+
+networks:
+  default:
+    external:
+      name: alohomora_default
