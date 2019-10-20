@@ -4,7 +4,16 @@ import logging
 PATH = "http://localhost:8000/graphql/"
 
 # Register constants
-NAME, PHONE, EMAIL, CPF, BLOCK, APARTMENT, VOICE_REGISTER, REPEAT_VOICE = range(8)
+NAME = 0
+PHONE = 1
+EMAIL = 2
+CPF = 3
+BLOCK = 4
+APARTMENT = 5
+CATCH_AUDIO_SPEAKING_NAME = 6
+CONFIRM_AUDIO_SPEAKING_NAME = 7
+VOICE_REGISTER = 8
+REPEAT_VOICE = 9
 
 # Auth constants
 CPF_AUTH, VOICE_AUTH = range(2)

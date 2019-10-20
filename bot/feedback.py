@@ -1,7 +1,8 @@
+import logging
+import requests
 from settings import FEEDBACK
 from settings import PATH, LOG_NAME
 from telegram.ext import ConversationHandler
-import requests
 
 logger = logging.getLogger(LOG_NAME)
 
@@ -9,17 +10,21 @@ chat = {}
 
 class Feedback:
 
+    @staticmethod
     def index(update, context):
         chat_id = update.message.chat_id
 
         logger.info("Introducing feedback session")
-        update.message.reply_text("Ok. Digite a mensagem que deseja enviar como feedback para o nosso sistema:")
+        update.message.reply_text(
+            "Ok. Digite a mensagem que deseja enviar como feedback para o nosso sistema:"
+        )
 
         chat[chat_id] = {}
         logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
 
         return FEEDBACK
 
+    @staticmethod
     def store(update, context):
         chat_id = update.message.chat_id
         feedback = update.message.text
@@ -41,8 +46,8 @@ class Feedback:
         """
 
         variables = {
-                'message': chat[chat_id]['message'],
-                }
+            'message': chat[chat_id]['message'],
+        }
 
         response = requests.post(PATH, json={'query':query, 'variables':variables})
         logger.debug(f"Response: {response.json()}")
@@ -59,6 +64,7 @@ class Feedback:
 
         return ConversationHandler.END
 
+    @staticmethod
     def end(update, context):
         chat_id = update.message.chat_id
 

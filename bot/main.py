@@ -1,9 +1,9 @@
+import logging
 from auth import Auth
 from register import Register
+from feedback import Feedback
 from settings import *
 from telegram.ext import Updater, CommandHandler, MessageHandler, ConversationHandler, Filters
-import logging
-import os
 
 # Remove logs from APIs
 logging.getLogger("telegram").setLevel(logging.CRITICAL)
@@ -50,8 +50,14 @@ if __name__ == '__main__':
             PHONE:[MessageHandler(Filters.text | Filters.contact, Register.phone)],
             EMAIL:[MessageHandler(Filters.text, Register.email)],
             CPF:[MessageHandler(Filters.text, Register.cpf)],
-            APARTMENT:[MessageHandler(Filters.text, Register.apartment)],
             BLOCK:[MessageHandler(Filters.text, Register.block)],
+            APARTMENT:[MessageHandler(Filters.text, Register.apartment)],
+            CATCH_AUDIO_SPEAKING_NAME:[
+                MessageHandler(Filters.voice, Register.catch_audio_speaking_name)
+            ],
+            CONFIRM_AUDIO_SPEAKING_NAME:[
+                MessageHandler(Filters.text, Register.confirm_audio_speaking_name)
+            ],
             VOICE_REGISTER: [MessageHandler(Filters.voice, Register.voice_register)],
             REPEAT_VOICE:[MessageHandler(Filters.text, Register.repeat_voice)]
             },

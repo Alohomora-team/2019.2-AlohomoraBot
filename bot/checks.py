@@ -1,12 +1,12 @@
-from settings import PATH, LOG_NAME
-import os
-import requests
 import logging
+import requests
+from settings import PATH, LOG_NAME
 
 logger = logging.getLogger(LOG_NAME)
 
 class CheckCondo:
 
+    @staticmethod
     def block(chat, chat_id):
         logger.debug("Checking if the informed block exists in database")
         query = """
@@ -18,14 +18,15 @@ class CheckCondo:
         """
 
         variables = {
-                'number': chat[chat_id]['block']
-                }
+            'number': chat[chat_id]['block']
+        }
 
         response = requests.post(PATH, json={'query': query, 'variables':variables})
         logger.debug(f"Response: {response.json()}")
 
         return response.json()
 
+    @staticmethod
     def apartment(chat, chat_id):
         logger.debug("Checking if the informed apartment exists in database")
         query = """
@@ -40,9 +41,9 @@ class CheckCondo:
         """
 
         variables = {
-                'number': chat[chat_id]['apartment'],
-                'block': chat[chat_id]['block']
-                }
+            'number': chat[chat_id]['apartment'],
+            'block': chat[chat_id]['block']
+        }
 
         response = requests.post(PATH, json={'query': query, 'variables':variables})
         logger.debug(f"Response: {response.json()}")
@@ -51,6 +52,7 @@ class CheckCondo:
 
 class CheckUser:
 
+    @staticmethod
     def email(chat, chat_id):
         logger.debug("Checking if the informed email exists in database")
         query = """
@@ -62,14 +64,15 @@ class CheckUser:
         """
 
         variables = {
-                'email': chat[chat_id]['email']
-                }
+            'email': chat[chat_id]['email']
+        }
 
         response = requests.post(PATH, json={'query': query, 'variables':variables})
         logger.debug(f"Response: {response.json()}")
 
         return response.json()
 
+    @staticmethod
     def cpf(chat, chat_id):
         logger.debug("Checking if the informed CPF exists in database")
         query = """
@@ -81,8 +84,8 @@ class CheckUser:
         """
 
         variables = {
-                'cpf': chat[chat_id]['cpf']
-                }
+            'cpf': chat[chat_id]['cpf']
+        }
 
         response = requests.post(PATH, json={'query': query, 'variables':variables})
         logger.debug(f"Response: {response.json()}")

@@ -1,15 +1,15 @@
+import json
+import logging
+import subprocess
+import numpy
+#import os
+import requests
 from python_speech_features import mfcc
 from scipy.io.wavfile import read
 from settings import CPF_AUTH, VOICE_AUTH
 from settings import PATH, LOG_NAME
 from telegram.ext import ConversationHandler
 from validator import ValidateForm
-import json
-import logging
-import numpy
-import os
-import requests
-import subprocess
 
 logger = logging.getLogger(LOG_NAME)
 
@@ -17,6 +17,7 @@ chat = {}
 
 class Auth:
 
+    @staticmethod
     def index(update, context):
         chat_id = update.message.chat_id
 
@@ -32,6 +33,7 @@ class Auth:
 
         return CPF_AUTH
 
+    @staticmethod
     def cpf(update, context):
         chat_id = update.message.chat_id
         cpf = update.message.text
@@ -49,6 +51,7 @@ class Auth:
 
         return VOICE_AUTH
 
+    @staticmethod
     def voice(update, context):
         chat_id = update.message.chat_id
         voice_auth = update.message.voice
@@ -61,7 +64,7 @@ class Auth:
         src = file_auth.download()
         dest = src.split('.')[0] + ".wav"
 
-        subprocess.run(['ffmpeg', '-i', src, dest])
+        subprocess.run(['ffmpeg', '-i', src, dest], check=True)
 
         samplerate, voice_data = read(dest)
 
@@ -70,7 +73,9 @@ class Auth:
         mfcc_data = json.dumps(mfcc_data)
 
         chat[chat_id]['voice_mfcc'] = mfcc_data
-        logger.debug(f"'auth-voice-mfcc': '{chat[chat_id]['voice_mfcc'][:1]}...{chat[chat_id]['voice_mfcc'][-1:]}'")
+        logger.debug(
+            f"'auth-voice-mfcc':'{chat[chat_id]['voice_mfcc'][:1]}...{chat[chat_id]['voice_mfcc'][-1:]}'"
+        )
 
         response = Auth.authenticate(chat_id)
 
@@ -79,6 +84,7 @@ class Auth:
         if valid:
             logger.info("User has been authenticated")
             update.message.reply_text('Autenticado(a) com sucesso!')
+
         else:
             logger.error("Authentication failed")
             update.message.reply_text('Falha na autenticação!')
@@ -88,6 +94,7 @@ class Auth:
 
         return ConversationHandler.END
 
+    @staticmethod
     def end(update, context):
         chat_id = update.message.chat_id
         update.message.reply_text('Autenticação cancelada!')
@@ -98,20 +105,21 @@ class Auth:
 
         return ConversationHandler.END
 
+    @staticmethod
     def authenticate(chat_id):
         logger.info("Authenticating user")
         query = """
-        query voiceBelongsResident(
-            $cpf: String!,
-            $mfccData: String
-        ){
-            voiceBelongsResident(cpf: $cpf, mfccData: $mfccData)
-        }
+            query voiceBelongsResident(
+                $cpf: String!,
+                $mfccData: String
+            ){
+                voiceBelongsResident(cpf: $cpf, mfccData: $mfccData)
+            }
         """
 
         variables = {
-                'cpf': chat[chat_id]['cpf'],
-                'mfccData': chat[chat_id]['voice_mfcc']
+            'cpf': chat[chat_id]['cpf'],
+            'mfccData': chat[chat_id]['voice_mfcc']
         }
 
         response = requests.post(PATH, json={'query':query, 'variables':variables})

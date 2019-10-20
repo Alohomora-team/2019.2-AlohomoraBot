@@ -1,18 +1,19 @@
-from checks import CheckUser, CheckCondo
+import json
+import logging
+#import os
+import subprocess
+import numpy
+import requests
 from python_speech_features import mfcc
 from scipy.io.wavfile import read
+from checks import CheckUser, CheckCondo
 from settings import LOG_NAME
 from settings import NAME, PHONE, EMAIL, CPF, BLOCK, APARTMENT, VOICE_REGISTER, REPEAT_VOICE
 from settings import PATH
+from settings import CATCH_AUDIO_SPEAKING_NAME, CONFIRM_AUDIO_SPEAKING_NAME
 from telegram import KeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import ConversationHandler
 from validator import ValidateForm
-import json
-import logging
-import numpy
-import os
-import requests
-import subprocess
 
 logger = logging.getLogger(LOG_NAME)
 
@@ -20,6 +21,7 @@ chat = {}
 
 class Register:
 
+    @staticmethod
     def index(update, context):
         logger.info("Introducing registration session")
         chat_id = update.message.chat_id
@@ -34,6 +36,7 @@ class Register:
 
         return NAME
 
+    @staticmethod
     def name(update, context):
         chat_id = update.message.chat_id
         name = update.message.text
@@ -45,14 +48,17 @@ class Register:
         logger.debug(f"'name': '{chat[chat_id]['name']}'")
 
         contact_keyboard = KeyboardButton('Enviar meu número de telefone', request_contact=True)
-        custom_keyboard = [[ contact_keyboard ]]
-        reply_markup = ReplyKeyboardMarkup(custom_keyboard, one_time_keyboard=True, resize_keyboard=True)
+        custom_keyboard = [[contact_keyboard]]
+        reply_markup = ReplyKeyboardMarkup(
+            custom_keyboard, one_time_keyboard=True, resize_keyboard=True
+        )
 
         update.message.reply_text('Telefone:', reply_markup=reply_markup)
         logger.info("Asking for phone")
 
         return PHONE
 
+    @staticmethod
     def phone(update, context):
         chat_id = update.message.chat_id
         phone = update.message.text
@@ -72,6 +78,7 @@ class Register:
 
         return EMAIL
 
+    @staticmethod
     def email(update, context):
         chat_id = update.message.chat_id
         email = update.message.text
@@ -96,6 +103,7 @@ class Register:
 
         return CPF
 
+    @staticmethod
     def cpf(update, context):
         chat_id = update.message.chat_id
         cpf = update.message.text
@@ -123,7 +131,7 @@ class Register:
 
         return BLOCK
 
-
+    @staticmethod
     def block(update, context):
         chat_id = update.message.chat_id
         block = update.message.text
@@ -148,6 +156,7 @@ class Register:
 
         return APARTMENT
 
+    @staticmethod
     def apartment(update, context):
         chat_id = update.message.chat_id
         apartment = update.message.text
@@ -168,12 +177,98 @@ class Register:
         logger.debug("Existing apartment - proceed")
 
         update.message.reply_text(
-            'Vamos agora cadastrar a sua voz! Grave uma breve mensagem de voz dizendo "Juro que sou eu"')
+            'Agora preciso que você grave um áudio dizendo seu nome completo.'
+        )
+        update.message.reply_text(
+            'O áudio deve ter no mínimo 1 segundo e no máximo 3 segundos.'
+        )
 
-        logger.info("Requesting voice audio")
+        return CATCH_AUDIO_SPEAKING_NAME
+
+    @staticmethod
+    def catch_audio_speaking_name(update, context):
+        chat_id = update.message.chat_id
+        audio = update.message.voice
+
+        logger.debug('\t\tAudio catched.')
+        if ValidateForm.audio_speaking_name(audio, update) is False:
+            return CATCH_AUDIO_SPEAKING_NAME
+
+        chat[chat_id]['mfcc_audio_speaking_name'] = audio
+
+        logger.debug('\tRequesting user confirmation ...')
+        next_button = KeyboardButton('Prosseguir')
+        repeat_button = KeyboardButton('Regravar')
+        prompt_buttons = [[repeat_button], [next_button]]
+        prompt = ReplyKeyboardMarkup(prompt_buttons, resize_keyboard=True, one_time_keyboard=True)
+        update.message.reply_text(
+            '''
+            Escute o audio gravado e verifique se:
+            1 - A fala foi natural e sem grandes pausas
+            2 - A fala não sofreu cortes nem no fim nem no começo do áudio
+            '''
+        )
+        update.message.reply_text(
+            'Caso o áudio cumpra essas exigências, prossiga. Caso contrário, por favor, regrave.',
+            reply_markup=prompt
+        )
+
+        return CONFIRM_AUDIO_SPEAKING_NAME
+
+    @staticmethod
+    def confirm_audio_speaking_name(update, context):
+        chat_id = update.message.chat_id
+        choice = update.message.text
+
+        if choice == 'Regravar':
+            update.message.reply_text('Ok. Pode regravar.')
+            logger.debug('\t\tUser has requested to record again.')
+            logger.debug('\tWaiting for audio ...')
+            return CATCH_AUDIO_SPEAKING_NAME
+
+        logger.debug('\t\tUser confirmed the audio')
+
+        audio = chat[chat_id]['mfcc_audio_speaking_name']
+
+        logger.debug('\tDownloading audio file ...')
+        audio_file_path = audio.get_file().download()
+        logger.debug('\t\tDone')
+
+        logger.debug('\tConverting audio file into .wav ...')
+        wav_audio_file_path = audio_file_path.split('.')[0] + '.wav'
+        subprocess.run(['ffmpeg', '-i', audio_file_path, wav_audio_file_path], check=True)
+        logger.debug('\t\tDone')
+
+        logger.debug('\tOpening the audio file...')
+        samplerate, data = read(wav_audio_file_path)
+        logger.debug('\t\tDone')
+
+        logger.debug('\tExtracting MFCC features from audio file ...')
+        mfcc_audio_speaking_name = mfcc(
+            data,
+            samplerate=samplerate,
+            nfft=1200,
+            winfunc=numpy.hamming
+        )
+        logger.debug('\t\tDone')
+
+        logger.debug("\tTurning into JSON and putting in the chat's dictionary ...")
+        mfcc_audio_speaking_name = json.dumps(mfcc_audio_speaking_name.tolist())
+        chat[chat_id]['mfcc_audio_speaking_name'] = mfcc_audio_speaking_name
+        logger.debug('\t\tDone')
+
+        logger.debug('TASK accomplished successfully')
+
+        update.message.reply_text('Vamos agora catalogar as características da sua voz!')
+        update.message.reply_text(
+            'Grave uma breve mensagem de voz dizendo a frase: "Juro que sou eu".'
+        )
+
+        logger.info("Requesting voice audio ...")
 
         return VOICE_REGISTER
 
+    @staticmethod
     def voice_register(update, context):
         chat_id = update.message.chat_id
         voice_register = update.message.voice
@@ -186,7 +281,7 @@ class Register:
         src = f_reg.download()
         dest = src.split('.')[0] + ".wav"
 
-        subprocess.run(['ffmpeg', '-i', src, dest])
+        subprocess.run(['ffmpeg', '-i', src, dest], check=True)
 
         samplerate, voice_data = read(dest)
 
@@ -198,19 +293,24 @@ class Register:
         chat[chat_id]['voice_reg'] = None
         chat[chat_id]['voice_mfcc'] = mfcc_data
         logger.debug(f"'voice_reg': '{chat[chat_id]['voice_reg']}'")
-        logger.debug(f"'voice_mfcc': '{chat[chat_id]['voice_mfcc'][:1]}...{chat[chat_id]['voice_mfcc'][-1:]}'")
+        logger.debug(
+            f"'voice_mfcc':'{chat[chat_id]['voice_mfcc'][:1]}...{chat[chat_id]['voice_mfcc'][-1:]}'"
+        )
 
         # Repeat and confirm buttons
         repeat_keyboard = KeyboardButton('Repetir')
         confirm_keyboard = KeyboardButton('Confirmar')
-        keyboard = [[repeat_keyboard],[confirm_keyboard]]
+        keyboard = [[repeat_keyboard], [confirm_keyboard]]
         choice = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
-        update.message.reply_text('Escute o seu áudio e confirme se está com boa qualidade', reply_markup = choice)
+        update.message.reply_text(
+            'Escute o seu áudio e confirme se está com boa qualidade', reply_markup=choice
+        )
 
         logger.info("Asking to confirm or repeat voice audio")
 
         return REPEAT_VOICE
 
+    @staticmethod
     def repeat_voice(update, context):
         chat_id = update.message.chat_id
         choice = update.message.text
@@ -237,6 +337,7 @@ class Register:
 
         return ConversationHandler.END
 
+    @staticmethod
     def end(update, context):
         logger.info("Canceling registration")
         chat_id = update.message.chat_id
@@ -248,7 +349,7 @@ class Register:
 
         return ConversationHandler.END
 
-
+    @staticmethod
     def register_user(chat_id):
         logger.info("Registering user")
         query = """
@@ -289,15 +390,15 @@ class Register:
         """
 
         variables = {
-                'completeName': chat[chat_id]['name'],
-                'email': chat[chat_id]['email'],
-                'phone': chat[chat_id]['phone'],
-                'cpf': chat[chat_id]['cpf'],
-                'apartment': chat[chat_id]['apartment'],
-                'block': chat[chat_id]['block'],
-                'voiceData': chat[chat_id]['voice_reg'],
-                'mfccData': chat[chat_id]['voice_mfcc']
-                }
+            'completeName': chat[chat_id]['name'],
+            'email': chat[chat_id]['email'],
+            'phone': chat[chat_id]['phone'],
+            'cpf': chat[chat_id]['cpf'],
+            'apartment': chat[chat_id]['apartment'],
+            'block': chat[chat_id]['block'],
+            'voiceData': chat[chat_id]['voice_reg'],
+            'mfccData': chat[chat_id]['voice_mfcc']
+        }
 
         response = requests.post(PATH, json={'query':query, 'variables':variables})
 
