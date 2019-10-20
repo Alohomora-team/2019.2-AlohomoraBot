@@ -9,6 +9,9 @@ NAME, PHONE, EMAIL, CPF, BLOCK, APARTMENT, VOICE_REGISTER, REPEAT_VOICE = range(
 # Auth constants
 CPF_AUTH, VOICE_AUTH = range(2)
 
+# Feedback constants
+FEEDBACK = range(1)
+
 # Log format
 FORMAT = '%(asctime)s - %(levelname)s - %(name)s - %(message)s'
 
