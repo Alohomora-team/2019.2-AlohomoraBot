@@ -1,5 +1,6 @@
-from settings import VERIFY_REGISTRATION
+from settings import VERIFY_REGISTRATION, LOG_NAME
 from telegram.ext import ConversationHandler
+from validator import ValidateForm
 import logging
 import requests
 
@@ -25,7 +26,12 @@ class Visit:
     def verify_registration(update, context):
         chat_id = update.message.chat_id
         response = update.message.text
-        update.message.reply_text('Entrei')
+        
+        if not ValidateForm.boolean_value(response, update):
+            return VERIFY_REGISTRATION
+
+        update.message.reply_text('Entrei!')
+        
 
     def end(update, context):
         logger.info("Canceling visit")
