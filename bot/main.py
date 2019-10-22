@@ -1,5 +1,6 @@
 from auth import Auth
 from register import Register
+from feedback import Feedback
 from settings import *
 from telegram.ext import Updater, CommandHandler, MessageHandler, ConversationHandler, Filters
 import logging
