@@ -7,7 +7,7 @@ PATH = "http://localhost:8000/graphql/"
 NAME, PHONE, EMAIL, CPF, BLOCK, APARTMENT, VOICE_REGISTER, REPEAT_VOICE = range(8)
 
 #Visitor constants
-VERIFY_REGISTRATION = range(1)
+VERIFY_REGISTRATION, VISITOR_CPF = range(1)
 
 # Auth constants
 CPF_AUTH, VOICE_AUTH = range(2)

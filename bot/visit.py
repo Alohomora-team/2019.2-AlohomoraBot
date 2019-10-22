@@ -1,6 +1,7 @@
-from settings import VERIFY_REGISTRATION, LOG_NAME
+from settings import VISITOR_CPF, VERIFY_REGISTRATION, LOG_NAME
 from telegram.ext import ConversationHandler
 from validator import ValidateForm
+from checks import CheckUser
 import logging
 import requests
 
@@ -30,8 +31,38 @@ class Visit:
         if not ValidateForm.boolean_value(response, update):
             return VERIFY_REGISTRATION
 
+        if(response == "sim"):
+            logger.info("Visitor already have registration")
+            return VISITOR_CPF
+
         update.message.reply_text('Entrei!')
         
+    def cpf(update, context):
+        chat_id = update.message.chat_id
+        cpf = update.message.text
+
+        if not ValidateForm.cpf(cpf, update):
+            return VISITOR_CPF
+
+        cpf = ValidateForm.cpf(cpf, update)
+
+        chat[chat_id]['cpf'] = cpf
+        logger.debug(f"'cpf': '{chat[chat_id]['cpf']}'")
+
+        check = CheckUser.cpf(chat, chat_id)
+
+        if 'errors' not in check.keys():
+            logger.error("CPF already exists in database - asking again")
+            update.message.reply_text('Já existe um morador com este CPF, tente novamente:')
+            return CPF
+
+        logger.debug("Available CPF - proceed")
+
+        logger.info("Asking for block number")
+
+        update.message.reply_text('Bloco:')
+
+        return BLOCK
 
     def end(update, context):
         logger.info("Canceling visit")
