@@ -1,6 +1,5 @@
 import json
 import logging
-#import os
 import subprocess
 import numpy
 import requests
@@ -175,6 +174,8 @@ class Register:
             return APARTMENT
 
         logger.debug("Existing apartment - proceed")
+        logger.debug('TASK: Catch audio speaking name')
+        logger.debug('\tWaiting for audio ...')
 
         update.message.reply_text(
             'Agora preciso que você grave um áudio dizendo seu nome completo.'
@@ -260,7 +261,6 @@ class Register:
         logger.debug('\tDeleting remaing files ...')
         subprocess.run(['rm', audio_file_path, wav_audio_file_path], check=True)
         logger.debug('\t\tDone')
-
         logger.debug('TASK accomplished successfully')
 
         update.message.reply_text('Vamos agora catalogar as características da sua voz!')
