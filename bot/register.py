@@ -204,8 +204,8 @@ class Register:
         update.message.reply_text(
             '''
             Escute o audio gravado e verifique se:
-            1 - A fala foi natural e sem grandes pausas
-            2 - A fala não sofreu cortes nem no fim nem no começo do áudio
+1 - A fala foi natural e sem grandes pausas
+2 - A fala não sofreu cortes nem no fim nem no começo do áudio
             '''
         )
         update.message.reply_text(
@@ -255,6 +255,10 @@ class Register:
         logger.debug("\tTurning into JSON and putting in the chat's dictionary ...")
         mfcc_audio_speaking_name = json.dumps(mfcc_audio_speaking_name.tolist())
         chat[chat_id]['mfcc_audio_speaking_name'] = mfcc_audio_speaking_name
+        logger.debug('\t\tDone')
+
+        logger.debug('\tDeleting remaing files ...')
+        subprocess.run(['rm', audio_file_path, wav_audio_file_path], check=True)
         logger.debug('\t\tDone')
 
         logger.debug('TASK accomplished successfully')
@@ -362,6 +366,7 @@ class Register:
             $block: String!,
             $voiceData: String,
             $mfccData: String,
+            $mfccAudioSpeakingName: String,
             ){
             createResident(
                 completeName: $completeName,
@@ -372,6 +377,7 @@ class Register:
                 block: $block,
                 voiceData: $voiceData
                 mfccData: $mfccData
+                mfccAudioSpeakingName: $mfccAudioSpeakingName
             ){
                 resident{
                     completeName
@@ -397,7 +403,8 @@ class Register:
             'apartment': chat[chat_id]['apartment'],
             'block': chat[chat_id]['block'],
             'voiceData': chat[chat_id]['voice_reg'],
-            'mfccData': chat[chat_id]['voice_mfcc']
+            'mfccData': chat[chat_id]['voice_mfcc'],
+            'mfccAudioSpeakingName': chat[chat_id]['mfcc_audio_speaking_name']
         }
 
         response = requests.post(PATH, json={'query':query, 'variables':variables})
