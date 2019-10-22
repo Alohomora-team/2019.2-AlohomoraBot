@@ -70,6 +70,7 @@ if __name__ == '__main__':
             VERIFY_REGISTRATION:[MessageHandler(Filters.text, Visit.verify_registration)],
             VISITOR_CPF:[MessageHandler(Filters.text, Visit.cpf)],
             VISITOR_BLOCK:[MessageHandler(Filters.text, Visit.block)],
+            VISITOR_APARTMENT:[MessageHandler(Filters.text, Visit.apartment)],
             },
 
         fallbacks=[CommandHandler('cancelar', Visit.end)]
