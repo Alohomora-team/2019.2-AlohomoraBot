@@ -69,6 +69,7 @@ if __name__ == '__main__':
         states={
             VERIFY_REGISTRATION:[MessageHandler(Filters.text, Visit.verify_registration)],
             VISITOR_CPF:[MessageHandler(Filters.text, Visit.cpf)],
+            VISITOR_BLOCK:[MessageHandler(Filters.text, Visit.block)],
             },
 
         fallbacks=[CommandHandler('cancelar', Visit.end)]

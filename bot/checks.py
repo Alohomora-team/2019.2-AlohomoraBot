@@ -49,13 +49,32 @@ class CheckCondo:
 
         return response.json()
 
-class CheckVisitor:
+class CheckUser:
+
+    def email(chat, chat_id):
+        logger.debug("Checking if the informed email exists in database")
+        query = """
+        query user($email: String!){
+            user(email: $email){
+                completeName
+            }
+        }
+        """
+
+        variables = {
+                'email': chat[chat_id]['email']
+                }
+
+        response = requests.post(PATH, json={'query': query, 'variables':variables})
+        logger.debug(f"Response: {response.json()}")
+
+        return response.json()
 
     def cpf(chat, chat_id):
-        logger.debug("Checking if the informed CPF from visitor exists in database")
+        logger.debug("Checking if the informed CPF exists in database")
         query = """
         query user($cpf: String!){
-            visitor(cpf: $cpf){
+            user(cpf: $cpf){
                 completeName
             }
         }
@@ -71,6 +90,14 @@ class CheckVisitor:
         return response.json()
 
 
+class CheckVisitor: 
+
+    def cpf(chat, chat_id):
+        logger.debug("Checking if the informed CPF of visitor exists in database")
+        query = """
+        query visitor($cpf: String!){
+            visitor(cpf: $cpf){
+                completeName
             }
         }
         """
@@ -83,4 +110,3 @@ class CheckVisitor:
         logger.debug(f"Response: {response.json()}")
 
         return response.json()
-

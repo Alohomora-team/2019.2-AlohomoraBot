@@ -7,7 +7,7 @@ PATH = "http://localhost:8000/graphql/"
 NAME, PHONE, EMAIL, CPF, BLOCK, APARTMENT, VOICE_REGISTER, REPEAT_VOICE = range(8)
 
 #Visitor constants
-VERIFY_REGISTRATION, VISITOR_CPF = range(1)
+VERIFY_REGISTRATION, VISITOR_CPF, VISITOR_BLOCK = range(3)
 
 # Auth constants
 CPF_AUTH, VOICE_AUTH = range(2)
@@ -28,7 +28,7 @@ LOG_LEVEL = logging.DEBUG
 LOG_NAME = 'Alohomora'
 
 # Bot token
-TOKEN = "862578806:AAG_SMYXi3JGKShYE-lmfqyl6Xrc6JmxJ1s"
+TOKEN = "801020772:AAGiaVK52MBf7is4InDnESbB0XE1m9QRcAo"
 
 #Log file name
 FILE_NAME = 'file.log'
