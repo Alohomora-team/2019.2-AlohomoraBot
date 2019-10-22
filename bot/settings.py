@@ -6,6 +6,9 @@ PATH = "http://localhost:8000/graphql/"
 # Register constants
 NAME, PHONE, EMAIL, CPF, BLOCK, APARTMENT, VOICE_REGISTER, REPEAT_VOICE = range(8)
 
+#Visitor constants
+VERIFY_REGISTRATION = range(1)
+
 # Auth constants
 CPF_AUTH, VOICE_AUTH = range(2)
 
