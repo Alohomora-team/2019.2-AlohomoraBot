@@ -1,4 +1,4 @@
-from settings import VISITOR_CPF, VISITOR_BLOCK, VISITOR_APARTMENT, VERIFY_REGISTRATION, LOG_NAME
+from settings import VISITOR_CPF, VISITOR_BLOCK, VISITOR_APARTMENT, VERIFY_REGISTRATION, NOTIFY_RESIDENT, LOG_NAME
 from telegram.ext import ConversationHandler
 from validator import ValidateForm
 from checks import CheckVisitor, CheckCondo
@@ -15,7 +15,7 @@ class Visit:
         logger.info("Introducing visitor session")
         chat_id = update.message.chat_id
 
-        update.message.reply_text('Você já possui cadastro? Digite apenas sim ou nao')
+        update.message.reply_text('Você já possui cadastro? Digite apenas "sim" ou "nao"')
         update.message.reply_text('Caso deseje interromper o processo digite /cancelar')
         logger.info("Checking if visitor has registration")
 
@@ -93,31 +93,31 @@ class Visit:
     def apartment(update, context):
 
         update.message.reply_text('Entrei!')
-        # chat_id = update.message.chat_id
-        # apartment = update.message.text
+        chat_id = update.message.chat_id
+        apartment = update.message.text
 
-        # if not ValidateForm.apartment(apartment, update):
-        #     return APARTMENT
+        if not ValidateForm.apartment(apartment, update):
+            return VISITOR_APARTMENT
 
-        # chat[chat_id]['apartment'] = apartment
-        # logger.debug(f"'apartment': '{chat[chat_id]['apartment']}'")
+        chat[chat_id]['apartment'] = apartment
+        logger.debug(f"'apartment': '{chat[chat_id]['apartment']}'")
 
-        # check = CheckCondo.apartment(chat, chat_id)
+        check = CheckCondo.apartment(chat, chat_id)
 
-        # if 'errors' in check.keys():
-        #     logger.error("Apartment not found - asking again")
-        #     update.message.reply_text('Por favor, digite um apartamento existente:')
-        #     return APARTMENT
+        if 'errors' in check.keys():
+            logger.error("Apartment not found - asking again")
+            update.message.reply_text('Por favor, digite um apartamento existente:')
+            return VISITOR_APARTMENT
 
-        # logger.debug("Existing apartment - proceed")
+        logger.debug("Existing apartment - proceed")
 
-        # update.message.reply_text(
-        #     'Vamos agora cadastrar a sua voz! Grave uma breve mensagem de voz dizendo "Juro que sou eu"')
+        update.message.reply_text('A solicitação de entrada foi enviada ao morador. Aguarde!')
 
-        # logger.info("Requesting voice audio")
+        return NOTIFY_RESIDENT
 
-        # return VOICE_REGISTER
+    def notify_resident(update, context):
 
+        update.message.reply_text('Entrei!')
 
     def end(update, context):
         logger.info("Canceling visit")

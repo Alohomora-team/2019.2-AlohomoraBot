@@ -71,6 +71,7 @@ if __name__ == '__main__':
             VISITOR_CPF:[MessageHandler(Filters.text, Visit.cpf)],
             VISITOR_BLOCK:[MessageHandler(Filters.text, Visit.block)],
             VISITOR_APARTMENT:[MessageHandler(Filters.text, Visit.apartment)],
+            NOTIFY_RESIDENT:[MessageHandler(Filters.text, Visit.notify_resident)],
             },
 
         fallbacks=[CommandHandler('cancelar', Visit.end)]
