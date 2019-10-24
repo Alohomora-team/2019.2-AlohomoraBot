@@ -1,7 +1,9 @@
 from settings import VISITOR_CPF, VISITOR_BLOCK, VISITOR_APARTMENT, VERIFY_REGISTRATION, NOTIFY_RESIDENT, LOG_NAME
 from telegram.ext import ConversationHandler
+from telegram import KeyboardButton, ReplyKeyboardMarkup
 from validator import ValidateForm
 from checks import CheckVisitor, CheckCondo
+
 import logging
 import requests
 
@@ -15,12 +17,18 @@ class Visit:
         logger.info("Introducing visitor session")
         chat_id = update.message.chat_id
 
-        update.message.reply_text('Você já possui cadastro? Digite apenas "sim" ou "nao"')
+        #update.message.reply_text('Você já possui cadastro? Digite apenas "sim" ou "nao"')
         update.message.reply_text('Caso deseje interromper o processo digite /cancelar')
         logger.info("Checking if visitor has registration")
 
         chat[chat_id] = {}
         logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
+
+        yes_keyboard = KeyboardButton('Sim')
+        no_keyboard = KeyboardButton('Não')
+        keyboard = [[yes_keyboard],[no_keyboard]]
+        response = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
+        update.message.reply_text('Você já possui cadastro?', reply_markup = response)
 
         return VERIFY_REGISTRATION
 
@@ -28,10 +36,10 @@ class Visit:
         chat_id = update.message.chat_id
         response = update.message.text
         
-        if not ValidateForm.boolean_value(response, update):
-            return VERIFY_REGISTRATION
+        #if not ValidateForm.boolean_value(response, update):
+        #    return VERIFY_REGISTRATION
 
-        if response == "sim":
+        if response == "Sim":
             logger.info("Visitor replied that he has registration")
             update.message.reply_text('Ok! Nos diga seu CPF:')
             return VISITOR_CPF
@@ -39,7 +47,7 @@ class Visit:
         # else:
         #     return VISITOR_REGISTRATION
 
-        update.message.reply_text('Entrei!')
+        update.message.reply_text('Ok! Então vamos fazer o seu cadastro?')
         
     def cpf(update, context):
         chat_id = update.message.chat_id
