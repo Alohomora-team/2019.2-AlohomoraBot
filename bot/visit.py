@@ -71,8 +71,8 @@ class Visit:
             return VISITOR_BLOCK
 
         else:
-            update.message.reply_text("Ok %s, agora nos diga a qual bloco deseja ir:" % completeName)
-            return VISITOR_REGISTER_NAME
+            update.message.reply_text("CPF não encontrado. Por favor, tente novamente")
+            return VISITOR_CPF
 
 
     def block(update, context):

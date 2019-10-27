@@ -70,6 +70,7 @@ if __name__ == '__main__':
         states={
             VERIFY_REGISTRATION:[MessageHandler(Filters.text, Visit.verify_registration)],
             VISITOR_REGISTER_NAME:[MessageHandler(Filters.text, RegisterVisitor.name)],
+            VISITOR_REGISTER_CPF:[MessageHandler(Filters.text, RegisterVisitor.cpf)],
             VISITOR_CPF:[MessageHandler(Filters.text, Visit.cpf)],
             VISITOR_BLOCK:[MessageHandler(Filters.text, Visit.block)],
             VISITOR_APARTMENT:[MessageHandler(Filters.text, Visit.apartment)],
