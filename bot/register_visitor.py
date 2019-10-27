@@ -56,7 +56,46 @@ class RegisterVisitor:
 
         update.message.reply_text('Deu bom, agora enviar a mutation!!!!')
 
-        response = Register.register_visitor(chat_id)
+        response = RegisterVisitor.register_visitor(chat_id)
+
+        if(response.status_code == 200 and 'errors' not in response.json().keys()):
+            logger.info("Visitor registered in database")
+            update.message.reply_text('Visitante cadastrado no sistema!')
+            update.message.reply_text('Para efetuar uma visita, digite /visitar')
+        else:
+            logger.error("Visitor registration failed")
+            update.message.reply_text('Falha ao cadastrar visitante no sistema!')
+
+        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
+
+        chat[chat_id] = {}
 
         return ConversationHandler.END
 
+    def register_visitor(chat_id):
+        logger.info("Registering visitor")
+        query = """
+        mutation createVisitor(
+            $completeName: String!,
+            $cpf: String!
+            ){
+            createVisitor(
+                completeName: $completeName,
+                cpf: $cpf
+            ){
+                completeName
+                cpf
+            }
+        }
+        """
+
+        variables = {
+                'completeName': chat[chat_id]['name'],
+                'cpf': chat[chat_id]['cpf']
+                }
+
+        response = requests.post(PATH, json={'query':query, 'variables':variables})
+
+        logger.debug(f"Response: {response.json()}")
+
+        return response
