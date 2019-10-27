@@ -168,9 +168,9 @@ class ValidateForm:
         return True
 
     def boolean_value(value, update):
-        if(value != "sim" and value != "nao"):
+        if(value != "Sim" and value != "Não"):
             logger.error("Boolean value isn't in valid format")
-            update.message.reply_text('Você deve apenas digitar "sim" ou "nao".')
+            update.message.reply_text('Você deve apenas apertar o botão "Sim" ou "Não".')
             return False
 
         return True

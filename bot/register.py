@@ -304,3 +304,4 @@ class Register:
         logger.debug(f"Response: {response.json()}")
 
         return response
+
