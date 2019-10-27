@@ -1,7 +1,7 @@
 import logging
 
 # API Path
-PATH = "http://localhost:8000/graphql/"
+PATH = "http://api:8000/graphql/"
 
 # Register constants
 NAME, PHONE, EMAIL, CPF, BLOCK, APARTMENT, VOICE_REGISTER, REPEAT_VOICE = range(8)
@@ -23,6 +23,9 @@ DATEFMT = '%d/%m/%Y %I:%M:%S'
 
 # Log level
 LOG_LEVEL = logging.DEBUG
+
+# API Log level
+API_LOG_LEVEL = logging.CRITICAL
 
 #Log name
 LOG_NAME = 'Alohomora'
