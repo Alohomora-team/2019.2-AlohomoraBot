@@ -1,4 +1,4 @@
-from settings import VERIFY_REGISTRATION, VISITOR_REGISTER_NAME, VISITOR_CPF, VISITOR_BLOCK, VISITOR_APARTMENT, NOTIFY_RESIDENT, LOG_NAME
+from settings import *
 from telegram.ext import ConversationHandler
 from telegram import KeyboardButton, ReplyKeyboardMarkup
 from validator import ValidateForm
@@ -101,7 +101,6 @@ class Visit:
 
     def apartment(update, context):
 
-        update.message.reply_text('Entrei!')
         chat_id = update.message.chat_id
         apartment = update.message.text
 
@@ -120,13 +119,54 @@ class Visit:
 
         logger.debug("Existing apartment - proceed")
 
-        update.message.reply_text('A solicitação de entrada foi enviada ao morador. Aguarde!')
+        response = Visit.create_entry(chat_id)
 
-        return NOTIFY_RESIDENT
+        if(response.status_code == 200 and 'errors' not in response.json().keys()):
+            logger.info("Entry visitor registered in database")
+            update.message.reply_text('Sua solicitação de entrada foi criada. Aguarde resposta do morador!')
+        else:
+            logger.error("Entry visitor registration failed")
+            update.message.reply_text('Falha no sistema!')
 
-    def notify_resident(update, context):
+        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
 
-        update.message.reply_text('Entrei!')
+        chat[chat_id] = {}
+
+        return ConversationHandler.END
+
+    def create_entry(chat_id):
+        logger.debug("Creating new visitor entry")
+
+        query = """
+        mutation createEntryVisitor(
+            $visitorCpf: String!,
+            $blockNumber: String!,
+            $apartmentNumber: String!,
+            $pending: Boolean!
+            ){
+            createEntryVisitor(
+                visitorCpf: $visitorCpf,
+                blockNumber: $blockNumber,
+                apartmentNumber: $apartmentNumber,
+                pending: $pending,
+            ){
+                pending
+            }
+        }
+        """
+
+        variables = {
+                'visitorCpf': chat[chat_id]['cpf'],
+                'blockNumber': chat[chat_id]['block'],
+                'apartmentNumber': chat[chat_id]['apartment'],
+                'pending': True,
+                }
+
+        response = requests.post(PATH, json={'query':query, 'variables':variables})
+
+        logger.debug(f"Response: {response.json()}")
+
+        return response
 
     def end(update, context):
         logger.info("Canceling visit")
