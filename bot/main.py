@@ -6,8 +6,8 @@ from settings import *
 from telegram.ext import Updater, CommandHandler, MessageHandler, ConversationHandler, Filters
 
 # Remove logs from APIs
-logging.getLogger("telegram").setLevel(logging.CRITICAL)
-logging.getLogger("JobQueue").setLevel(logging.CRITICAL)
+logging.getLogger("telegram").setLevel(API_LOG_LEVEL)
+logging.getLogger("JobQueue").setLevel(API_LOG_LEVEL)
 
 # Logger
 logging.basicConfig(format=FORMAT, datefmt=DATEFMT)

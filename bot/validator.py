@@ -198,8 +198,6 @@ class ValidateForm:
 
             return False
 
-        update.message.reply_text('Ótimo!')
-
         return True
 
     @staticmethod

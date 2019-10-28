@@ -64,7 +64,6 @@ class Register:
         contact = update.effective_message.contact
 
         if not ValidateForm.phone(phone, contact, update):
-            update.message.reply_text('Dado incorreto. Digite novamente:')
             return PHONE
 
         phone = ValidateForm.phone(phone, contact, update)
@@ -279,6 +278,8 @@ class Register:
 
         if not ValidateForm.voice(voice_register, update):
             return VOICE_REGISTER
+
+        update.message.reply_text('Ótimo!')
 
         f_reg = voice_register.get_file()
 
