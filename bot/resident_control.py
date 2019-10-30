@@ -79,9 +79,22 @@ class Auth:
         if valid:
             logger.info("resident has been authenticated")
             update.message.reply_text('Autenticado(a) com sucesso!')
-
             
-            return SHOW_ENTRIES_PENDING
+            response = HandleEntryVisitor.get_resident_apartment(chat, chat_id)
+
+            resident = response['data']['resident']
+            apartment = resident['apartment']
+            block = apartment['block']
+
+            update.message.reply_text(apartment)
+            update.message.reply_text(block)
+            
+            chat[chat_id]['block'] = block['number']
+            chat[chat_id]['apartment'] = apartment['number']
+            
+
+            HandleEntryVisitor.get_entries_pending(chat, chat_id)
+            
 
         else:
             logger.error("Authentication failed")
@@ -131,15 +144,37 @@ class HandleEntryVisitor:
     def index(update, context):
         return
 
-    def getEntriesPending(chat, chat_id):
+    def get_resident_apartment(chat, chat_id):
+        logger.debug("Getting resident block and apartment")
+        query = """
+        query resident($cpf: String!){
+            resident(cpf: $cpf){
+                completeName
+                apartment {
+                    number
+                    block {
+                        number
+                    }
+                }
+            }
+        }
+        """
+
+        variables = {
+            'cpf': chat[chat_id]['cpf']
+            }
+
+        response = requests.post(PATH, json={'query': query, 'variables':variables})
+        logger.debug(f"Response: {response.json()}")
+
+        return response.json()
+
+    def get_entries_pending(chat, chat_id):
         logger.debug("Sending query to get entries pending of visitors")
-        
         query = """
         query entriesVisitorsPending($blockNumber: String!, $apartmentNumber: String!){
             entriesVisitorsPending(blockNumber: $blockNumber, apartmentNumber: $apartmentNumber){
-                id
                 visitor {
-                    id
                     completeName
                     cpf
                 }
@@ -149,11 +184,13 @@ class HandleEntryVisitor:
         """
 
         variables = {
-                'cpf': chat[chat_id]['cpf']
-                }
+            'blockNumber': chat[chat_id]['block'],
+            'apartmentNumber': chat[chat_id]['apartment']
+            }
 
         response = requests.post(PATH, json={'query': query, 'variables':variables})
         logger.debug(f"Response: {response.json()}")
 
         return response.json()
+
 
