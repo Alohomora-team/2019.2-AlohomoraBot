@@ -1,5 +1,4 @@
 import pytest
-from register import Register
 from unittest.mock import MagicMock, patch
 from unittest import mock
 from checks import CheckCondo
@@ -13,11 +12,9 @@ def update(update):
     update.effective_message.contact = '1234567'
     return update
 
-@pytest.fixture(autouse=True)
-def register(bot_app, update):
-    register = Register
-    register.index(update, bot_app)
-    return register
+def test_start(bot_app, update):
+    bot_app.call('start', update)
+    assert update.message.reply_text.called == True
 
 def test_register_name(bot_app, update, register):
     register.name(update, bot_app)
@@ -94,14 +91,8 @@ def test_register_condos(mock_post, bot_app, update, register):
     msg = update.message.reply_text.call_args[1]['text']
     assert 'agora cadastrar a sua voz!' in msg
 
-def test_start(bot_app, update, register):
-    bot_app.call('start', update)
-    update.message.reply_text
-    assert update.message.reply_text.called == True
-
 @patch('checks.requests.post', autospec=True)  #mock object during the test
-def test_check_block(mock_post, update, bot_app):
-    register = Register
+def test_check_block(mock_post, update, bot_app, register):
     mock_post.return_value.status_code = 404
     mock_post.return_value.json = lambda : {"errors": {"id": "test"}}
     register.index(update, bot_app)

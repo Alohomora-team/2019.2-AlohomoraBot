@@ -1,4 +1,5 @@
 import pytest
+from register import Register
 from unittest.mock import MagicMock, patch
 from faker import Faker
 import base64
@@ -57,23 +58,12 @@ def update(message):
     return factory(
         'Update',
         update_id='__randint',
-        message=message(from_user=tg_user),
-        effective_message=message(from_user=tg_user),
+        message=message(),
+        effective_message=message(),
     )()
 
 @pytest.fixture
-def tg_user():
-    """telegram.User"""
-    class User(factory(
-        'User',
-        id='__randint',
-        is_bot=False,
-        name=faker.name(),
-        username=faker.user_name(),
-    )):
-
-        @property
-        def full_name(self):
-            return f'{self.first_name} {self.last_name}'
-
-    return User()
+def register(bot_app, update):
+    register = Register
+    register.index(update, bot_app)
+    return register

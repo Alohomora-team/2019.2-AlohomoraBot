@@ -1,6 +1,7 @@
 from auth import Auth
 from register import Register
 from settings import *
+from telegram import Message, ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
 from telegram.ext import Updater, CommandHandler, MessageHandler, ConversationHandler, Filters
 import logging
 import os
@@ -21,12 +22,12 @@ f_format = logging.Formatter(FORMAT, datefmt=DATEFMT)
 file_handler.setFormatter(f_format)
 logger.addHandler(file_handler)
 
-def start(update, context):
+def start(bot, update:Update):
     logger.info("Introducing the bot")
-    update.message.reply_text('Olá, bem vindo(a) ao bot do Alohomora!')
-    update.message.reply_text('Digite /cadastrar para fazer o cadastro de um morador')
-    update.message.reply_text('Caso queira fazer a autenticação por voz, digite /autenticar')
-    update.message.reply_text('Para dar um feedback pro nosso serviço, digite /feedback')
+    update.message.reply_text(text='Olá, bem vindo(a) ao bot do Alohomora!')
+    update.message.reply_text(text='Digite /cadastrar para fazer o cadastro de um morador')
+    update.message.reply_text(text='Caso queira fazer a autenticação por voz, digite /autenticar')
+    update.message.reply_text(text='Para dar um feedback pro nosso serviço, digite /feedback')
 
 
 if __name__ == '__main__':
