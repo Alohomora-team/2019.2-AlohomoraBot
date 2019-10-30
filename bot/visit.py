@@ -3,7 +3,6 @@ from telegram.ext import ConversationHandler
 from telegram import KeyboardButton, ReplyKeyboardMarkup
 from validator import ValidateForm
 from checks import CheckVisitor, CheckCondo
-
 import logging
 import requests
 

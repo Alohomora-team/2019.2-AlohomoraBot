@@ -2,6 +2,7 @@ from auth import Auth
 from register import Register
 from register_visitor import RegisterVisitor
 from feedback import Feedback
+from entry import HandleEntryVisitors
 from visit import Visit
 from settings import *
 from telegram.ext import Updater, CommandHandler, MessageHandler, ConversationHandler, Filters
@@ -29,6 +30,7 @@ def start(update, context):
     update.message.reply_text('Olá, bem vindo(a) ao bot do Alohomora!')
     update.message.reply_text('Caso deseje fazer uma solicitação de visita a algum morador, digite /visitar')
     update.message.reply_text('Digite /cadastrar para fazer o cadastro de um morador')
+    update.message.reply_text('Digite /autorizar para autorizar entrada de algum visitante')
     update.message.reply_text('Caso queira fazer a autenticação por voz, digite /autenticar')
     update.message.reply_text('Para dar um feedback pro nosso serviço, digite /feedback')
 
@@ -63,7 +65,18 @@ if __name__ == '__main__':
         fallbacks=[CommandHandler('cancelar', Register.end)]
         ))
 
-    # Handle visitor
+    # Handle resident (handle entries)
+    dp.add_handler(ConversationHandler(
+        entry_points=[CommandHandler('autorizar', HandleEntryVisitors.index, pass_args=True)],
+
+        states={
+            VERIFY_REGISTRATION:[MessageHandler(Filters.text, Visit.verify_registration)],
+            },
+
+        fallbacks=[CommandHandler('cancelar', Visit.end)]
+        ))
+
+    # Handle visitor (register resident and register entry)
     dp.add_handler(ConversationHandler(
         entry_points=[CommandHandler('visitar', Visit.index, pass_args=True)],
 

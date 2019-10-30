@@ -1,9 +1,7 @@
-from settings import LOG_NAME
-from settings import VISITOR_REGISTER_NAME, VISITOR_REGISTER_CPF
-from settings import PATH
+from settings import LOG_NAME, PATH
+from settings import VISITOR_REGISTER_NAME, VISITOR_REGISTER_CPF, VISITOR_BLOCK
 from checks import CheckVisitor
 from telegram.ext import ConversationHandler
-from telegram import KeyboardButton, ReplyKeyboardMarkup
 from validator import ValidateForm
 import logging
 import requests
@@ -52,23 +50,20 @@ class RegisterVisitor:
 
         logger.debug("Available CPF - proceed")
 
-        logger.info("Asking for block number")
-
-        update.message.reply_text('Deu bom, agora enviar a mutation!!!!')
-
         response = RegisterVisitor.register_visitor(chat_id)
+
+        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
+        chat[chat_id] = {}
 
         if(response.status_code == 200 and 'errors' not in response.json().keys()):
             logger.info("Visitor registered in database")
-            update.message.reply_text('Visitante cadastrado no sistema!')
-            update.message.reply_text('Para efetuar uma visita, digite /visitar')
-        else:
-            logger.error("Visitor registration failed")
-            update.message.reply_text('Falha ao cadastrar visitante no sistema!')
+            update.message.reply_text('Você foi cadastrado no sistema!')
+            update.message.reply_text('Agora, digite o bloco que deseja visitar:')
 
-        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
+            return VISITOR_BLOCK
 
-        chat[chat_id] = {}
+        logger.error("Visitor registration failed")
+        update.message.reply_text('Falha ao cadastrar visitante no sistema!')
 
         return ConversationHandler.END
 
@@ -82,17 +77,20 @@ class RegisterVisitor:
             createVisitor(
                 completeName: $completeName,
                 cpf: $cpf
-            ){
-                completeName
-                cpf
+            ) {
+                visitor {
+                    id
+                    completeName
+                    cpf
+                }
             }
         }
         """
 
         variables = {
-                'completeName': chat[chat_id]['name'],
-                'cpf': chat[chat_id]['cpf']
-                }
+            'completeName': chat[chat_id]['name'],
+            'cpf': chat[chat_id]['cpf']
+            }
 
         response = requests.post(PATH, json={'query':query, 'variables':variables})
 
