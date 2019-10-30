@@ -19,14 +19,13 @@ logger = logging.getLogger(LOG_NAME)
 chat = {}
 
 class Register:
-
     def index(update, context):
         logger.info("Introducing registration session")
         chat_id = update.message.chat_id
 
-        update.message.reply_text('Ok, vamos iniciar o cadastro!')
-        update.message.reply_text('Caso deseje interromper o processo digite /cancelar')
-        update.message.reply_text('Nome:')
+        update.message.reply_text(text='Ok, vamos iniciar o cadastro!')
+        update.message.reply_text(text='Caso deseje interromper o processo digite /cancelar')
+        update.message.reply_text(text='Nome:')
         logger.info("Asking for name")
 
         chat[chat_id] = {}
@@ -37,7 +36,6 @@ class Register:
     def name(update, context):
         chat_id = update.message.chat_id
         name = update.message.text
-
         if not ValidateForm.name(name, update):
             return NAME
 
@@ -48,7 +46,7 @@ class Register:
         custom_keyboard = [[ contact_keyboard ]]
         reply_markup = ReplyKeyboardMarkup(custom_keyboard, one_time_keyboard=True, resize_keyboard=True)
 
-        update.message.reply_text('Telefone:', reply_markup=reply_markup)
+        update.message.reply_text(text='Telefone:', reply_markup=reply_markup)
         logger.info("Asking for phone")
 
         return PHONE
@@ -66,7 +64,7 @@ class Register:
         chat[chat_id]['phone'] = phone
         logger.debug(f"'phone': '{chat[chat_id]['phone']}'")
 
-        update.message.reply_text('Email:')
+        update.message.reply_text(text='Email:')
         logger.info("Asking for email")
 
         return EMAIL
@@ -90,7 +88,7 @@ class Register:
 
         logger.debug("Available email - proceed")
 
-        update.message.reply_text('CPF:')
+        update.message.reply_text(text='CPF:')
         logger.info("Asking for CPF")
 
         return CPF
@@ -111,14 +109,14 @@ class Register:
 
         if 'errors' not in check.keys():
             logger.error("CPF already exists in database - asking again")
-            update.message.reply_text('Já existe um morador com este CPF, tente novamente:')
+            update.message.reply_text(text='Já existe um morador com este CPF, tente novamente:')
             return CPF
 
         logger.debug("Available CPF - proceed")
 
         logger.info("Asking for block number")
 
-        update.message.reply_text('Bloco:')
+        update.message.reply_text(text='Bloco:')
 
         return BLOCK
 
@@ -137,12 +135,12 @@ class Register:
 
         if 'errors' in check.keys():
             logger.error("Block not found - asking again")
-            update.message.reply_text('Por favor, digite um bloco existente:')
+            update.message.reply_text(text='Por favor, digite um bloco existente:')
             return BLOCK
 
         logger.debug("Existing block - proceed")
 
-        update.message.reply_text('Apartamento:')
+        update.message.reply_text(text='Apartamento:')
         logger.info("Asking for apartment number")
 
         return APARTMENT
@@ -161,13 +159,13 @@ class Register:
 
         if 'errors' in check.keys():
             logger.error("Apartment not found - asking again")
-            update.message.reply_text('Por favor, digite um apartamento existente:')
+            update.message.reply_text(text='Por favor, digite um apartamento existente:')
             return APARTMENT
 
         logger.debug("Existing apartment - proceed")
 
         update.message.reply_text(
-            'Vamos agora cadastrar a sua voz! Grave uma breve mensagem de voz dizendo "Juro que sou eu"')
+            text='Vamos agora cadastrar a sua voz! Grave uma breve mensagem de voz dizendo "Juro que sou eu"')
 
         logger.info("Requesting voice audio")
 
@@ -218,7 +216,7 @@ class Register:
 
         if choice == "Repetir":
             logger.debug("Repeating voice audio")
-            update.message.reply_text('Por favor, grave novamente:')
+            update.message.reply_text(text='Por favor, grave novamente:')
             return VOICE_REGISTER
 
         logger.debug("Confirming voice audio")
@@ -227,10 +225,10 @@ class Register:
 
         if(response.status_code == 200 and 'errors' not in response.json().keys()):
             logger.info("User registered in database")
-            update.message.reply_text('Morador cadastrado no sistema!')
+            update.message.reply_text(text='Morador cadastrado no sistema!')
         else:
             logger.error("Registration failed")
-            update.message.reply_text('Falha ao cadastrar no sistema!')
+            update.message.reply_text(text='Falha ao cadastrar no sistema!')
 
         logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
 
@@ -242,7 +240,7 @@ class Register:
         logger.info("Canceling registration")
         chat_id = update.message.chat_id
 
-        update.message.reply_text('Cadastro cancelado!')
+        update.message.reply_text(text='Cadastro cancelado!')
 
         chat[chat_id] = {}
         logger.debug(f"data['{chat_id}']: {chat[chat_id]}")

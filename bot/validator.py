@@ -7,23 +7,23 @@ class ValidateForm:
 
     def name(name, update):
         if("nome" in name.lower()):
-            update.message.reply_text('Por favor, digite apenas o seu nome:')
+            update.message.reply_text(text='Por favor, digite apenas o seu nome:')
             logger.error("User informing his name in a sentence - asking again")
             return False
         if(any(i.isdigit() for i in name)):
             logger.error("Numbers in name - asking again")
             update.message.reply_text(
-                'Por favor, não digite números no nome, tente novamente:')
+                text='Por favor, não digite números no nome, tente novamente:')
             return False
         if("@" in name or len(name) < 3):
             logger.error("Email instead name - asking again")
             update.message.reply_text(
-                'Neste momento é hora de digitar o seu nome, tente novamente:')
+                text='Neste momento é hora de digitar o seu nome, tente novamente:')
             return False
         if(len(name) > 80):
             looging.error("Name out of range - asking again")
             update.message.reply_text(
-                'Nome excedeu tamanho máximo (80), tente novamente:')
+                text='Nome excedeu tamanho máximo (80), tente novamente:')
             return False
 
         return True
@@ -45,13 +45,13 @@ class ValidateForm:
             if(any(i.isalpha() for i in phone)):
                 logger.error("Alphabetic character in phone - asking again")
                 update.message.reply_text(
-                    'Por favor, digite seu telefone corretamente:')
+                    text='Por favor, digite seu telefone corretamente:')
                 return False
 
             if(len(phone) > 15):
                 logger.error("Phone out of range - asking again")
                 update.message.reply_text(
-                    'Telefone excedeu tamanho máximo (15), tente novamente:')
+                    text='Telefone excedeu tamanho máximo (15), tente novamente:')
                 return False
 
         else:
