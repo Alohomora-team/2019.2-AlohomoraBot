@@ -49,13 +49,13 @@ class CheckCondo:
 
         return response.json()
 
-class CheckUser:
+class CheckResident:
 
     def email(chat, chat_id):
         logger.debug("Checking if the informed email exists in database")
         query = """
-        query user($email: String!){
-            user(email: $email){
+        query resident($email: String!){
+            resident(email: $email){
                 completeName
             }
         }
@@ -73,9 +73,10 @@ class CheckUser:
     def cpf(chat, chat_id):
         logger.debug("Checking if the informed CPF exists in database")
         query = """
-        query user($cpf: String!){
-            user(cpf: $cpf){
+        query resident($cpf: String!){
+            resident(cpf: $cpf){
                 completeName
+                
             }
         }
         """

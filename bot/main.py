@@ -1,8 +1,7 @@
-from auth import Auth
+from resident_control import Auth, HandleEntryVisitor
 from register import Register
 from register_visitor import RegisterVisitor
 from feedback import Feedback
-from entry import HandleEntryVisitors
 from visit import Visit
 from settings import *
 from telegram.ext import Updater, CommandHandler, MessageHandler, ConversationHandler, Filters
@@ -65,17 +64,6 @@ if __name__ == '__main__':
         fallbacks=[CommandHandler('cancelar', Register.end)]
         ))
 
-    # Handle resident (handle entries)
-    dp.add_handler(ConversationHandler(
-        entry_points=[CommandHandler('autorizar', HandleEntryVisitors.index, pass_args=True)],
-
-        states={
-            VERIFY_REGISTRATION:[MessageHandler(Filters.text, Visit.verify_registration)],
-            },
-
-        fallbacks=[CommandHandler('cancelar', Visit.end)]
-        ))
-
     # Handle visitor (register resident and register entry)
     dp.add_handler(ConversationHandler(
         entry_points=[CommandHandler('visitar', Visit.index, pass_args=True)],
@@ -93,13 +81,14 @@ if __name__ == '__main__':
         fallbacks=[CommandHandler('cancelar', Visit.end)]
         ))
 
-    # Authentication
+    # Resident control
     dp.add_handler(ConversationHandler(
-        entry_points=[CommandHandler('autenticar', Auth.index)],
+        entry_points=[CommandHandler('autorizar', Auth.index)],
 
         states={
             CPF_AUTH:[MessageHandler(Filters.text, Auth.cpf)],
-            VOICE_AUTH: [MessageHandler(Filters.voice, Auth.voice)]
+            VOICE_AUTH: [MessageHandler(Filters.voice, Auth.voice)],
+            SHOW_VISITORS_PENDING: [MessageHandler(Filters.text, HandleEntryVisitor.index)]
             },
 
         fallbacks=[CommandHandler('cancelar', Auth.end)]

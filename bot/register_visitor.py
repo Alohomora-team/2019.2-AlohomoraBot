@@ -52,18 +52,18 @@ class RegisterVisitor:
 
         response = RegisterVisitor.register_visitor(chat_id)
 
-        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
-        chat[chat_id] = {}
 
         if(response.status_code == 200 and 'errors' not in response.json().keys()):
             logger.info("Visitor registered in database")
             update.message.reply_text('Você foi cadastrado no sistema!')
-            update.message.reply_text('Agora, digite o bloco que deseja visitar:')
+            update.message.reply_text('Para visitar algum morador, digite /visitar')
 
-            return VISITOR_BLOCK
+        else:
+            logger.error("Visitor registration failed")
+            update.message.reply_text('Falha ao cadastrar visitante no sistema!')
 
-        logger.error("Visitor registration failed")
-        update.message.reply_text('Falha ao cadastrar visitante no sistema!')
+        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
+        chat[chat_id] = {}
 
         return ConversationHandler.END
 

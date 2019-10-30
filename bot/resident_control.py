@@ -1,6 +1,6 @@
 from python_speech_features import mfcc
 from scipy.io.wavfile import read
-from settings import CPF_AUTH, VOICE_AUTH
+from settings import CPF_AUTH, VOICE_AUTH, SHOW_VISITORS_PENDING
 from settings import PATH, LOG_NAME
 from telegram.ext import ConversationHandler
 from validator import ValidateForm
@@ -21,7 +21,7 @@ class Auth:
         chat_id = update.message.chat_id
 
         logger.info("Introducing authentication session")
-        update.message.reply_text("Ok, vamos te autenticar!")
+        update.message.reply_text("Ok. Mas antes, você precisa se autenticar!")
         update.message.reply_text("Caso deseje interromper o processo digite /cancelar")
         update.message.reply_text("Por favor, informe seu CPF:")
 
@@ -77,11 +77,16 @@ class Auth:
         valid = response['data']['voiceBelongsResident']
 
         if valid:
-            logger.info("User has been authenticated")
+            logger.info("resident has been authenticated")
             update.message.reply_text('Autenticado(a) com sucesso!')
+
+            
+            return SHOW_ENTRIES_PENDING
+
         else:
             logger.error("Authentication failed")
             update.message.reply_text('Falha na autenticação!')
+
 
         chat[chat_id] = {}
         logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
@@ -99,7 +104,7 @@ class Auth:
         return ConversationHandler.END
 
     def authenticate(chat_id):
-        logger.info("Authenticating user")
+        logger.info("Authenticating resident")
         query = """
         query voiceBelongsResident(
             $cpf: String!,
@@ -119,3 +124,36 @@ class Auth:
         logger.debug(f"Response: {response.json()}")
 
         return response.json()
+
+
+class HandleEntryVisitor: 
+
+    def index(update, context):
+        return
+
+    def getEntriesPending(chat, chat_id):
+        logger.debug("Sending query to get entries pending of visitors")
+        
+        query = """
+        query entriesVisitorsPending($blockNumber: String!, $apartmentNumber: String!){
+            entriesVisitorsPending(blockNumber: $blockNumber, apartmentNumber: $apartmentNumber){
+                id
+                visitor {
+                    id
+                    completeName
+                    cpf
+                }
+                date
+            }
+        }
+        """
+
+        variables = {
+                'cpf': chat[chat_id]['cpf']
+                }
+
+        response = requests.post(PATH, json={'query': query, 'variables':variables})
+        logger.debug(f"Response: {response.json()}")
+
+        return response.json()
+
