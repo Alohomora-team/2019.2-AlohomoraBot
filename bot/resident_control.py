@@ -3,7 +3,9 @@ from scipy.io.wavfile import read
 from settings import CPF_AUTH, VOICE_AUTH, SHOW_VISITORS_PENDING
 from settings import PATH, LOG_NAME
 from telegram.ext import ConversationHandler
+from telegram import KeyboardButton, ReplyKeyboardMarkup
 from validator import ValidateForm
+import datetime
 import json
 import logging
 import numpy
@@ -99,6 +101,44 @@ class Auth:
         else:
             logger.error("Authentication failed")
             update.message.reply_text('Falha na autenticação!')
+
+            response = HandleEntryVisitor.get_resident_apartment(chat, chat_id)
+
+            resident = response['data']['resident']
+            apartment = resident['apartment']
+            block = apartment['block']
+
+            update.message.reply_text(apartment)
+            update.message.reply_text(block)
+            
+            chat[chat_id]['block'] = block['number']
+            chat[chat_id]['apartment'] = apartment['number']
+            
+
+            response = HandleEntryVisitor.get_entries_pending(chat, chat_id)
+
+            entries_pending = response['data']['entriesVisitorsPending']
+
+            if entries_pending:
+                update.message.reply_text('Você possui entrada(s) pendente(s):')
+                logger.info("Showing visitors pending to resident")
+            else:
+                update.message.reply_text('Você não possui entrada pendente')
+                logger.info("Apartment don`t have pending entries")
+
+            for entry in entries_pending:
+                
+                confirm_keyboard = KeyboardButton('Aceitar')
+                reject_keyboard = KeyboardButton('Rejeitar')
+                keyboard = [[confirm_keyboard],[reject_keyboard]]
+                response = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
+
+                update.message.reply_text(
+                    "\nNome: "+entry['visitor']['completeName']+
+                    "\nCPF: "+entry['visitor']['cpf']+
+                    "\nData: "+entry['date']
+                    ,reply_markup=response)
+
 
 
         chat[chat_id] = {}

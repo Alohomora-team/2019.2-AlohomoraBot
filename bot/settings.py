@@ -1,7 +1,7 @@
 import logging
 
 # API Path
-PATH = "http://localhost:8000/graphql/"
+PATH = "http://api:8000/graphql/"
 
 # Register constants
 NAME, PHONE, EMAIL, CPF, BLOCK, APARTMENT, VOICE_REGISTER, REPEAT_VOICE = range(8)
