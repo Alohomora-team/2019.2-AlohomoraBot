@@ -1,10 +1,16 @@
 import logging
 
 # API Path
-PATH = "http://api:8000/graphql/"
+PATH = "http://localhost:8000/graphql/"
 
 # Register constants
 NAME, PHONE, EMAIL, CPF, BLOCK, APARTMENT, VOICE_REGISTER, REPEAT_VOICE = range(8)
+
+#Visitor constants
+VISITOR_REGISTER_NAME, VISITOR_REGISTER_CPF, VERIFY_REGISTRATION, VISITOR_CPF, VISITOR_BLOCK, VISITOR_APARTMENT, CREATE_VISITOR_ENTRY = range(7)
+
+#Handle entry visitors constants
+SHOW_VISITORS_PENDING = range(1)
 
 # Auth constants
 CPF_AUTH, VOICE_AUTH = range(2)
@@ -28,8 +34,7 @@ API_LOG_LEVEL = logging.CRITICAL
 LOG_NAME = 'Alohomora'
 
 # Bot token
-#TOKEN = "724918697:AAF_CYQtfDtbrr8YpHU3K6RKvLJQXRJiHWY"
-TOKEN="429283202:AAFAwrd459W0eA7xhgctjsEHOQI4Wl5IjVY"
+TOKEN = "801020772:AAGiaVK52MBf7is4InDnESbB0XE1m9QRcAo"
 
 #Log file name
 FILE_NAME = 'file.log'
