@@ -8,7 +8,7 @@ class ValidateForm:
     def name(name, update):
         if("nome" in name.lower()):
             update.message.reply_text('Por favor, digite apenas o seu nome:')
-            logger.error("User informing his name in a sentence - asking again")
+            logger.error("Resident informing his name in a sentence - asking again")
             return False
         if(any(i.isdigit() for i in name)):
             logger.error("Numbers in name - asking again")
@@ -122,7 +122,7 @@ class ValidateForm:
 
     def block(block, update):
         if("bloco" in block.lower() or " " in block):
-            logger.error("User informing the block number in a sentence - asking again")
+            logger.error("Resident informing the block number in a sentence - asking again")
             update.message.reply_text(
                 'Por favor, digite apenas o bloco: (Ex: 1)')
             return False
@@ -161,6 +161,14 @@ class ValidateForm:
             update.message.reply_text(
                 'Muito grande...O áudio deve ter 2 segundo de duração.')
             update.message.reply_text('Por favor, grave novamente:')
+            return False
+
+        return True
+
+    def boolean_value(value, update):
+        if(value != "Sim" and value != "Não"):
+            logger.error("Boolean value isn't in valid format")
+            update.message.reply_text('Você deve apenas apertar o botão "Sim" ou "Não".')
             return False
 
         return True

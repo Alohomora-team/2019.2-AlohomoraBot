@@ -1,6 +1,6 @@
-from settings import FEEDBACK
-from settings import PATH, LOG_NAME
+from settings import *
 from telegram.ext import ConversationHandler
+import logging
 import requests
 
 logger = logging.getLogger(LOG_NAME)
