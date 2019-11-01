@@ -10,15 +10,6 @@ env:
 
 jobs:
   include:
-    - stage: deploy
-      install: skip
-      script: skip
-      deploy:
-        provider: heroku
-        skip_cleanup: true
-        api_key:
-          secure: ${HEROKU_KEY}
-        app: alohomora-bot
-        on:
-          repo: Alohomora-team/2019.2-AlohomoraBot
-          branch: devel
+    - stage: code_style
+      script:
+        - docker-compose run lint
