@@ -1,4 +1,4 @@
-from checks import CheckUser, CheckCondo
+from checks import CheckResident, CheckCondo
 from python_speech_features import mfcc
 from scipy.io.wavfile import read
 from settings import LOG_NAME
@@ -79,7 +79,7 @@ class Register:
         chat[chat_id]['email'] = email
         logger.debug(f"'email': '{chat[chat_id]['email']}'")
 
-        check = CheckUser.email(chat, chat_id)
+        check = CheckResident.email(chat, chat_id)
 
         if 'errors' not in check.keys():
             logger.error("Email already exists in database - asking again")
@@ -105,7 +105,7 @@ class Register:
         chat[chat_id]['cpf'] = cpf
         logger.debug(f"'cpf': '{chat[chat_id]['cpf']}'")
 
-        check = CheckUser.cpf(chat, chat_id)
+        check = CheckResident.cpf(chat, chat_id)
 
         if 'errors' not in check.keys():
             logger.error("CPF already exists in database - asking again")
@@ -221,7 +221,7 @@ class Register:
 
         logger.debug("Confirming voice audio")
 
-        response = Register.register_user(chat_id)
+        response = Register.register_resident(chat_id)
 
         if(response.status_code == 200 and 'errors' not in response.json().keys()):
             logger.info("User registered in database")
@@ -248,8 +248,8 @@ class Register:
         return ConversationHandler.END
 
 
-    def register_user(chat_id):
-        logger.info("Registering user")
+    def register_resident(chat_id):
+        logger.info("Registering resident")
         query = """
         mutation createResident(
             $completeName: String!,
@@ -303,3 +303,4 @@ class Register:
         logger.debug(f"Response: {response.json()}")
 
         return response
+
