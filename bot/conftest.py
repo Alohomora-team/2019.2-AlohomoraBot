@@ -5,6 +5,8 @@ from faker import Faker
 import base64
 faker = Faker()
 from random import randint
+from os import path
+import json
 
 def factory(class_name: str = None, **kwargs):
     """Simple factory to create a class with attributes from kwargs"""
@@ -27,11 +29,12 @@ def factory(class_name: str = None, **kwargs):
 
     return FactoryGeneratedClass
 @pytest.fixture
-def message():
+def message(tg_voice_size):
     """telegram.Message"""
     return lambda **kwargs: factory(
         'Message',
         chat_id='1',
+        voice = tg_voice_size(),
         reply_text=MagicMock(return_value=factory(message_id=100800)()),  # always 100800 as the replied message id
         **kwargs,
 
@@ -67,3 +70,39 @@ def register(bot_app, update):
     register = Register
     register.index(update, bot_app)
     return register
+
+@pytest.fixture
+def tg_voice_file():
+    """telegram.File"""
+
+    return lambda **kwargs: factory(
+        'File',
+        file_id='__randint',
+        file_size=None,
+        duration=0.5,
+        file_path='/tmp/path/to/file.png',
+        download=MagicMock(),
+        **kwargs,
+    )()
+
+
+@pytest.fixture
+def tg_voice_size(tg_voice_file):
+    """telegram.PhotoSize"""
+    return lambda **kwargs: factory(
+        'VoiceSize',
+        file_id='__randint',
+        duration=1,
+        get_file=MagicMock(tg_voice_file),
+        split=MagicMock(),
+        **kwargs,
+    )()
+
+@pytest.fixture
+def read_fixture():
+    """Fixture reader"""
+    def read_file(f):
+        with open(path.join('tests/fixtures/', f) + '.json') as fp:
+            return json.load(fp)
+
+    return read_file

@@ -1,0 +1,18 @@
+{
+  "data": {
+    "createResident": {
+      "resident": {
+        "completeName": "Count of Monte Cristo",
+        "email": "exemplo@exemplo.com",
+        "cpf": "59278712400",
+        "phone": "12345678",
+        "apartment": {
+          "number": "101",
+          "block": {
+            "number": "1"
+          }
+        }
+      }
+    }
+  }
+}

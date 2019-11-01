@@ -1,13 +1,10 @@
 python-telegram-bot==12.1.1
 requests
 python_speech_features==0.6
-Pyrogram == 0.7.4
-python-decouple ==3.1.0
-tgintegration
 numpy
 scipy
-pytest==5.2.1
-pytest-mock==1.11.1
-pytest-django==3.5.1
+pytest==5.2.2
+pytest-mock==1.11.2
+pytest-django==3.6.0
 pytest-django-queries==1.1.0
 Faker==2.0.3

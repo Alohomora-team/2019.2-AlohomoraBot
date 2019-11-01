@@ -8,7 +8,7 @@ class ValidateForm:
     def name(name, update):
         if("nome" in name.lower()):
             update.message.reply_text(text='Por favor, digite apenas o seu nome:')
-            logger.error("User informing his name in a sentence - asking again")
+            logger.error("Resident informing his name in a sentence - asking again")
             return False
         if(any(i.isdigit() for i in name)):
             logger.error("Numbers in name - asking again")
@@ -21,7 +21,7 @@ class ValidateForm:
                 text='Neste momento é hora de digitar o seu nome, tente novamente:')
             return False
         if(len(name) > 80):
-            looging.error("Name out of range - asking again")
+            logger.error("Name out of range - asking again")
             update.message.reply_text(
                 text='Nome excedeu tamanho máximo (80), tente novamente:')
             return False
@@ -63,13 +63,13 @@ class ValidateForm:
     def email(email, update):
         if("@" not in email or " " in email or len(email) < 4 or "." not in email):
             logger.error("Invalid email - asking again")
-            update.message.reply_text('Por favor, digite um email válido:')
+            update.message.reply_text(text='Por favor, digite um email válido:')
             return False
 
         if(len(email) > 90):
             logger.error("Email out of range - asking again")
             update.message.reply_text(
-                'Email excedeu tamanho máximo (90), tente novamente:')
+                text='Email excedeu tamanho máximo (90), tente novamente:')
             return False
 
         return True
@@ -82,7 +82,7 @@ class ValidateForm:
 
         if(any(i.isalpha() for i in cpf) or "." in cpf or "-" in cpf or len(cpf) != 11):
             logger.error("CPF in wrong formatation - asking again")
-            update.message.reply_text('Por favor, digite o CPF com os 11 digitos: (Ex: 123.456.789-10)')
+            update.message.reply_text(text='Por favor, digite o CPF com os 11 digitos: (Ex: 123.456.789-10)')
             logger.error("CPF in wrong formatation - asking again")
             return False
 
@@ -109,13 +109,13 @@ class ValidateForm:
 
         # Validating CPF
         if((int(cpf[9]) != 0 and authCPF_J != 0 and authCPF_J != 1) and (int(cpf[9]) != (11 - authCPF_J))):
-            update.message.reply_text('CPF inválido, tente novamente:')
+            update.message.reply_text(text='CPF inválido, tente novamente:')
             logger.error("Invalid CPF - asking again")
             return False
 
         if((int(cpf[10]) != 0 and authCPF_K != 0 and authCPF_K != 1) and (int(cpf[10]) != (11 - authCPF_K))):
             logger.error("Invalid CPF - asking again")
-            update.message.reply_text('CPF inválido, tente novamente:')
+            update.message.reply_text(text='CPF inválido, tente novamente:')
             return False
 
         return cpf
@@ -124,27 +124,27 @@ class ValidateForm:
         if("bloco" in block.lower() or " " in block):
             logger.error("Resident informing the block number in a sentence - asking again")
             update.message.reply_text(
-                'Por favor, digite apenas o bloco: (Ex: 1)')
+                text='Por favor, digite apenas o bloco: (Ex: 1)')
             return False
 
         if(len(block) > 4):
             logger.error("Block number out of range - asking again")
-            update.message.reply_text('Digte um bloco de até 4 caracteres:')
+            update.message.reply_text(text='Digte um bloco de até 4 caracteres:')
             return False
 
         return True
 
     def apartment(apartment, update):
         if(any(i.isalpha() for i in apartment) or " " in apartment):
-            loggin.error("Alphabetic character in apartment number - asking again")
+            logger.error("Alphabetic character in apartment number - asking again")
             update.message.reply_text(
-                'Por favor, digite apenas o apartamento: (Ex: 101)')
+                text='Por favor, digite apenas o apartamento: (Ex: 101)')
             return False
 
         if(len(apartment) > 6):
             logger.error("Apartment out of range - asking again")
             update.message.reply_text(
-                'Digite um apartamente de até 6 caracteres:')
+                text='Digite um apartamente de até 6 caracteres:')
             return False
 
         return True
@@ -154,13 +154,13 @@ class ValidateForm:
             logger.error("Audio too short - asking again")
             update.message.reply_text(
                 'Muito curto...O áudio deve ter 1 segundo de duração.')
-            update.message.reply_text('Por favor, grave novamente:')
+            update.message.reply_text(text='Por favor, grave novamente:')
             return False
         elif((voice_register.duration) > 2.0):
             logger.error("Audio too long - asking again")
             update.message.reply_text(
                 'Muito grande...O áudio deve ter 2 segundo de duração.')
-            update.message.reply_text('Por favor, grave novamente:')
+            update.message.reply_text(text='Por favor, grave novamente:')
             return False
 
         return True
@@ -168,7 +168,7 @@ class ValidateForm:
     def boolean_value(value, update):
         if(value != "Sim" and value != "Não"):
             logger.error("Boolean value isn't in valid format")
-            update.message.reply_text('Você deve apenas apertar o botão "Sim" ou "Não".')
+            update.message.reply_text(text='Você deve apenas apertar o botão "Sim" ou "Não".')
             return False
 
         return True

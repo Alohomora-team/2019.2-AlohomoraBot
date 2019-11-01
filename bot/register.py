@@ -19,12 +19,13 @@ logger = logging.getLogger(LOG_NAME)
 chat = {}
 
 class Register:
+
     def index(update, context):
         logger.info("Introducing registration session")
         chat_id = update.message.chat_id
 
-        update.message.reply_text(text='Ok, vamos iniciar o cadastro!')
-        update.message.reply_text(text='Caso deseje interromper o processo digite /cancelar')
+        update.message.reply_text('Ok, vamos iniciar o cadastro!')
+        update.message.reply_text('Caso deseje interromper o processo digite /cancelar')
         update.message.reply_text(text='Nome:')
         logger.info("Asking for name")
 
@@ -36,6 +37,7 @@ class Register:
     def name(update, context):
         chat_id = update.message.chat_id
         name = update.message.text
+
         if not ValidateForm.name(name, update):
             return NAME
 
@@ -109,7 +111,7 @@ class Register:
 
         if 'errors' not in check.keys():
             logger.error("CPF already exists in database - asking again")
-            update.message.reply_text(text='Já existe um morador com este CPF, tente novamente:')
+            update.message.reply_text('Já existe um morador com este CPF, tente novamente:')
             return CPF
 
         logger.debug("Available CPF - proceed")
@@ -216,7 +218,7 @@ class Register:
 
         if choice == "Repetir":
             logger.debug("Repeating voice audio")
-            update.message.reply_text(text='Por favor, grave novamente:')
+            update.message.reply_text('Por favor, grave novamente:')
             return VOICE_REGISTER
 
         logger.debug("Confirming voice audio")
@@ -224,7 +226,7 @@ class Register:
         response = Register.register_resident(chat_id)
 
         if(response.status_code == 200 and 'errors' not in response.json().keys()):
-            logger.info("User registered in database")
+            logger.info("resident registered in database")
             update.message.reply_text(text='Morador cadastrado no sistema!')
         else:
             logger.error("Registration failed")
@@ -303,4 +305,3 @@ class Register:
         logger.debug(f"Response: {response.json()}")
 
         return response
-
