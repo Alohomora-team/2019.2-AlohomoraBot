@@ -1,6 +1,6 @@
 from python_speech_features import mfcc
 from scipy.io.wavfile import read
-from settings import CPF_AUTH, VOICE_AUTH, SHOW_VISITORS_PENDING
+from settings import CPF_AUTH, VOICE_AUTH, HANDLE_VISITORS_PENDING
 from settings import PATH, LOG_NAME
 from telegram.ext import ConversationHandler
 from telegram import KeyboardButton, ReplyKeyboardMarkup
@@ -95,26 +95,6 @@ class Auth:
             chat[chat_id]['apartment'] = apartment['number']
             
 
-            HandleEntryVisitor.get_entries_pending(chat, chat_id)
-            
-
-        else:
-            logger.error("Authentication failed")
-            update.message.reply_text('Falha na autenticação!')
-
-            response = HandleEntryVisitor.get_resident_apartment(chat, chat_id)
-
-            resident = response['data']['resident']
-            apartment = resident['apartment']
-            block = apartment['block']
-
-            update.message.reply_text(apartment)
-            update.message.reply_text(block)
-            
-            chat[chat_id]['block'] = block['number']
-            chat[chat_id]['apartment'] = apartment['number']
-            
-
             response = HandleEntryVisitor.get_entries_pending(chat, chat_id)
 
             entries_pending = response['data']['entriesVisitorsPending']
@@ -127,29 +107,35 @@ class Auth:
                 logger.info("Apartment don`t have pending entries")
 
             for entry in entries_pending:
-                
-                confirm_keyboard = KeyboardButton('Aceitar')
-                reject_keyboard = KeyboardButton('Rejeitar')
-                keyboard = [[confirm_keyboard],[reject_keyboard]]
-                response = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
 
                 update.message.reply_text(
                     "\nNome: "+entry['visitor']['completeName']+
                     "\nCPF: "+entry['visitor']['cpf']+
-                    "\nData: "+entry['date']
-                    ,reply_markup=response)
+                    "\nData: "+entry['date']+
+                    "\n\nPara aceitar digite o comando /"+str(entry['visitor']['id'])
+                    )
 
+            remove_keyboard = KeyboardButton('Remover')
+            cancel_keyboard = KeyboardButton('Cancelar')
+            keyboard = [[remove_keyboard],[cancel_keyboard]]
+            response = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
 
+            update.message.reply_text('Para remover as entradas pendentes, precione o botão "Remover"')
+            update.message.reply_text('Para sair da interação, precione o botão "Cancelar"', reply_markup=response)
 
-        chat[chat_id] = {}
-        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
+            return HANDLE_VISITORS_PENDING
+
+        else:
+            logger.error("Authentication failed")
+            update.message.reply_text('Falha na autenticação!')
+
 
         return ConversationHandler.END
 
     def end(update, context):
         chat_id = update.message.chat_id
-        update.message.reply_text('Autenticação cancelada!')
-        logger.info("Canceling authentication")
+        update.message.reply_text('Comando de autorização cancelado!')
+        logger.info("Canceling command")
 
         chat[chat_id] = {}
         logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
@@ -182,7 +168,23 @@ class Auth:
 class HandleEntryVisitor: 
 
     def index(update, context):
-        return
+        reply = update.message.text
+        
+        if reply == 'Remover': 
+            logger.info('resident request remove all visitor entries pending')
+        
+        elif reply == 'Cancelar':
+            logger.info('resident end conversation')
+            return ConversationHandler.END
+
+        if not ValidateForm.number(reply, update):
+            return HANDLE_VISITORS_PENDING
+
+        # response = HandleEntryVisitor.confirm_entry(chat, chat_id)
+
+        
+
+    
 
     def get_resident_apartment(chat, chat_id):
         logger.debug("Getting resident block and apartment")
@@ -215,6 +217,7 @@ class HandleEntryVisitor:
         query entriesVisitorsPending($blockNumber: String!, $apartmentNumber: String!){
             entriesVisitorsPending(blockNumber: $blockNumber, apartmentNumber: $apartmentNumber){
                 visitor {
+                    id
                     completeName
                     cpf
                 }
@@ -232,5 +235,8 @@ class HandleEntryVisitor:
         logger.debug(f"Response: {response.json()}")
 
         return response.json()
+
+    # def confirm_entry(chat, chat_id):
+       
 
 
