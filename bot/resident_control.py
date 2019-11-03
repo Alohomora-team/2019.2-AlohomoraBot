@@ -103,7 +103,7 @@ class Auth:
             update.message.reply_text('Você possui entrada(s) pendente(s):')
             logger.info("Showing visitors pending to resident")
         else:
-            update.message.reply_text('Você não possui entrada pendente')
+            update.message.reply_text('Você não possui entrada(s) pendente(s)')
             logger.info("Apartment don`t have pending entries")
 
         for entry in entries:
@@ -159,6 +159,7 @@ class Auth:
 class HandleEntryVisitor: 
 
     def index(update, context):
+        chat_id = update.message.chat_id
         reply = update.message.text
         
         if reply == 'Remover': 
@@ -186,9 +187,27 @@ class HandleEntryVisitor:
         if not ValidateForm.number(reply, update):
             return HANDLE_VISITORS_PENDING
 
-        chat[chat_id]['entry_id'] = update.message.text
+        chat[chat_id]['entry_id'] = reply
 
-        response = HandleEntryVisitor.allow_entry(chat, chat_id)
+        status = HandleEntryVisitor.allow_entry(chat, chat_id)
+
+        if 'errors' not in status.keys():
+            logger.info('entry visitor updated successfully')
+
+            update.message.reply_text('A entrada foi aceita')
+            update.message.reply_text('Para liberar mais alguma entrada, digite o respectivo código')
+            update.message.reply_text('Para remover todas as entradas pendentes restantes, precione o botão "Remover"')
+            update.message.reply_text('Para cancelar a interação, precione o botão "Cancelar"')
+
+            return HANDLE_VISITORS_PENDING
+    
+        logger.info('entry visitor updated error')
+        update.message.reply_text('Ocorreu um erro ao aceitar a entrada.')
+        update.message.reply_text('Interação cancelada.')
+
+        return ConversationHandler.END
+
+
 
     def get_resident_apartment(chat, chat_id):
         logger.debug("Getting resident block and apartment")
@@ -245,10 +264,10 @@ class HandleEntryVisitor:
     def allow_entry(chat, chat_id):
         logger.info("Updating entry")
         query = """
-        mutation UpdateEntryVisitorPending(
+        mutation updateEntryVisitorPending(
             $entryId: String!
             ){
-            UpdateEntryVisitorPending(
+            updateEntryVisitorPending(
                 entryId: $entryId
             ){
                 entryId
@@ -265,7 +284,7 @@ class HandleEntryVisitor:
 
         logger.debug(f"Response: {response.json()}")
 
-        return response
+        return response.json()
 
 
     def delete_entries_pending():
