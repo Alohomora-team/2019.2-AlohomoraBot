@@ -77,9 +77,9 @@ enable=duplicate-argument-name,
        invalid-name ,
        blacklisted-name,
        empty-docstring,
-       missing-class-docstring,
-       missing-function-docstring,
-       missing-module-docstring,
+       #missing-class-docstring,
+       #missing-function-docstring,
+       #missing-module-docstring,
        unidiomatic-typecheck,
        access-member-before-definition,
        protected-access,
@@ -240,7 +240,7 @@ no-docstring-rgx=^_
 property-classes=abc.abstractproperty
 
 # Naming style matching correct variable names.
-variable-naming-style=snake_case
+variable-naming-style=any
 
 # Regular expression matching correct variable names. Overrides variable-
 # naming-style.
