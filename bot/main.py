@@ -80,7 +80,7 @@ if __name__ == '__main__':
         fallbacks=[CommandHandler('cancelar', Visit.end)]
         ))
 
-    # Resident control
+    # Resident control (manage apartment entries )
     dp.add_handler(ConversationHandler(
         entry_points=[CommandHandler('autorizar', Auth.index)],
 
@@ -90,7 +90,7 @@ if __name__ == '__main__':
             HANDLE_VISITORS_PENDING: [MessageHandler(Filters.text, HandleEntryVisitor.index)]
             },
 
-        fallbacks=[CommandHandler('cancelar', Auth.end)]
+        fallbacks=[CommandHandler('cancelar', HandleEntryVisitor.end)]
         ))
 
     # Feedback

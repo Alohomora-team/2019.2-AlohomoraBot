@@ -174,14 +174,7 @@ class ValidateForm:
         return True
 
     def number(value, update):
-        
-        number = value[1:]
-        keyboard_bar = value[0:1]
-
-        logger.info(number)
-        logger.info(keyboard_bar)
-
-        if not str.isdigit(value) or not keyboard_bar == '/':
+        if not str.isdigit(value):
             logger.error("Incorrect format number")
             update.message.reply_text("Comando incorreto. Digite no formato /numero")
             return False

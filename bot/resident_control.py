@@ -78,67 +78,58 @@ class Auth:
 
         valid = response['data']['voiceBelongsResident']
 
-        if valid:
-            logger.info("resident has been authenticated")
-            update.message.reply_text('Autenticado(a) com sucesso!')
-            
-            response = HandleEntryVisitor.get_resident_apartment(chat, chat_id)
+        # if valid:
+        logger.info("resident has been authenticated")
+        update.message.reply_text('Autenticado(a) com sucesso!')
+        
+        response = HandleEntryVisitor.get_resident_apartment(chat, chat_id)
 
-            resident = response['data']['resident']
-            apartment = resident['apartment']
-            block = apartment['block']
+        resident = response['data']['resident']
+        apartment = resident['apartment']
+        block = apartment['block']
 
-            update.message.reply_text(apartment)
-            update.message.reply_text(block)
-            
-            chat[chat_id]['block'] = block['number']
-            chat[chat_id]['apartment'] = apartment['number']
-            
+        update.message.reply_text(apartment)
+        update.message.reply_text(block)
+        
+        chat[chat_id]['block'] = block['number']
+        chat[chat_id]['apartment'] = apartment['number']
+        
 
-            response = HandleEntryVisitor.get_entries_pending(chat, chat_id)
+        response = HandleEntryVisitor.get_entries_pending(chat, chat_id)
 
-            entries_pending = response['data']['entriesVisitorsPending']
+        entries = response['data']['entriesVisitorsPending']
 
-            if entries_pending:
-                update.message.reply_text('Você possui entrada(s) pendente(s):')
-                logger.info("Showing visitors pending to resident")
-            else:
-                update.message.reply_text('Você não possui entrada pendente')
-                logger.info("Apartment don`t have pending entries")
+        if entries:
+            update.message.reply_text('Você possui entrada(s) pendente(s):')
+            logger.info("Showing visitors pending to resident")
+        else:
+            update.message.reply_text('Você não possui entrada pendente')
+            logger.info("Apartment don`t have pending entries")
 
-            for entry in entries_pending:
+        for entry in entries:
 
+            if entry['pending'] == True:
                 update.message.reply_text(
                     "\nNome: "+entry['visitor']['completeName']+
                     "\nCPF: "+entry['visitor']['cpf']+
                     "\nData: "+entry['date']+
-                    "\n\nPara aceitar digite o comando /"+str(entry['visitor']['id'])
+                    "\n\nPara aceitar digite "+str(entry['id'])
                     )
 
-            remove_keyboard = KeyboardButton('Remover')
-            cancel_keyboard = KeyboardButton('Cancelar')
-            keyboard = [[remove_keyboard],[cancel_keyboard]]
-            response = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
+        remove_keyboard = KeyboardButton('Remover')
+        cancel_keyboard = KeyboardButton('Cancelar')
+        keyboard = [[remove_keyboard],[cancel_keyboard]]
+        response = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
 
-            update.message.reply_text('Para remover as entradas pendentes, precione o botão "Remover"')
-            update.message.reply_text('Para sair da interação, precione o botão "Cancelar"', reply_markup=response)
+        update.message.reply_text('Para remover as entradas pendentes, precione o botão "Remover"')
+        update.message.reply_text('Para sair da interação, precione o botão "Cancelar"', reply_markup=response)
 
-            return HANDLE_VISITORS_PENDING
+        return HANDLE_VISITORS_PENDING
 
-        else:
-            logger.error("Authentication failed")
-            update.message.reply_text('Falha na autenticação!')
+        #else:
+        logger.error("Authentication failed")
+        update.message.reply_text('Falha na autenticação!')
 
-
-        return ConversationHandler.END
-
-    def end(update, context):
-        chat_id = update.message.chat_id
-        update.message.reply_text('Comando de autorização cancelado!')
-        logger.info("Canceling command")
-
-        chat[chat_id] = {}
-        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
 
         return ConversationHandler.END
 
@@ -172,19 +163,32 @@ class HandleEntryVisitor:
         
         if reply == 'Remover': 
             logger.info('resident request remove all visitor entries pending')
+            
+            response = HandleEntryVisitor.delete_entries_pending()
+
+            status = response['data']['deleteEntryVisitorPending']
+
+            if status['deleted']:
+                logger.info('all visitor entries pending is removed.')
+
+                update.message.reply_text('Todos as entradas pendentes foram removidas.')
+
+                return ConversationHandler.END
+
         
         elif reply == 'Cancelar':
             logger.info('resident end conversation')
+
+            update.message.reply_text('Interação de gerenciamento de entradas cancelado.')
+            
             return ConversationHandler.END
 
         if not ValidateForm.number(reply, update):
             return HANDLE_VISITORS_PENDING
 
-        # response = HandleEntryVisitor.confirm_entry(chat, chat_id)
+        chat[chat_id]['entry_id'] = update.message.text
 
-        
-
-    
+        response = HandleEntryVisitor.allow_entry(chat, chat_id)
 
     def get_resident_apartment(chat, chat_id):
         logger.debug("Getting resident block and apartment")
@@ -216,12 +220,14 @@ class HandleEntryVisitor:
         query = """
         query entriesVisitorsPending($blockNumber: String!, $apartmentNumber: String!){
             entriesVisitorsPending(blockNumber: $blockNumber, apartmentNumber: $apartmentNumber){
+                id
+                date
+                pending
                 visitor {
                     id
                     completeName
                     cpf
                 }
-                date
             }
         }
         """
@@ -236,7 +242,56 @@ class HandleEntryVisitor:
 
         return response.json()
 
-    # def confirm_entry(chat, chat_id):
+    def allow_entry(chat, chat_id):
+        logger.info("Updating entry")
+        query = """
+        mutation UpdateEntryVisitorPending(
+            $entryId: String!
+            ){
+            UpdateEntryVisitorPending(
+                entryId: $entryId
+            ){
+                entryId
+                entryVisitorPending
+            }
+        }
+        """
+
+        variables = {
+            'entryId': chat[chat_id]['entry_id'],
+            }
+
+        response = requests.post(PATH, json={'query':query, 'variables':variables})
+
+        logger.debug(f"Response: {response.json()}")
+
+        return response
+
+
+    def delete_entries_pending():
+        logger.debug("Deleting all entries visitors pending")
+        query = """
+        mutation {
+            deleteEntryVisitorPending {
+                deleted
+            }
+        }
+        """
+
+        response = requests.post(PATH, json={'query': query})
+
+        return response.json()
+
+    def end(update, context):
+        chat_id = update.message.chat_id
+        update.message.reply_text('Comando de autorização cancelado!')
+        logger.info("Canceling command")
+
+        chat[chat_id] = {}
+        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
+
+        return ConversationHandler.END
+
        
 
 

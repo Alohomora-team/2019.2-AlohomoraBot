@@ -149,7 +149,11 @@ class Visit:
                 apartmentNumber: $apartmentNumber,
                 pending: $pending,
             ){
-                pending
+                entryVisitor {
+                    id
+                    date
+                    pending
+                    }
             }
         }
         """
