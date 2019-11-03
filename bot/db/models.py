@@ -3,10 +3,6 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 Base = declarative_base()
-engine = create_engine('sqlite:///./database.db')
-
-Base.metadata.create_all(bind=engine)
-Session = sessionmaker(bind=engine)
 
 class Resident(Base):
     __tablename__ = 'residents'
@@ -31,3 +27,6 @@ class Admin(Base):
     email = Column(String(60), unique=True)
     chat_id = Column(Integer, unique=True)
 
+engine = create_engine('sqlite:///./database.db')
+Base.metadata.create_all(bind=engine)
+Session = sessionmaker(bind=engine)
