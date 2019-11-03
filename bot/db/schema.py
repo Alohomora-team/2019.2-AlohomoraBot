@@ -4,39 +4,54 @@ from models import Session
 def create_resident(cpf, block, apartment, chat_id):
     session = Session()
 
-    resident = Resident()
-
-    resident.cpf = cpf
-    resident.block = block
-    resident.apartment = apartment
-    resident.chat_id = chat_id
+    resident = Resident(
+            cpf=cpf,
+            block=block,
+            apartment=apartment,
+            chat_id=chat_id
+            )
 
     session.add(resident)
-    session.commit()
+
+    try:
+        session.commit()
+    except:
+        print("[ERROR]: Resident already exists in database")
+
     session.close()
 
 def create_visitor(cpf, chat_id):
     session = Session()
 
-    visitor = Visitor()
-
-    visitor.cpf = cpf
-    visitor.chat_id = chat_id
+    visitor = Visitor(
+            cpf=cpf,
+            chat_id=chat_id
+            )
 
     session.add(visitor)
-    session.commit()
+
+    try:
+        session.commit()
+    except:
+        print("[ERROR]: Visitor already exists in database")
+
     session.close()
 
 def create_admin(email, chat_id):
     session = Session()
 
-    admin = Admin()
-
-    admin.email = email
-    admin.chat_id = chat_id
+    admin = Admin(
+            email=email,
+            chat_id=chat_id
+            )
 
     session.add(admin)
-    session.commit()
+
+    try:
+        session.commit()
+    except:
+        print("[ERROR]: Admin already exists in database")
+
     session.close()
 
 def delete_resident(cpf):
@@ -45,18 +60,26 @@ def delete_resident(cpf):
     resident = session.query(Resident).\
             filter_by(cpf=cpf).first()
 
-    session.delete(resident)
-    session.commit()
+    try:
+        session.delete(resident)
+        session.commit()
+    except:
+        print("[ERROR]: Resident not found in database")
+
     session.close()
-    
+
 def delete_visitor(cpf):
     session = Session()
 
     visitor = session.query(Visitor).\
             filter_by(cpf=cpf).first()
 
-    session.delete(visitor)
-    session.commit()
+    try:
+        session.delete(visitor)
+        session.commit()
+    except:
+        print("[ERROR]: Visitor not found in database")
+
     session.close()
 
 def delete_admin(email):
@@ -65,8 +88,12 @@ def delete_admin(email):
     admin = session.query(Admin).\
             filter_by(email=email).first()
 
-    session.delete(admin)
-    session.commit()
+    try:
+        session.delete(admin)
+        session.commit()
+    except:
+        print("[ERROR]: Admin not found in database")
+
     session.close()
 
 def update_resident(cpf, **kwargs):
@@ -84,13 +111,13 @@ def update_resident(cpf, **kwargs):
 
         if new_cpf:
             resident.cpf = new_cpf
-    
+
         if apartment:
             resident.apartment = apartment
-    
+
         if block:
             resident.block = block
-    
+
         if chat_id:
             resident.chat_id = chat_id
 
@@ -110,7 +137,7 @@ def update_visitor(cpf, **kwargs):
 
         if new_cpf:
             visitor.cpf = new_cpf
-    
+
         if chat_id:
             visitor.chat_id = chat_id
 
@@ -125,12 +152,12 @@ def update_admin(email, **kwargs):
 
     admin = session.query(Admin).\
             filter_by(email=email).first()
-    
+
     if admin:
 
         if new_email:
             admin.email = new_email
-    
+
         if chat_id:
             admin.chat_id = chat_id
 
@@ -150,6 +177,16 @@ def get_resident_chat_id(cpf):
         return resident.chat_id
     else:
         return None
+
+def get_residents_chat_ids(block, apartment):
+    session = Session()
+
+    residents_chat_ids = [resident.chat_id for resident in session.query(Resident).\
+            filter_by(block=block, apartment=apartment).all()]
+
+    session.close()
+
+    return residents_chat_ids
 
 def get_visitor_chat_id(cpf):
     session = Session()
@@ -182,8 +219,8 @@ def get_admin_chat_id(email):
 def get_all_admins_chat_ids():
     session = Session()
 
-    vector = [admin.chat_id for admin in session.query(Admin)]
+    admins_chat_ids = [admin.chat_id for admin in session.query(Admin)]
 
     session.close()
 
-    return vector
+    return admins_chat_ids
