@@ -5,7 +5,7 @@ from settings import PATH, LOG_NAME
 from telegram.ext import ConversationHandler
 from telegram import KeyboardButton, ReplyKeyboardMarkup
 from validator import ValidateForm
-import datetime
+from helpers import format_datetime
 import json
 import logging
 import numpy
@@ -87,13 +87,9 @@ class Auth:
         resident = response['data']['resident']
         apartment = resident['apartment']
         block = apartment['block']
-
-        update.message.reply_text(apartment)
-        update.message.reply_text(block)
         
         chat[chat_id]['block'] = block['number']
         chat[chat_id]['apartment'] = apartment['number']
-        
 
         response = HandleEntryVisitor.get_entries_pending(chat, chat_id)
 
@@ -108,11 +104,13 @@ class Auth:
 
         for entry in entries:
 
-            if entry['pending'] == True:
+            datetime = format_datetime(entry['date'])
+
+            if entry['pending']:
                 update.message.reply_text(
                     "\nNome: "+entry['visitor']['completeName']+
                     "\nCPF: "+entry['visitor']['cpf']+
-                    "\nData: "+entry['date']+
+                    "\nData: "+datetime+
                     "\n\nPara aceitar digite "+str(entry['id'])
                     )
 
