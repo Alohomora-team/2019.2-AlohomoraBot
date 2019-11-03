@@ -6,21 +6,21 @@ from telegram import KeyboardButton, ReplyKeyboardMarkup
 from validator import ValidateForm
 from checks import CheckVisitor, CheckCondo
 
-logger = logging.getLogger(LOG_NAME)
+LOGGER = logging.getLogger(LOG_NAME)
 
-chat = {}
+CHAT = {}
 
 class Visit:
 
     def index(update, context):
-        logger.info("Introducing visitor session")
+        LOGGER.info("Introducing visitor session")
         chat_id = update.message.chat_id
 
         update.message.reply_text('Caso deseje interromper o processo digite /cancelar')
-        logger.info("Checking if visitor has registration")
+        LOGGER.info("Checking if visitor has registration")
 
-        chat[chat_id] = {}
-        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
+        CHAT[chat_id] = {}
+        LOGGER.debug(f"data['{chat_id}']: {CHAT[chat_id]}")
 
         yes_keyboard = KeyboardButton('Sim')
         no_keyboard = KeyboardButton('Não')
@@ -38,13 +38,13 @@ class Visit:
             return VERIFY_REGISTRATION
 
         if response == "Sim":
-            logger.info("Visitor replied that he has registration")
+            LOGGER.info("Visitor replied that he has registration")
             update.message.reply_text('Ok! Nos diga seu CPF:')
             return VISITOR_CPF
 
         else:
             update.message.reply_text('Ok! Então vamos fazer o seu cadastro!')
-            logger.info("Visitor replied that he hasn't registration")
+            LOGGER.info("Visitor replied that he hasn't registration")
             update.message.reply_text('Qual o seu nome completo?')
             return VISITOR_REGISTER_NAME
 
@@ -57,14 +57,14 @@ class Visit:
 
         cpf = ValidateForm.cpf(cpf, update)
 
-        chat[chat_id]['cpf'] = cpf
-        logger.debug(f"'cpf': '{chat[chat_id]['cpf']}'")
+        CHAT[chat_id]['cpf'] = cpf
+        LOGGER.debug(f"'cpf': '{CHAT[chat_id]['cpf']}'")
 
-        check = CheckVisitor.cpf(chat, chat_id)
+        check = CheckVisitor.cpf(CHAT, chat_id)
 
         #if visitor have registration into database
         if 'errors' not in check.keys():
-            logger.error("Visit have register")
+            LOGGER.error("Visit have register")
             completeName = check['data']['visitor']['completeName']
             update.message.reply_text(
                 "Ok %s, agora nos diga a qual bloco deseja ir:" % completeName
@@ -83,20 +83,20 @@ class Visit:
         if not ValidateForm.block(block, update):
             return VISITOR_BLOCK
 
-        chat[chat_id]['block'] = block
-        logger.debug(f"'block': '{chat[chat_id]['block']}'")
+        CHAT[chat_id]['block'] = block
+        LOGGER.debug(f"'block': '{CHAT[chat_id]['block']}'")
 
-        check = CheckCondo.block(chat, chat_id)
+        check = CheckCondo.block(CHAT, chat_id)
 
         if 'errors' in check.keys():
-            logger.error("Block not found - asking again")
+            LOGGER.error("Block not found - asking again")
             update.message.reply_text('Por favor, digite um bloco existente:')
             return VISITOR_BLOCK
 
-        logger.debug("Existing block - proceed")
+        LOGGER.debug("Existing block - proceed")
 
         update.message.reply_text('Apartamento:')
-        logger.info("Asking for apartment number")
+        LOGGER.info("Asking for apartment number")
 
         return VISITOR_APARTMENT
 
@@ -108,37 +108,37 @@ class Visit:
         if not ValidateForm.apartment(apartment, update):
             return VISITOR_APARTMENT
 
-        chat[chat_id]['apartment'] = apartment
-        logger.debug(f"'apartment': '{chat[chat_id]['apartment']}'")
+        CHAT[chat_id]['apartment'] = apartment
+        LOGGER.debug(f"'apartment': '{CHAT[chat_id]['apartment']}'")
 
-        check = CheckCondo.apartment(chat, chat_id)
+        check = CheckCondo.apartment(CHAT, chat_id)
 
         if 'errors' in check.keys():
-            logger.error("Apartment not found - asking again")
+            LOGGER.error("Apartment not found - asking again")
             update.message.reply_text('Por favor, digite um apartamento existente:')
             return VISITOR_APARTMENT
 
-        logger.debug("Existing apartment - proceed")
+        LOGGER.debug("Existing apartment - proceed")
 
         response = Visit.create_entry(chat_id)
 
         if(response.status_code == 200 and 'errors' not in response.json().keys()):
-            logger.info("Entry visitor registered in database")
+            LOGGER.info("Entry visitor registered in database")
             update.message.reply_text(
                 'Sua solicitação de entrada foi criada. Aguarde resposta do morador!'
             )
         else:
-            logger.error("Entry visitor registration failed")
+            LOGGER.error("Entry visitor registration failed")
             update.message.reply_text('Falha no sistema!')
 
-        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
+        LOGGER.debug(f"data['{chat_id}']: {CHAT[chat_id]}")
 
-        chat[chat_id] = {}
+        CHAT[chat_id] = {}
 
         return ConversationHandler.END
 
     def create_entry(chat_id):
-        logger.debug("Creating new visitor entry")
+        LOGGER.debug("Creating new visitor entry")
 
         query = """
         mutation createEntryVisitor(
@@ -159,25 +159,25 @@ class Visit:
         """
 
         variables = {
-                'visitorCpf': chat[chat_id]['cpf'],
-                'blockNumber': chat[chat_id]['block'],
-                'apartmentNumber': chat[chat_id]['apartment'],
+                'visitorCpf': CHAT[chat_id]['cpf'],
+                'blockNumber': CHAT[chat_id]['block'],
+                'apartmentNumber': CHAT[chat_id]['apartment'],
                 'pending': True,
                 }
 
         response = requests.post(PATH, json={'query':query, 'variables':variables})
 
-        logger.debug(f"Response: {response.json()}")
+        LOGGER.debug(f"Response: {response.json()}")
 
         return response
 
     def end(update, context):
-        logger.info("Canceling visit")
+        LOGGER.info("Canceling visit")
         chat_id = update.message.chat_id
 
         update.message.reply_text('Visita cancelada!')
 
-        chat[chat_id] = {}
-        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
+        CHAT[chat_id] = {}
+        LOGGER.debug(f"data['{chat_id}']: {CHAT[chat_id]}")
 
         return ConversationHandler.END

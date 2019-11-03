@@ -2,13 +2,13 @@ import logging
 import requests
 from settings import PATH, LOG_NAME
 
-logger = logging.getLogger(LOG_NAME)
+LOGGER = logging.getLogger(LOG_NAME)
 
 class CheckCondo:
 
     @staticmethod
     def block(chat, chat_id):
-        logger.debug("Checking if the informed block exists in database")
+        LOGGER.debug("Checking if the informed block exists in database")
         query = """
         query block($number: String!){
             block(number: $number){
@@ -22,13 +22,13 @@ class CheckCondo:
         }
 
         response = requests.post(PATH, json={'query': query, 'variables':variables})
-        logger.debug(f"Response: {response.json()}")
+        LOGGER.debug(f"Response: {response.json()}")
 
         return response.json()
 
     @staticmethod
     def apartment(chat, chat_id):
-        logger.debug("Checking if the informed apartment exists in database")
+        LOGGER.debug("Checking if the informed apartment exists in database")
         query = """
         query apartment($number: String!, $block: String!){
             apartment(number: $number, block: $block){
@@ -46,7 +46,7 @@ class CheckCondo:
         }
 
         response = requests.post(PATH, json={'query': query, 'variables':variables})
-        logger.debug(f"Response: {response.json()}")
+        LOGGER.debug(f"Response: {response.json()}")
 
         return response.json()
 
@@ -54,7 +54,7 @@ class CheckResident:
 
     @staticmethod
     def email(chat, chat_id):
-        logger.debug("Checking if the informed email exists in database")
+        LOGGER.debug("Checking if the informed email exists in database")
         query = """
         query resident($email: String!){
             resident(email: $email){
@@ -68,13 +68,13 @@ class CheckResident:
         }
 
         response = requests.post(PATH, json={'query': query, 'variables':variables})
-        logger.debug(f"Response: {response.json()}")
+        LOGGER.debug(f"Response: {response.json()}")
 
         return response.json()
 
     @staticmethod
     def cpf(chat, chat_id):
-        logger.debug("Checking if the informed CPF exists in database")
+        LOGGER.debug("Checking if the informed CPF exists in database")
         query = """
         query resident($cpf: String!){
             resident(cpf: $cpf){
@@ -89,15 +89,15 @@ class CheckResident:
                 }
 
         response = requests.post(PATH, json={'query': query, 'variables':variables})
-        logger.debug(f"Response: {response.json()}")
+        LOGGER.debug(f"Response: {response.json()}")
 
         return response.json()
 
 
-class CheckVisitor: 
+class CheckVisitor:
 
     def cpf(chat, chat_id):
-        logger.debug("Checking if the informed CPF of visitor exists in database")
+        LOGGER.debug("Checking if the informed CPF of visitor exists in database")
         query = """
         query visitor($cpf: String!){
             visitor(cpf: $cpf){
@@ -111,6 +111,6 @@ class CheckVisitor:
         }
 
         response = requests.post(PATH, json={'query': query, 'variables':variables})
-        logger.debug(f"Response: {response.json()}")
+        LOGGER.debug(f"Response: {response.json()}")
 
         return response.json()

@@ -85,7 +85,7 @@ class Auth:
             LOGGER.info("resident has been authenticated")
             update.message.reply_text('Autenticado(a) com sucesso!')
 
-            response = HandleEntryVisitor.get_resident_apartment(chat, chat_id)
+            response = HandleEntryVisitor.get_resident_apartment(CHAT, chat_id)
 
             resident = response['data']['resident']
             apartment = resident['apartment']
@@ -97,7 +97,7 @@ class Auth:
             CHAT[chat_id]['block'] = block['number']
             CHAT[chat_id]['apartment'] = apartment['number']
 
-            HandleEntryVisitor.get_entries_pending(chat, chat_id)
+            HandleEntryVisitor.get_entries_pending(CHAT, chat_id)
 
         else:
             LOGGER.error("Authentication failed")
@@ -148,7 +148,7 @@ class HandleEntryVisitor:
     def index(update, context):
         return
 
-    def get_resident_apartment(chat, chat_id):
+    def get_resident_apartment(chat_id):
         LOGGER.debug("Getting resident block and apartment")
         query = """
         query resident($cpf: String!){
@@ -173,7 +173,7 @@ class HandleEntryVisitor:
 
         return response.json()
 
-    def get_entries_pending(chat, chat_id):
+    def get_entries_pending(chat_id):
         LOGGER.debug("Sending query to get entries pending of visitors")
         query = """
         query entriesVisitorsPending($blockNumber: String!, $apartmentNumber: String!){

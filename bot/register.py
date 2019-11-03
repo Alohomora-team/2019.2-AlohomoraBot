@@ -87,7 +87,7 @@ class Register:
         CHAT[chat_id]['email'] = email
         LOGGER.debug(f"'email': '{CHAT[chat_id]['email']}'")
 
-        check = CheckResident.email(chat, chat_id)
+        check = CheckResident.emai chat_id)
 
         if 'errors' not in check.keys():
             LOGGER.error("Email already exists in database - asking again")
@@ -114,7 +114,7 @@ class Register:
         CHAT[chat_id]['cpf'] = cpf
         LOGGER.debug(f"'cpf': '{CHAT[chat_id]['cpf']}'")
 
-        check = CheckResident.cpf(chat, chat_id)
+        check = CheckResident.cp chat_id)
 
         if 'errors' not in check.keys():
             LOGGER.error("CPF already exists in database - asking again")
@@ -140,7 +140,7 @@ class Register:
         CHAT[chat_id]['block'] = block
         LOGGER.debug(f"'block': '{CHAT[chat_id]['block']}'")
 
-        check = CheckCondo.block(chat, chat_id)
+        check = CheckCondo.bloc chat_id)
 
         if 'errors' in check.keys():
             LOGGER.error("Block not found - asking again")
@@ -165,7 +165,7 @@ class Register:
         CHAT[chat_id]['apartment'] = apartment
         LOGGER.debug(f"'apartment': '{CHAT[chat_id]['apartment']}'")
 
-        check = CheckCondo.apartment(chat, chat_id)
+        check = CheckCondo.apartmen chat_id)
 
         if 'errors' in check.keys():
             LOGGER.error("Apartment not found - asking again")

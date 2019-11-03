@@ -12,18 +12,17 @@ logging.getLogger("JobQueue").setLevel(API_LOG_LEVEL)
 
 # Logger
 logging.basicConfig(format=FORMAT, datefmt=DATEFMT)
-logger = logging.getLogger(LOG_NAME)
-logger.setLevel(LOG_LEVEL)
+LOGGER = logging.getLogger(LOG_NAME)
+LOGGER.setLevel(LOG_LEVEL)
 
 # FileHandler
-file_handler = logging.FileHandler(FILE_NAME)
-file_handler.setLevel(LOG_LEVEL)
-f_format = logging.Formatter(FORMAT, datefmt=DATEFMT)
-file_handler.setFormatter(f_format)
-logger.addHandler(file_handler)
+FILE_HANDLER = logging.FileHandler(FILE_NAME)
+FILE_HANDLER.setLevel(LOG_LEVEL)
+FILE_HANDLER.setFormatter(logging.Formatter(FORMAT, datefmt=DATEFMT))
+LOGGER.addHandler(FILE_HANDLER)
 
 def start(update, context):
-    logger.info("Introducing the bot")
+    LOGGER.info("Introducing the bot")
     update.message.reply_text('Olá, bem vindo(a) ao bot do Alohomora!')
     update.message.reply_text(
         'Caso deseje fazer uma solicitação de visita a algum morador, digite /visitar'
@@ -34,19 +33,16 @@ def start(update, context):
 
 
 if __name__ == '__main__':
+    UPDATER = Updater(TOKEN, use_context=True)
 
-    token = TOKEN
+    LOGGER.info("Starting Bot")
 
-    updater = Updater(token, use_context=True)
+    DP = UPDATER.dispatcher
 
-    logger.info("Starting Bot")
-
-    dp = updater.dispatcher
-
-    dp.add_handler(CommandHandler("start", start))
+    DP.add_handler(CommandHandler("start", start))
 
     # Registration
-    dp.add_handler(ConversationHandler(
+    DP.add_handler(ConversationHandler(
         entry_points=[CommandHandler('cadastrar', Register.index, pass_args=True)],
 
         states={
@@ -70,7 +66,7 @@ if __name__ == '__main__':
         ))
 
     # Handle visitor (register resident and register entry)
-    dp.add_handler(ConversationHandler(
+    DP.add_handler(ConversationHandler(
         entry_points=[CommandHandler('visitar', Visit.index, pass_args=True)],
 
         states={
@@ -87,7 +83,7 @@ if __name__ == '__main__':
         ))
 
     # Resident control
-    dp.add_handler(ConversationHandler(
+    DP.add_handler(ConversationHandler(
         entry_points=[CommandHandler('autorizar', Auth.index)],
 
         states={
@@ -100,7 +96,7 @@ if __name__ == '__main__':
         ))
 
     # Feedback
-    dp.add_handler(ConversationHandler(
+    DP.add_handler(ConversationHandler(
         entry_points=[CommandHandler('feedback', Feedback.index)],
 
         states={
@@ -111,6 +107,6 @@ if __name__ == '__main__':
         ))
 
 
-    updater.start_polling()
+    UPDATER.start_polling()
 
-    updater.idle()
+    UPDATER.idle()
