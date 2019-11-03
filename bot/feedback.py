@@ -3,9 +3,8 @@ import requests
 from settings import *
 from telegram.ext import ConversationHandler
 
-logger = logging.getLogger(LOG_NAME)
-
-chat = {}
+LOGGER = logging.getLogger(LOG_NAME)
+CHAT = {}
 
 class Feedback:
 
@@ -13,13 +12,13 @@ class Feedback:
     def index(update, context):
         chat_id = update.message.chat_id
 
-        logger.info("Introducing feedback session")
+        LOGGER.info("Introducing feedback session")
         update.message.reply_text(
             "Ok. Digite a mensagem que deseja enviar como feedback para o nosso sistema:"
         )
 
-        chat[chat_id] = {}
-        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
+        CHAT[chat_id] = {}
+        LOGGER.debug(f"data['{chat_id}']: {CHAT[chat_id]}")
 
         return FEEDBACK
 
@@ -28,10 +27,10 @@ class Feedback:
         chat_id = update.message.chat_id
         feedback = update.message.text
 
-        chat[chat_id]['message'] = feedback
-        logger.debug(f"'feedback-message': '{chat[chat_id]['message']}'")
+        CHAT[chat_id]['message'] = feedback
+        LOGGER.debug(f"'feedback-message': '{CHAT[chat_id]['message']}'")
 
-        logger.info("Sending feedback to database")
+        LOGGER.info("Sending feedback to database")
         query = """
         mutation createFeedback(
             $message: String!
@@ -45,21 +44,21 @@ class Feedback:
         """
 
         variables = {
-            'message': chat[chat_id]['message'],
+            'message': CHAT[chat_id]['message'],
         }
 
         response = requests.post(PATH, json={'query':query, 'variables':variables})
-        logger.debug(f"Response: {response.json()}")
+        LOGGER.debug(f"Response: {response.json()}")
 
         if(response.status_code == 200 and 'errors' not in response.json().keys()):
             update.message.reply_text('Seu feedback foi salvo no sistema, obrigado!')
-            logger.info("Feedback saved!")
+            LOGGER.info("Feedback saved!")
         else:
             update.message.reply_text('Falha ao salvar no sistema!')
-            logger.error("Fail to save feedback")
+            LOGGER.error("Fail to save feedback")
 
-        chat[chat_id] = {}
-        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
+        CHAT[chat_id] = {}
+        LOGGER.debug(f"data['{chat_id}']: {CHAT[chat_id]}")
 
         return ConversationHandler.END
 
@@ -68,9 +67,9 @@ class Feedback:
         chat_id = update.message.chat_id
 
         update.message.reply_text('Feedback cancelado!')
-        logger.info("Canceling feedback")
+        LOGGER.info("Canceling feedback")
 
-        chat[chat_id] = {}
-        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
+        CHAT[chat_id] = {}
+        LOGGER.debug(f"data['{chat_id}']: {CHAT[chat_id]}")
 
         return ConversationHandler.END

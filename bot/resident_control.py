@@ -11,9 +11,9 @@ from settings import PATH, LOG_NAME
 from telegram.ext import ConversationHandler
 from validator import ValidateForm
 
-logger = logging.getLogger(LOG_NAME)
+LOGGER = logging.getLogger(LOG_NAME)
 
-chat = {}
+CHAT = {}
 
 class Auth:
 
@@ -21,15 +21,15 @@ class Auth:
     def index(update, context):
         chat_id = update.message.chat_id
 
-        logger.info("Introducing authentication session")
+        LOGGER.info("Introducing authentication session")
         update.message.reply_text("Ok. Mas antes, você precisa se autenticar!")
         update.message.reply_text("Caso deseje interromper o processo digite /cancelar")
         update.message.reply_text("Por favor, informe seu CPF:")
 
-        logger.info("Asking for CPF")
+        LOGGER.info("Asking for CPF")
 
-        chat[chat_id] = {}
-        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
+        CHAT[chat_id] = {}
+        LOGGER.debug(f"data['{chat_id}']: {CHAT[chat_id]}")
 
         return CPF_AUTH
 
@@ -43,11 +43,11 @@ class Auth:
 
         cpf = ValidateForm.cpf(cpf, update)
 
-        chat[chat_id]['cpf'] = cpf
-        logger.debug(f"'auth-cpf': '{chat[chat_id]['cpf']}'")
+        CHAT[chat_id]['cpf'] = cpf
+        LOGGER.debug(f"'auth-cpf': '{CHAT[chat_id]['cpf']}'")
 
         update.message.reply_text('Grave um áudio de no mínimo 1 segundo dizendo "Juro que sou eu"')
-        logger.info("Requesting voice audio")
+        LOGGER.info("Requesting voice audio")
 
         return VOICE_AUTH
 
@@ -72,9 +72,9 @@ class Auth:
         mfcc_data = mfcc_data.tolist()
         mfcc_data = json.dumps(mfcc_data)
 
-        chat[chat_id]['voice_mfcc'] = mfcc_data
-        logger.debug(
-            f"'auth-voice-mfcc':'{chat[chat_id]['voice_mfcc'][:1]}...{chat[chat_id]['voice_mfcc'][-1:]}'"
+        CHAT[chat_id]['voice_mfcc'] = mfcc_data
+        LOGGER.debug(
+    f"'auth-voice-mfcc':'{CHAT[chat_id]['voice_mfcc'][:1]}...{CHAT[chat_id]['voice_mfcc'][-1:]}'"
         )
 
         response = Auth.authenticate(chat_id)
@@ -82,7 +82,7 @@ class Auth:
         valid = response['data']['voiceBelongsResident']
 
         if valid:
-            logger.info("resident has been authenticated")
+            LOGGER.info("resident has been authenticated")
             update.message.reply_text('Autenticado(a) com sucesso!')
 
             response = HandleEntryVisitor.get_resident_apartment(chat, chat_id)
@@ -94,18 +94,18 @@ class Auth:
             update.message.reply_text(apartment)
             update.message.reply_text(block)
 
-            chat[chat_id]['block'] = block['number']
-            chat[chat_id]['apartment'] = apartment['number']
+            CHAT[chat_id]['block'] = block['number']
+            CHAT[chat_id]['apartment'] = apartment['number']
 
             HandleEntryVisitor.get_entries_pending(chat, chat_id)
 
         else:
-            logger.error("Authentication failed")
+            LOGGER.error("Authentication failed")
             update.message.reply_text('Falha na autenticação!')
 
 
-        chat[chat_id] = {}
-        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
+        CHAT[chat_id] = {}
+        LOGGER.debug(f"data['{chat_id}']: {CHAT[chat_id]}")
 
         return ConversationHandler.END
 
@@ -113,16 +113,16 @@ class Auth:
     def end(update, context):
         chat_id = update.message.chat_id
         update.message.reply_text('Autenticação cancelada!')
-        logger.info("Canceling authentication")
+        LOGGER.info("Canceling authentication")
 
-        chat[chat_id] = {}
-        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
+        CHAT[chat_id] = {}
+        LOGGER.debug(f"data['{chat_id}']: {CHAT[chat_id]}")
 
         return ConversationHandler.END
 
     @staticmethod
     def authenticate(chat_id):
-        logger.info("Authenticating resident")
+        LOGGER.info("Authenticating resident")
         query = """
             query voiceBelongsResident(
                 $cpf: String!,
@@ -133,23 +133,23 @@ class Auth:
         """
 
         variables = {
-            'cpf': chat[chat_id]['cpf'],
-            'mfccData': chat[chat_id]['voice_mfcc']
+            'cpf': CHAT[chat_id]['cpf'],
+            'mfccData': CHAT[chat_id]['voice_mfcc']
         }
 
         response = requests.post(PATH, json={'query':query, 'variables':variables})
 
-        logger.debug(f"Response: {response.json()}")
+        LOGGER.debug(f"Response: {response.json()}")
 
         return response.json()
 
-class HandleEntryVisitor: 
+class HandleEntryVisitor:
 
     def index(update, context):
         return
 
     def get_resident_apartment(chat, chat_id):
-        logger.debug("Getting resident block and apartment")
+        LOGGER.debug("Getting resident block and apartment")
         query = """
         query resident($cpf: String!){
             resident(cpf: $cpf){
@@ -165,16 +165,16 @@ class HandleEntryVisitor:
         """
 
         variables = {
-            'cpf': chat[chat_id]['cpf']
+            'cpf': CHAT[chat_id]['cpf']
             }
 
         response = requests.post(PATH, json={'query': query, 'variables':variables})
-        logger.debug(f"Response: {response.json()}")
+        LOGGER.debug(f"Response: {response.json()}")
 
         return response.json()
 
     def get_entries_pending(chat, chat_id):
-        logger.debug("Sending query to get entries pending of visitors")
+        LOGGER.debug("Sending query to get entries pending of visitors")
         query = """
         query entriesVisitorsPending($blockNumber: String!, $apartmentNumber: String!){
             entriesVisitorsPending(blockNumber: $blockNumber, apartmentNumber: $apartmentNumber){
@@ -188,11 +188,11 @@ class HandleEntryVisitor:
         """
 
         variables = {
-            'blockNumber': chat[chat_id]['block'],
-            'apartmentNumber': chat[chat_id]['apartment']
+            'blockNumber': CHAT[chat_id]['block'],
+            'apartmentNumber': CHAT[chat_id]['apartment']
             }
 
         response = requests.post(PATH, json={'query': query, 'variables':variables})
-        logger.debug(f"Response: {response.json()}")
+        LOGGER.debug(f"Response: {response.json()}")
 
         return response.json()

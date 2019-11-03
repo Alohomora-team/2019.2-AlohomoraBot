@@ -25,7 +25,9 @@ logger.addHandler(file_handler)
 def start(update, context):
     logger.info("Introducing the bot")
     update.message.reply_text('Olá, bem vindo(a) ao bot do Alohomora!')
-    update.message.reply_text('Caso deseje fazer uma solicitação de visita a algum morador, digite /visitar')
+    update.message.reply_text(
+        'Caso deseje fazer uma solicitação de visita a algum morador, digite /visitar'
+    )
     update.message.reply_text('Digite /cadastrar para fazer o cadastro de um morador')
     update.message.reply_text('Digite /autorizar para autorizar entrada de algum visitante')
     update.message.reply_text('Para dar um feedback pro nosso serviço, digite /feedback')
