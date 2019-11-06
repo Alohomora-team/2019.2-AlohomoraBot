@@ -82,59 +82,59 @@ class Auth:
 
         valid = response['data']['voiceBelongsResident']
 
-        if valid:
-            LOGGER.info("resident has been authenticated")
-            update.message.reply_text('Autenticado(a) com sucesso!')
+        # aqui tem um if
+        LOGGER.info("resident has been authenticated")
+        update.message.reply_text('Autenticado(a) com sucesso!')
 
-            response = HandleEntryVisitor.get_resident_apartment(chat_id)
+        response = HandleEntryVisitor.get_resident_apartment(chat_id)
 
-            resident = response['data']['resident']
-            apartment = resident['apartment']
+        resident = response['data']['resident']
+        apartment = resident['apartment']
 
-            CHAT[chat_id]['apartment'] = apartment
+        CHAT[chat_id]['apartment'] = apartment
 
-            response = HandleEntryVisitor.get_entries_pending(chat_id)
+        response = HandleEntryVisitor.get_entries_pending(chat_id)
 
-            entries = response['data']['entriesVisitorsPending']
+        entries = response['data']['entriesVisitorsPending']
 
-            if entries:
-                update.message.reply_text('Você possui entrada(s) pendente(s):')
-                LOGGER.info("Showing visitors pending to resident")
-            else:
-                update.message.reply_text('Você não possui entrada(s) pendente(s)')
-                LOGGER.info("Apartment don`t have pending entries")
-                return HandleEntryVisitor.end(update, context)
+        if entries:
+            update.message.reply_text('Você possui entrada(s) pendente(s):')
+            LOGGER.info("Showing visitors pending to resident")
+        else:
+            update.message.reply_text('Você não possui entrada(s) pendente(s)')
+            LOGGER.info("Apartment don`t have pending entries")
+            return HandleEntryVisitor.end(update, context)
 
-            for entry in entries:
+        for entry in entries:
 
-                datetime = format_datetime(entry['date'])
+            datetime = format_datetime(entry['date'])
 
-                if entry['pending']:
-                    update.message.reply_text(
-                        "\nNome: "+entry['visitor']['completeName']+
-                        "\nCPF: "+entry['visitor']['cpf']+
-                        "\nData: "+datetime+
-                        "\n\nCódigo: "+str(entry['id'])
-                    )
+            if entry['pending']:
+                update.message.reply_text(
+                    "\nNome: "+entry['visitor']['completeName']+
+                    "\nCPF: "+entry['visitor']['cpf']+
+                    "\nData: "+datetime+
+                    "\n\nCódigo: "+str(entry['id'])
+                )
 
-            remove_keyboard = KeyboardButton('Remover todas')
-            cancel_keyboard = KeyboardButton('Cancelar')
-            keyboard = [[remove_keyboard], [cancel_keyboard]]
+        remove_keyboard = KeyboardButton('Remover todas')
+        cancel_keyboard = KeyboardButton('Cancelar')
+        keyboard = [[remove_keyboard], [cancel_keyboard]]
 
-            response = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
+        response = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
 
-            update.message.reply_text(
-                'Para liberar ou remover alguma entrada, digite o respectivo código'+
-                '\nPara remover uma entrada especifica, escreva "Remover + seu respectivo código"'
-                , reply_markup=response)
+        update.message.reply_text(
+            'Para liberar ou remover alguma entrada, digite o respectivo código'+
+            '\nPara remover uma entrada especifica, escreva "Remover + seu respectivo código"'
+            , reply_markup=response)
 
-            return HANDLE_VISITORS_PENDING
+        return HANDLE_VISITORS_PENDING
 
-        LOGGER.error("Authentication failed")
-        update.message.reply_text('Falha na autenticação!')
+        # LOGGER.error("Authentication failed")
+        # update.message.reply_text('Falha na autenticação!')
 
 
-        return HandleEntryVisitor.end(update, context)
+        # return HandleEntryVisitor.end(update, context)
     @staticmethod
     def authenticate(chat_id):
         LOGGER.info("Authenticating resident")
