@@ -86,10 +86,8 @@ class Auth:
 
             resident = response['data']['resident']
             apartment = resident['apartment']
-            block = apartment['block']
             
-            chat[chat_id]['block'] = block['number']
-            chat[chat_id]['apartment'] = apartment['number']
+            chat[chat_id]['apartment'] = apartment
 
             response = HandleEntryVisitor.get_entries_pending(chat, chat_id)
 
@@ -101,6 +99,7 @@ class Auth:
             else:
                 update.message.reply_text('Você não possui entrada(s) pendente(s)')
                 logger.info("Apartment don`t have pending entries")
+                return HandleEntryVisitor.end(update, context)
 
             for entry in entries:
 
@@ -111,16 +110,16 @@ class Auth:
                         "\nNome: "+entry['visitor']['completeName']+
                         "\nCPF: "+entry['visitor']['cpf']+
                         "\nData: "+datetime+
-                        "\n\nPara aceitar digite "+str(entry['id'])
+                        "\n\nCódigo: "+str(entry['id'])
                         )
 
-            remove_keyboard = KeyboardButton('Remover')
+            remove_keyboard = KeyboardButton('Remover todas')
             cancel_keyboard = KeyboardButton('Cancelar')
             keyboard = [[remove_keyboard],[cancel_keyboard]]
             response = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
 
-            update.message.reply_text('Para remover as entradas pendentes, precione o botão "Remover"')
-            update.message.reply_text('Para sair da interação, precione o botão "Cancelar"', reply_markup=response)
+            update.message.reply_text('Para liberar ou remover alguma entrada, digite o respectivo código'+
+            '\nPara remover uma entrada especifica, escreva "Remover + seu respectivo código"', reply_markup=response)
 
             return HANDLE_VISITORS_PENDING
 
@@ -128,7 +127,7 @@ class Auth:
         update.message.reply_text('Falha na autenticação!')
 
 
-        return ConversationHandler.END
+        return HandleEntryVisitor.end(update, context)
 
     def authenticate(chat_id):
         logger.info("Authenticating resident")
@@ -142,8 +141,8 @@ class Auth:
         """
 
         variables = {
-                'cpf': chat[chat_id]['cpf'],
-                'mfccData': chat[chat_id]['voice_mfcc']
+            'cpf': chat[chat_id]['cpf'],
+            'mfccData': chat[chat_id]['voice_mfcc']
         }
 
         response = requests.post(PATH, json={'query':query, 'variables':variables})
@@ -159,19 +158,53 @@ class HandleEntryVisitor:
         chat_id = update.message.chat_id
         reply = update.message.text
         
-        if reply == 'Remover': 
-            logger.info('resident request remove all visitor entries pending')
-            
-            response = HandleEntryVisitor.delete_entries_pending()
+        if 'Remover' in reply: 
 
-            status = response['data']['deleteEntryVisitorPending']
+            if reply == 'Remover todas':
+                logger.info('resident request remove all visitors entries pending')
 
-            if status['deleted']:
-                logger.info('all visitor entries pending is removed.')
+                response = HandleEntryVisitor.delete_entries_pending(chat, chat_id)
 
-                update.message.reply_text('Todos as entradas pendentes foram removidas.')
+                status = response['data']['deleteEntriesVisitorsPending']
 
-                return ConversationHandler.END
+                if status['deleted']:
+                    logger.info('all visitor entries pending is removed.')
+
+                    update.message.reply_text('Todos as entradas pendentes foram removidas.')
+
+                else: 
+                    logger.info('error in delete visitors entries')
+
+                    update.message.reply_text('Erro ao deletar entradas pendentes.')
+
+            else:
+                logger.info('resident request remove a specific visitor entry pending')
+
+                #find entry_id in reply
+                remove_entry_by_id = [int(number) for number in reply.split() if number.isdigit()]
+                logger.debug(remove_entry_by_id[0])
+
+                chat[chat_id]['remove_entry_by_id'] = remove_entry_by_id[0]
+
+                response = HandleEntryVisitor.delete_entry_pending(chat, chat_id)
+
+                status = response['data']['deleteEntryVisitorPending']
+
+                if status['deleted']:
+                    logger.info('A single visitor entry pending is removed.')
+
+                    update.message.reply_text('A entrada pendente foi removida.')
+                    update.message.reply_text('Para liberar ou remover alguma entrada, digite o respectivo código')
+                    update.message.reply_text('Para remover uma entrada especifica, escreva "Remover + numero da entrada"')
+
+                    return HANDLE_VISITORS_PENDING
+
+                else: 
+                    logger.info('error in delete visitor entry')
+                    update.message.reply_text('Erro ao deletar entrada pendente.')
+
+
+            return ConversationHandler.END
 
         
         elif reply == 'Cancelar':
@@ -192,17 +225,13 @@ class HandleEntryVisitor:
             logger.info('entry visitor updated successfully')
 
             update.message.reply_text('A entrada foi aceita')
-            update.message.reply_text('Para liberar mais alguma entrada, digite o respectivo código')
-            update.message.reply_text('Para remover todas as entradas pendentes restantes, precione o botão "Remover"')
-            update.message.reply_text('Para cancelar a interação, precione o botão "Cancelar"')
-
-            return HANDLE_VISITORS_PENDING
+            update.message.reply_text('Para liberar ou remover alguma entrada, digite o respectivo código')
+            update.message.reply_text('Para remover uma entrada especifica, escreva "Remover + numero da entrada"')
     
         logger.info('entry visitor updated error')
         update.message.reply_text('Ocorreu um erro ao aceitar a entrada.')
-        update.message.reply_text('Interação cancelada.')
 
-        return ConversationHandler.END
+        return HANDLE_VISITORS_PENDING
 
 
 
@@ -213,10 +242,8 @@ class HandleEntryVisitor:
             resident(cpf: $cpf){
                 completeName
                 apartment {
+                    id
                     number
-                    block {
-                        number
-                    }
                 }
             }
         }
@@ -234,8 +261,10 @@ class HandleEntryVisitor:
     def get_entries_pending(chat, chat_id):
         logger.debug("Sending query to get entries pending of visitors")
         query = """
-        query entriesVisitorsPending($blockNumber: String!, $apartmentNumber: String!){
-            entriesVisitorsPending(blockNumber: $blockNumber, apartmentNumber: $apartmentNumber){
+        query entriesVisitorsPending($apartmentId: String!) {
+            entriesVisitorsPending(
+                apartmentId: $apartmentId, 
+            ){
                 id
                 date
                 pending
@@ -249,8 +278,7 @@ class HandleEntryVisitor:
         """
 
         variables = {
-            'blockNumber': chat[chat_id]['block'],
-            'apartmentNumber': chat[chat_id]['apartment']
+            'apartmentId': chat[chat_id]['apartment']['id'],
             }
 
         response = requests.post(PATH, json={'query': query, 'variables':variables})
@@ -284,17 +312,48 @@ class HandleEntryVisitor:
         return response.json()
 
 
-    def delete_entries_pending():
-        logger.debug("Deleting all entries visitors pending")
+    def delete_entries_pending(chat, chat_id):
+        logger.info("Deleting all entries visitors pending")
         query = """
-        mutation {
-            deleteEntryVisitorPending {
+        mutation deleteEntriesVisitorsPending(
+            $apartmentId: String!
+            ){
+            deleteEntriesVisitorsPending (
+                apartmentId: $apartmentId,
+            ) {
                 deleted
             }
         }
         """
 
-        response = requests.post(PATH, json={'query': query})
+        variables = {
+            'apartmentId': chat[chat_id]['apartment']['id'],
+            }
+
+        response = requests.post(PATH, json={'query': query, 'variables': variables})
+        logger.debug(f"Response: {response.json()}")
+
+        return response.json()
+
+    def delete_entry_pending(chat, chat_id):
+        logger.debug("Deleting a specific entry visitor pending")
+        query = """
+        mutation deleteEntryVisitorPending(
+            $entryId: String!
+        ){
+            deleteEntryVisitorPending (
+                entryId: $entryId
+            ){
+                deleted
+            }
+        }
+        """
+
+        variables = {
+            'entryId': chat[chat_id]['remove_entry_by_id'],
+            }
+
+        response = requests.post(PATH, json={'query': query, 'variables': variables})
 
         return response.json()
 
