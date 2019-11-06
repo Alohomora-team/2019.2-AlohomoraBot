@@ -169,12 +169,10 @@ class HandleEntryVisitor:
 
                 if status['deleted']:
                     logger.info('all visitor entries pending is removed.')
-
                     update.message.reply_text('Todos as entradas pendentes foram removidas.')
 
                 else: 
                     logger.info('error in delete visitors entries')
-
                     update.message.reply_text('Erro ao deletar entradas pendentes.')
 
             else:
@@ -210,9 +208,7 @@ class HandleEntryVisitor:
         elif reply == 'Cancelar':
             logger.info('resident end conversation')
 
-            update.message.reply_text('Interação de gerenciamento de entradas cancelado.')
-            
-            return ConversationHandler.END
+            return HandleEntryVisitor.end(update, context)
 
         if not ValidateForm.number(reply, update):
             return HANDLE_VISITORS_PENDING
@@ -225,15 +221,13 @@ class HandleEntryVisitor:
             logger.info('entry visitor updated successfully')
 
             update.message.reply_text('A entrada foi aceita')
-            update.message.reply_text('Para liberar ou remover alguma entrada, digite o respectivo código')
+            update.message.reply_text('Para liberar alguma entrada, digite o respectivo código')
             update.message.reply_text('Para remover uma entrada especifica, escreva "Remover + numero da entrada"')
     
         logger.info('entry visitor updated error')
         update.message.reply_text('Ocorreu um erro ao aceitar a entrada.')
 
         return HANDLE_VISITORS_PENDING
-
-
 
     def get_resident_apartment(chat, chat_id):
         logger.debug("Getting resident block and apartment")
@@ -310,7 +304,6 @@ class HandleEntryVisitor:
         logger.debug(f"Response: {response.json()}")
 
         return response.json()
-
 
     def delete_entries_pending(chat, chat_id):
         logger.info("Deleting all entries visitors pending")
