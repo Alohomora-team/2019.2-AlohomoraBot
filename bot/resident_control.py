@@ -15,10 +15,11 @@ from helpers import format_datetime
 LOGGER = logging.getLogger(LOG_NAME)
 
 CHAT = {}
+
 class Auth:
 
     @staticmethod
-    def index(update):
+    def index(update, context):
         chat_id = update.message.chat_id
 
         LOGGER.info("Introducing authentication session")
@@ -34,7 +35,7 @@ class Auth:
         return CPF_AUTH
 
     @staticmethod
-    def cpf(update):
+    def cpf(update, context):
         chat_id = update.message.chat_id
         cpf = update.message.text
 
@@ -51,7 +52,7 @@ class Auth:
 
         return VOICE_AUTH
     @staticmethod
-    def voice(update):
+    def voice(update, context):
         chat_id = update.message.chat_id
         voice_auth = update.message.voice
 
@@ -102,7 +103,7 @@ class Auth:
             else:
                 update.message.reply_text('Você não possui entrada(s) pendente(s)')
                 LOGGER.info("Apartment don`t have pending entries")
-                return HandleEntryVisitor.end(update)
+                return HandleEntryVisitor.end(update, context)
 
             for entry in entries:
 
@@ -133,7 +134,7 @@ class Auth:
         update.message.reply_text('Falha na autenticação!')
 
 
-        return HandleEntryVisitor.end(update)
+        return HandleEntryVisitor.end(update, context)
     @staticmethod
     def authenticate(chat_id):
         LOGGER.info("Authenticating resident")
@@ -160,7 +161,7 @@ class Auth:
 class HandleEntryVisitor:
 
     @staticmethod
-    def index(update):
+    def index(update, context):
         chat_id = update.message.chat_id
         reply = update.message.text
 
@@ -216,7 +217,7 @@ class HandleEntryVisitor:
         elif reply == 'Cancelar':
             LOGGER.info('resident end conversation')
 
-            return HandleEntryVisitor.end(update)
+            return HandleEntryVisitor.end(update, context)
 
         if not ValidateForm.number(reply, update):
             return HANDLE_VISITORS_PENDING
@@ -372,7 +373,7 @@ class HandleEntryVisitor:
         return response.json()
 
     @staticmethod
-    def end(update):
+    def end(update, context):
         chat_id = update.message.chat_id
         update.message.reply_text('Comando de autorização cancelado!')
         LOGGER.info("Canceling command")
