@@ -235,8 +235,9 @@ class HandleEntryVisitor:
                 'Para remover uma entrada especifica, escreva "Remover + numero da entrada"'
             )
 
-        LOGGER.info('entry visitor updated error')
-        update.message.reply_text('Ocorreu um erro ao aceitar a entrada.')
+        else:
+            LOGGER.info('entry visitor updated error')
+            update.message.reply_text('Ocorreu um erro ao aceitar a entrada.')
 
         return HANDLE_VISITORS_PENDING
 
