@@ -1,7 +1,14 @@
-from settings import CPF_AUTH_ADMIN
+from checks import CheckResident
+from settings import EMAIL_AUTH_ADMIN, PASSWORD_AUTH_ADMIN
 from settings import PATH, LOG_NAME
 from telegram.ext import ConversationHandler
+from validator import ValidateForm
+import json
 import logging
+import numpy
+import os
+import requests
+import subprocess
 
 
 logger = logging.getLogger(LOG_NAME)
@@ -16,19 +23,47 @@ class RegisterAdmin:
 
         update.message.reply_text('Para cadastrar um administrador, você precisa ser um!')
         update.message.reply_text('Preciso confirmar sua identidade.')
-        update.message.reply_text('Por favor, digite seu cpf:')
-        logger.info("Asking for cpf")
+        update.message.reply_text('Por favor, digite seu email:')
+        logger.info("Asking for email")
 
         chat[chat_id] = {}
         logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
 
-        return CPF_AUTH_ADMIN
+        return EMAIL_AUTH_ADMIN
 
-    
+    def email(update, context):
+        chat_id = update.message.chat_id
+        email = update.message.text
 
+        if not ValidateForm.email(email, update):
+            return EMAIL_AUTH_ADMIN
 
+        chat[chat_id]['email'] = email
+        logger.debug(f"'auth-admin-email': '{chat[chat_id]['email']}'")
 
+        check = CheckResident.email(chat, chat_id)
 
+        if 'errors' not in check.keys():
+            logger.error("Email exists in database")
+            update.message.reply_text('Ok, email válido')
+
+            logger.info("Requesting password")
+            update.message.reply_text('Senha:')
+            return PASSWORD_AUTH_ADMIN
+
+        else:
+            update.message.reply_text("Email não encontrado. Por favor, digite novamente")
+            return EMAIL_AUTH_ADMIN
+
+    def password(update, context):
+        chat_id = update.message.chat_id
+        password = update.message.text
+
+        chat[chat_id]['password'] = password
+        logger.debug(f"'auth-admin-password': '{chat[chat_id]['password']}'")
+
+        update.message.reply_text("Email não encontrado. Por favor, digite novamente")
+        return EMAIL_AUTH_ADMIN
 
     def end(update, context):
         logger.info("Canceling admin registration")
