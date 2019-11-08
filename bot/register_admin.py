@@ -1,4 +1,4 @@
-from checks import CheckResident
+from checks import CheckAdmin
 from settings import EMAIL_AUTH_ADMIN, PASSWORD_AUTH_ADMIN
 from settings import PATH, LOG_NAME
 from telegram.ext import ConversationHandler
@@ -41,7 +41,7 @@ class RegisterAdmin:
         chat[chat_id]['email'] = email
         logger.debug(f"'auth-admin-email': '{chat[chat_id]['email']}'")
 
-        check = CheckResident.email(chat, chat_id)
+        check = CheckAdmin.email(chat, chat_id)
 
         if 'errors' not in check.keys():
             logger.error("Email exists in database")
