@@ -62,8 +62,26 @@ class RegisterAdmin:
         chat[chat_id]['password'] = password
         logger.debug(f"'auth-admin-password': '{chat[chat_id]['password']}'")
 
-        update.message.reply_text("Email não encontrado. Por favor, digite novamente")
-        return EMAIL_AUTH_ADMIN
+        response = RegisterAdmin.generate_token(chat_id)
+
+        if(response.status_code == 200 and 'errors' not in response.json().keys()):
+            logger.info("Sucess on generating token")
+            update.message.reply_text('Muito bem! Podemos agora cadastrar um novo administrador')
+        else:
+            logger.error("Failed generating token")
+            update.message.reply_text('Email ou senha incorretos. Não foi possível identificar o administrador.')
+            update.message.reply_text('Deseja inseri-los novamente?')
+
+        token = response.json()['data']['tokenAuth']['token']
+
+        chat[chat_id]['token'] = token
+        logger.debug(f"'auth-admin-token': '{chat[chat_id]['token']}'")
+
+        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
+
+        chat[chat_id] = {}
+
+        return ConversationHandler.END
 
     def end(update, context):
         logger.info("Canceling admin registration")
@@ -75,3 +93,26 @@ class RegisterAdmin:
         logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
 
         return ConversationHandler.END
+
+    def generate_token(chat_id):
+        logger.info("Generating admin token")
+        query = """
+            mutation tokenAuth($email: String!, $password: String!){
+                tokenAuth(email: $email, password: $password){
+                    token
+                }
+            }
+            """
+
+        variables = {
+                'email': chat[chat_id]['email'],
+                'password': chat[chat_id]['password'],
+                }
+        
+        response = requests.post(PATH, json={'query':query, 'variables':variables})
+
+        logger.debug(f"Response: {response.json()}")
+
+        return response
+
+        
