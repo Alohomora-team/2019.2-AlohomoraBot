@@ -19,7 +19,7 @@ CPF_AUTH, VOICE_AUTH = range(2)
 FEEDBACK = range(1)
 
 # Auth admin and new admin constants
-EMAIL_AUTH_ADMIN, PASSWORD_AUTH_ADMIN = range(2)
+EMAIL_AUTH_ADMIN, PASSWORD_AUTH_ADMIN, REPEAT_AUTH_ADMIN = range(3)
 
 # Log format
 FORMAT = '%(asctime)s - %(levelname)s - %(name)s - %(message)s'

@@ -1,6 +1,7 @@
 from checks import CheckAdmin
-from settings import EMAIL_AUTH_ADMIN, PASSWORD_AUTH_ADMIN
+from settings import EMAIL_AUTH_ADMIN, PASSWORD_AUTH_ADMIN, REPEAT_AUTH_ADMIN
 from settings import PATH, LOG_NAME
+from telegram import KeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import ConversationHandler
 from validator import ValidateForm
 import json
@@ -67,19 +68,38 @@ class RegisterAdmin:
         if(response.status_code == 200 and 'errors' not in response.json().keys()):
             logger.info("Sucess on generating token")
             update.message.reply_text('Muito bem! Podemos agora cadastrar um novo administrador')
+        
+            token = response.json()['data']['tokenAuth']['token']
+            chat[chat_id]['token'] = token
+            logger.debug(f"'auth-admin-token': '{chat[chat_id]['token']}'")
+        
         else:
             logger.error("Failed generating token")
             update.message.reply_text('Email ou senha incorretos. Não foi possível identificar o administrador.')
-            update.message.reply_text('Deseja inseri-los novamente?')
+            
+            yes_keyboard = KeyboardButton('Sim')
+            no_keyboard = KeyboardButton('Não')
+            keyboard = [[yes_keyboard],[no_keyboard]]
+            choice = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
+            update.message.reply_text('Deseja inseri-los novamente?', reply_markup = choice)
 
-        token = response.json()['data']['tokenAuth']['token']
+            return REPEAT_AUTH_ADMIN
 
-        chat[chat_id]['token'] = token
-        logger.debug(f"'auth-admin-token': '{chat[chat_id]['token']}'")
+    def repeat_auth_admin(update, context):
+        chat_id = update.message.chat_id
+        choice = update.message.text
 
-        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
+        if not ValidateForm.boolean_value(choice, update):
+            return REPEAT_AUTH_ADMIN
 
-        chat[chat_id] = {}
+        if choice == "Sim":
+            logger.info("Replied 'yes'")
+            update.message.reply_text('Ok! Por favor, informe seu email:')
+            return EMAIL_AUTH_ADMIN
+        else:
+            update.message.reply_text('Ok!')
+            logger.info("Replied 'no'")
+            RegisterAdmin.end(update, context)
 
         return ConversationHandler.END
 

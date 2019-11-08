@@ -113,6 +113,7 @@ if __name__ == '__main__':
         states={
             EMAIL_AUTH_ADMIN: [MessageHandler(Filters.text, RegisterAdmin.email)],
             PASSWORD_AUTH_ADMIN: [MessageHandler(Filters.text, RegisterAdmin.password)],
+            REPEAT_AUTH_ADMIN: [MessageHandler(Filters.text, RegisterAdmin.repeat_auth_admin)],
             },
 
         fallbacks=[CommandHandler('cancelar', RegisterAdmin.end)]
