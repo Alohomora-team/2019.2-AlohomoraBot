@@ -2,9 +2,10 @@ from resident_control import Auth, HandleEntryVisitor
 from register import Register
 from register_visitor import RegisterVisitor
 from feedback import Feedback
+from notify import NotifyAdmin
 from visit import Visit
 from settings import *
-from telegram.ext import Updater, CommandHandler, MessageHandler, ConversationHandler, Filters
+from telegram.ext import Updater, CommandHandler, MessageHandler, ConversationHandler, Filters, CallbackQueryHandler
 import logging
 import os
 
@@ -31,7 +32,6 @@ def start(update, context):
     update.message.reply_text('Digite /cadastrar para fazer o cadastro de um morador')
     update.message.reply_text('Digite /autorizar para autorizar entrada de algum visitante')
     update.message.reply_text('Para dar um feedback pro nosso serviço, digite /feedback')
-
 
 if __name__ == '__main__':
 
@@ -103,6 +103,10 @@ if __name__ == '__main__':
 
         fallbacks=[CommandHandler('cancelar', Feedback.end)]
         ))
+
+    # Admin
+    dp.add_handler(CallbackQueryHandler(NotifyAdmin.accepted, pattern='acc'))
+    dp.add_handler(CallbackQueryHandler(NotifyAdmin.recused, pattern='rec'))
 
 
     updater.start_polling()
