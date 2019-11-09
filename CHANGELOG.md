@@ -3,6 +3,7 @@
 ## [Unreleased]
 + mudança do docker alpine para debian slim
 + A api é acessada agora via registry do projeto em suas versões de homologação e deploy
++ Novo comando para criar administradores do sistema
 
 #### Problemas resolvidos
 + As bibliotecas de processamento de sinais estão devidamentes instaladas
