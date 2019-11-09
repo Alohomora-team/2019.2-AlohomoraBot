@@ -1,15 +1,17 @@
+import os
+import json
+import logging
+import requests
+import subprocess
+import numpy
+
 from checks import CheckAdmin
 from settings import EMAIL_AUTH_ADMIN, PASSWORD_AUTH_ADMIN, REPEAT_AUTH_ADMIN, ADMIN_REGISTER_EMAIL, ADMIN_REGISTER_PASSWORD
 from settings import PATH, LOG_NAME
 from telegram import KeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import ConversationHandler
 from validator import ValidateForm
-import json
-import logging
-import numpy
-import os
-import requests
-import subprocess
+
 
 
 logger = logging.getLogger(LOG_NAME)
@@ -78,16 +80,15 @@ class RegisterAdmin:
             logger.info("Requesting new admin's email")
 
             return ADMIN_REGISTER_EMAIL
-        
         else:
             logger.error("Failed generating token")
             update.message.reply_text('Email ou senha incorretos. Não foi possível identificar o administrador.')
             
             yes_keyboard = KeyboardButton('Sim')
             no_keyboard = KeyboardButton('Não')
-            keyboard = [[yes_keyboard],[no_keyboard]]
+            keyboard = [[yes_keyboard], [no_keyboard]]
             choice = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
-            update.message.reply_text('Deseja inseri-los novamente?', reply_markup = choice)
+            update.message.reply_text('Deseja inseri-los novamente?', reply_markup=choice)
 
             return REPEAT_AUTH_ADMIN
 
@@ -181,7 +182,6 @@ class RegisterAdmin:
                 'email': chat[chat_id]['auth-email'],
                 'password': chat[chat_id]['auth-password'],
                 }
-        
         response = requests.post(PATH, json={'query':query, 'variables':variables})
         logger.debug(f"Response: {response.json()}")
 
@@ -216,5 +216,3 @@ class RegisterAdmin:
         logger.debug(f"Response: {response.json()}")
 
         return response
-
-        
