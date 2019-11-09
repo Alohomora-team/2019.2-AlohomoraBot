@@ -1,6 +1,7 @@
 import logging
 from db.schema import get_all_admins_chat_ids
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from admin import Admin
 
 messages = {}
 
@@ -37,6 +38,10 @@ class NotifyAdmin:
                 message_id=query.message.message_id,
                 text="Morador autorizado!"
                 )
+
+        email = query.message.text.split('-')[-4].split()[1]
+
+        response = Admin.activate_resident(email)
 
     def recused(update, context):
         query = update.callback_query
