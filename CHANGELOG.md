@@ -15,6 +15,12 @@ Em: https://github.com/fga-eps-mds/2019.2-Alohomora/releases
 ### Adicionado
 *  Configurado path e rede interna no docker-compose para subir a aplicação localmente
 *  Novo comando para enviar feedbacks sobre o sistema.
+
+## [0.1.0] - 2019-11-06
+### Adicionado
+*  Interação de visitante para solicitar uma entrada.
+*  Interação do morador para lidar com a entrada do visitante.
+
  ---
  Modelo padrão do changelog disponível [aqui](https://keepachangelog.com/en/0.3.0/).
 

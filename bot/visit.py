@@ -66,7 +66,8 @@ class Visit:
         if 'errors' not in check.keys():
             logger.error("Visit have register")
             completeName = check['data']['visitor']['completeName']
-            update.message.reply_text("Ok %s, agora nos diga a qual bloco deseja ir:" % completeName)
+            firstName = completeName.split(' ')[0]
+            update.message.reply_text("Ok %s, agora nos diga a qual bloco deseja ir:" % firstName)
             return VISITOR_BLOCK
 
         else:
@@ -149,7 +150,11 @@ class Visit:
                 apartmentNumber: $apartmentNumber,
                 pending: $pending,
             ){
-                pending
+                entryVisitor {
+                    id
+                    date
+                    pending
+                    }
             }
         }
         """

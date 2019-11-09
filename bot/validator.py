@@ -172,3 +172,11 @@ class ValidateForm:
             return False
 
         return True
+
+    def number(value, update):
+        if not str.isdigit(value):
+            logger.error("Incorrect format number")
+            update.message.reply_text("Comando incorreto. Digite no formato /numero")
+            return False
+
+        return True
