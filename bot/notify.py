@@ -1,5 +1,5 @@
 import logging
-from db.schema import get_all_admins_chat_ids
+from db.schema import get_all_admins_chat_ids, get_resident_chat_id
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from admin import Admin
 
@@ -43,6 +43,13 @@ class NotifyAdmin:
 
         response = Admin.activate_resident(email)
 
+        cpf = [i for i in query.message.text.split('-')[-3].split() if i.isdigit()][0]
+
+        context.bot.send_message(
+                chat_id=get_resident_chat_id(cpf),
+                text="Cadastro aprovado!"
+                )
+
     def recused(update, context):
         query = update.callback_query
 
@@ -67,6 +74,13 @@ class NotifyAdmin:
         email = query.message.text.split('-')[-4].split()[1]
 
         response = Admin.delete_resident(email)
+
+        cpf = [i for i in query.message.text.split('-')[-3].split() if i.isdigit()][0]
+
+        context.bot.send_message(
+                chat_id=get_resident_chat_id(cpf),
+                text="Cadastro recusado."
+                )
 
     def text(data):
         return f"""
