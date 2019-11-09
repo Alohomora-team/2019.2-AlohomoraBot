@@ -21,3 +21,20 @@ class Admin:
         response = requests.post(PATH, json={'query':query, 'variables':variables})
 
         return response.json()
+
+    def delete_resident(email):
+        query = """
+        mutation deleteResident($email: String!){
+            deleteResident(residentEmail: $email){
+                residentEmail
+            }
+        }
+        """
+
+        variables = {
+                'email': email
+                }
+
+        response = requests.post(PATH, json={'query':query, 'variables':variables})
+
+        return response.json()

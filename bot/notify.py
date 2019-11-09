@@ -64,6 +64,9 @@ class NotifyAdmin:
                 text="Morador recusado!"
                 )
 
+        email = query.message.text.split('-')[-4].split()[1]
+
+        response = Admin.delete_resident(email)
 
     def text(data):
         return f"""
