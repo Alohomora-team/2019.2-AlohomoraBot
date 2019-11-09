@@ -1,4 +1,5 @@
 from checks import CheckResident, CheckCondo
+from notify import NotifyAdmin
 from python_speech_features import mfcc
 from scipy.io.wavfile import read
 from settings import LOG_NAME
@@ -227,7 +228,8 @@ class Register:
 
         if(response.status_code == 200 and 'errors' not in response.json().keys()):
             logger.info("resident registered in database")
-            update.message.reply_text('Morador cadastrado no sistema!')
+            update.message.reply_text('Cadastro feito! Aguardando autorização dos administradores.')
+            NotifyAdmin.send_message(context, chat[chat_id])
         else:
             logger.error("Registration failed")
             update.message.reply_text('Falha ao cadastrar no sistema!')
