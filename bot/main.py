@@ -111,9 +111,11 @@ if __name__ == '__main__':
         entry_points=[CommandHandler('novoadmin', RegisterAdmin.index)],
 
         states={
-            EMAIL_AUTH_ADMIN: [MessageHandler(Filters.text, RegisterAdmin.email)],
-            PASSWORD_AUTH_ADMIN: [MessageHandler(Filters.text, RegisterAdmin.password)],
+            EMAIL_AUTH_ADMIN: [MessageHandler(Filters.text, RegisterAdmin.auth_email)],
+            PASSWORD_AUTH_ADMIN: [MessageHandler(Filters.text, RegisterAdmin.auth_password)],
             REPEAT_AUTH_ADMIN: [MessageHandler(Filters.text, RegisterAdmin.repeat_auth_admin)],
+            ADMIN_REGISTER_EMAIL: [MessageHandler(Filters.text, RegisterAdmin.register_email)],
+            ADMIN_REGISTER_PASSWORD: [MessageHandler(Filters.text, RegisterAdmin.register_password)],
             },
 
         fallbacks=[CommandHandler('cancelar', RegisterAdmin.end)]

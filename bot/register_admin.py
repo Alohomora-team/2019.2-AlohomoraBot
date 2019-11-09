@@ -1,5 +1,5 @@
 from checks import CheckAdmin
-from settings import EMAIL_AUTH_ADMIN, PASSWORD_AUTH_ADMIN, REPEAT_AUTH_ADMIN
+from settings import EMAIL_AUTH_ADMIN, PASSWORD_AUTH_ADMIN, REPEAT_AUTH_ADMIN, ADMIN_REGISTER_EMAIL, ADMIN_REGISTER_PASSWORD
 from settings import PATH, LOG_NAME
 from telegram import KeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import ConversationHandler
@@ -32,17 +32,17 @@ class RegisterAdmin:
 
         return EMAIL_AUTH_ADMIN
 
-    def email(update, context):
+    def auth_email(update, context):
         chat_id = update.message.chat_id
         email = update.message.text
 
         if not ValidateForm.email(email, update):
             return EMAIL_AUTH_ADMIN
 
-        chat[chat_id]['email'] = email
-        logger.debug(f"'auth-admin-email': '{chat[chat_id]['email']}'")
+        chat[chat_id]['auth-email'] = email
+        logger.debug(f"'auth-admin-email': '{chat[chat_id]['auth-email']}'")
 
-        check = CheckAdmin.email(chat, chat_id)
+        check = CheckAdmin.auth_email(chat, chat_id)
 
         if 'errors' not in check.keys():
             logger.error("Email exists in database")
@@ -56,22 +56,28 @@ class RegisterAdmin:
             update.message.reply_text("Email não encontrado. Por favor, digite novamente")
             return EMAIL_AUTH_ADMIN
 
-    def password(update, context):
+    def auth_password(update, context):
         chat_id = update.message.chat_id
         password = update.message.text
 
-        chat[chat_id]['password'] = password
-        logger.debug(f"'auth-admin-password': '{chat[chat_id]['password']}'")
+        chat[chat_id]['auth-password'] = password
+        logger.debug(f"'auth-admin-password': '{chat[chat_id]['auth-password']}'")
 
         response = RegisterAdmin.generate_token(chat_id)
 
         if(response.status_code == 200 and 'errors' not in response.json().keys()):
             logger.info("Sucess on generating token")
-            update.message.reply_text('Muito bem! Podemos agora cadastrar um novo administrador')
-        
+
             token = response.json()['data']['tokenAuth']['token']
             chat[chat_id]['token'] = token
             logger.debug(f"'auth-admin-token': '{chat[chat_id]['token']}'")
+
+            update.message.reply_text('Muito bem! Podemos agora cadastrar um novo administrador.')
+            update.message.reply_text('Por favor, informe o email do novo administrador:')
+
+            logger.info("Requesting new admin's email")
+
+            return ADMIN_REGISTER_EMAIL
         
         else:
             logger.error("Failed generating token")
@@ -103,6 +109,39 @@ class RegisterAdmin:
 
         return ConversationHandler.END
 
+    def register_email(update, context):
+        chat_id = update.message.chat_id
+        email = update.message.text
+
+        if not ValidateForm.email(email, update):
+            return ADMIN_REGISTER_EMAIL
+        
+        chat[chat_id]['email'] = email
+        logger.debug(f"'email': '{chat[chat_id]['email']}'")
+
+        check = CheckAdmin.email(chat, chat_id)
+
+        if 'errors' not in check.keys():
+            logger.error("Email already exists in database - asking again")
+            update.message.reply_text('Já existe um administrador com este email, tente novamente:')
+            return ADMIN_REGISTER_EMAIL
+
+        logger.debug("Available email - proceed")
+
+        update.message.reply_text('Senha:')
+        logger.info("Asking for password")
+
+        return ADMIN_REGISTER_PASSWORD
+
+    def register_password(update, context):
+        chat_id = update.message.chat_id
+        password = update.message.text
+
+        chat[chat_id]['password'] = password
+        logger.debug(f"'password': '{chat[chat_id]['password']}'")
+
+
+
     def end(update, context):
         logger.info("Canceling admin registration")
         chat_id = update.message.chat_id
@@ -125,12 +164,11 @@ class RegisterAdmin:
             """
 
         variables = {
-                'email': chat[chat_id]['email'],
-                'password': chat[chat_id]['password'],
+                'email': chat[chat_id]['auth-email'],
+                'password': chat[chat_id]['auth-password'],
                 }
         
         response = requests.post(PATH, json={'query':query, 'variables':variables})
-
         logger.debug(f"Response: {response.json()}")
 
         return response
