@@ -121,10 +121,10 @@ class RegisterAdmin:
 
         check = CheckAdmin.email(chat, chat_id)
 
-        if 'errors' not in check.keys():
-            logger.error("Email already exists in database - asking again")
-            update.message.reply_text('Já existe um administrador com este email, tente novamente:')
-            return ADMIN_REGISTER_EMAIL
+        # if 'errors' not in check.keys():
+        #     logger.error("Email already exists in database - asking again")
+        #     update.message.reply_text('Já existe um administrador com este email, tente novamente:')
+        #     return ADMIN_REGISTER_EMAIL
 
         logger.debug("Available email - proceed")
 
@@ -140,6 +140,20 @@ class RegisterAdmin:
         chat[chat_id]['password'] = password
         logger.debug(f"'password': '{chat[chat_id]['password']}'")
 
+        response = RegisterAdmin.register_admin(chat_id)
+
+        if(response.status_code == 200 and 'errors' not in response.json().keys()):
+            logger.info("Admin registered in database")
+            update.message.reply_text('Administrador cadastrado no sistema!')
+        else:
+            logger.error("Registration failed")
+            update.message.reply_text('Falha ao cadastrar administrador no sistema!')
+
+        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
+
+        chat[chat_id] = {}
+
+        return ConversationHandler.END
 
 
     def end(update, context):
@@ -169,6 +183,36 @@ class RegisterAdmin:
                 }
         
         response = requests.post(PATH, json={'query':query, 'variables':variables})
+        logger.debug(f"Response: {response.json()}")
+
+        return response
+
+    def register_admin(chat_id):
+        logger.info("Registering admin")
+        query = """
+        mutation createAdmin(
+            $email: String!,
+            $password: String!,
+            ){
+            createAdmin(
+                email: $email,
+                password: $password
+            ){
+                email
+                creator {
+                    email
+                }
+            }
+        }
+        """
+
+        variables = {
+                'email': chat[chat_id]['email'],
+                'password': chat[chat_id]['password']
+                }
+
+        response = requests.post(PATH, headers={'Authorization': 'JWT %s' % chat[chat_id]['token']}, json={'query':query, 'variables':variables})
+
         logger.debug(f"Response: {response.json()}")
 
         return response
