@@ -225,6 +225,7 @@ class Register:
 
         logger.debug("Confirming voice audio")
 
+        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
         response = Register.register_resident(chat_id)
 
         if(response.status_code == 200 and 'errors' not in response.json().keys()):
@@ -241,8 +242,6 @@ class Register:
         else:
             logger.error("Registration failed")
             update.message.reply_text('Falha ao cadastrar no sistema!')
-
-        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
 
         chat[chat_id] = {}
 

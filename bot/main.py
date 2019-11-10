@@ -105,8 +105,8 @@ if __name__ == '__main__':
         ))
 
     # Admin
-    dp.add_handler(CallbackQueryHandler(NotifyAdmin.accepted, pattern='acc'))
-    dp.add_handler(CallbackQueryHandler(NotifyAdmin.recused, pattern='rec'))
+    dp.add_handler(CallbackQueryHandler(NotifyAdmin.approved, pattern='app'))
+    dp.add_handler(CallbackQueryHandler(NotifyAdmin.rejected, pattern='rej'))
 
 
     updater.start_polling()
