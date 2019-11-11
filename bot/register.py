@@ -3,7 +3,7 @@ from python_speech_features import mfcc
 from scipy.io.wavfile import read
 from settings import LOG_NAME
 from settings import NAME, PHONE, EMAIL, CPF, BLOCK, APARTMENT, VOICE_REGISTER, REPEAT_VOICE
-from settings import PATH
+from settings import PATH, CATCH_AUDIO_SPEAKING_NAME, CONFIRM_AUDIO_SPEAKING_NAME
 from telegram import KeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import ConversationHandler
 from validator import ValidateForm
@@ -166,10 +166,94 @@ class Register:
 
         logger.debug("Existing apartment - proceed")
 
-        update.message.reply_text(
-            'Vamos agora cadastrar a sua voz! Grave uma breve mensagem de voz dizendo "Juro que sou eu"')
+        update.message.reply_text('Agora preciso que você grave um áudio dizendo seu nome completo.')
+        update.message.reply_text('O áudio deve ter no mínimo 1 segundo e no máximo 3 segundos.')
 
-        logger.info("Requesting voice audio")
+        return CATCH_AUDIO_SPEAKING_NAME
+
+    def catch_audio_speaking_name(update, context):
+        chat_id = update.message.chat_id
+        audio = update.message.voice
+
+        logger.debug('\t\tAudio catched.')
+        if ValidateForm.audio_speaking_name(audio, update) is False:
+            return CATCH_AUDIO_SPEAKING_NAME
+
+        chat[chat_id]['mfcc_audio_speaking_name'] = audio
+
+        logger.debug('\tRequesting user confirmation ...')
+        next_button = KeyboardButton('Prosseguir')
+        repeat_button = KeyboardButton('Regravar')
+        prompt_buttons = [[repeat_button], [next_button]]
+        prompt = ReplyKeyboardMarkup(prompt_buttons, resize_keyboard=True, one_time_keyboard=True)
+        update.message.reply_text(
+            '''
+            Escute o audio gravado e verifique se:
+            1 - A fala foi natural e sem grandes pausas
+            2 - A fala não sofreu cortes nem no fim nem no começo do áudio
+            '''
+        )
+        update.message.reply_text(
+            'Caso o áudio cumpra essas exigências, prossiga. Caso contrário, por favor, regrave.',
+            reply_markup=prompt
+        )
+
+        return CONFIRM_AUDIO_SPEAKING_NAME
+
+    def confirm_audio_speaking_name(update, context):
+        chat_id = update.message.chat_id
+        choice = update.message.text
+
+        if choice == 'Regravar':
+            update.message.reply_text('Ok. Pode regravar.')
+            logger.debug('\t\tUser has requested to record again.')
+            logger.debug('\tWaiting for audio ...')
+            return CATCH_AUDIO_SPEAKING_NAME
+
+        logger.debug('\t\tUser confirmed the audio')
+
+        audio = chat[chat_id]['mfcc_audio_speaking_name']
+
+        logger.debug('\tDownloading audio file ...')
+        audio_file_path = audio.get_file().download()
+        logger.debug('\t\tDone')
+
+        logger.debug('\tConverting audio file into .wav ...')
+        wav_audio_file_path = audio_file_path.split('.')[0] + '.wav'
+        subprocess.run(['ffmpeg', '-i', audio_file_path, wav_audio_file_path], check=True)
+        logger.debug('\t\tDone')
+
+        logger.debug('\tOpening the audio file...')
+        samplerate, data = read(wav_audio_file_path)
+        logger.debug('\t\tDone')
+
+        logger.debug('\tExtracting MFCC features from audio file ...')
+        mfcc_audio_speaking_name = mfcc(
+            data,
+            samplerate=samplerate,
+            nfft=1200,
+            winfunc=numpy.hamming
+        )
+        logger.debug('\t\tDone')
+
+        logger.debug("\tTurning into JSON and putting in the chat's dictionary ...")
+        mfcc_audio_speaking_name = json.dumps(mfcc_audio_speaking_name.tolist())
+        chat[chat_id]['mfcc_audio_speaking_name'] = mfcc_audio_speaking_name
+        logger.debug('\t\tDone')
+
+        logger.debug('\tDeleting the audio file ...')
+        os.remove(wav_audio_file_path)
+        os.remove(audio_file_path)
+        logger.debug('\t\tDone')
+
+        logger.debug('TASK accomplished successfully')
+
+        update.message.reply_text('Vamos agora catalogar as características da sua voz!')
+        update.message.reply_text(
+            'Grave uma breve mensagem de voz dizendo a frase: "Juro que sou eu".'
+        )
+
+        logger.info("Requesting voice audio ...")
 
         return VOICE_REGISTER
 
@@ -232,7 +316,7 @@ class Register:
             logger.error("Registration failed")
             update.message.reply_text('Falha ao cadastrar no sistema!')
 
-        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
+        # logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
 
         chat[chat_id] = {}
 
@@ -262,6 +346,7 @@ class Register:
             $block: String!,
             $voiceData: String,
             $mfccData: String,
+            $mfccAudioSpeakingName: String,
             ){
             createResident(
                 completeName: $completeName,
@@ -270,8 +355,9 @@ class Register:
                 phone: $phone,
                 apartment: $apartment,
                 block: $block,
-                voiceData: $voiceData
-                mfccData: $mfccData
+                voiceData: $voiceData,
+                mfccData: $mfccData,
+                mfccAudioSpeakingName: $mfccAudioSpeakingName
             ){
                 resident{
                     completeName
@@ -297,7 +383,8 @@ class Register:
                 'apartment': chat[chat_id]['apartment'],
                 'block': chat[chat_id]['block'],
                 'voiceData': chat[chat_id]['voice_reg'],
-                'mfccData': chat[chat_id]['voice_mfcc']
+                'mfccData': chat[chat_id]['voice_mfcc'],
+                'mfccAudioSpeakingName': chat[chat_id]['mfcc_audio_speaking_name']
                 }
 
         response = requests.post(PATH, json={'query':query, 'variables':variables})
