@@ -1,6 +1,7 @@
 from checks import CheckResident, CheckCondo
 from python_speech_features import mfcc
 from scipy.io.wavfile import read
+import librosa
 from settings import LOG_NAME
 from settings import NAME, PHONE, EMAIL, CPF, BLOCK, APARTMENT, VOICE_REGISTER, REPEAT_VOICE
 from settings import PATH, CATCH_AUDIO_SPEAKING_NAME, CONFIRM_AUDIO_SPEAKING_NAME
@@ -179,7 +180,7 @@ class Register:
         if ValidateForm.audio_speaking_name(audio, update) is False:
             return CATCH_AUDIO_SPEAKING_NAME
 
-        chat[chat_id]['mfcc_audio_speaking_name'] = audio
+        chat[chat_id]['audio_speaking_name'] = audio
 
         logger.debug('\tRequesting user confirmation ...')
         next_button = KeyboardButton('Prosseguir')
@@ -188,9 +189,9 @@ class Register:
         prompt = ReplyKeyboardMarkup(prompt_buttons, resize_keyboard=True, one_time_keyboard=True)
         update.message.reply_text(
             '''
-            Escute o audio gravado e verifique se:
-            1 - A fala foi natural e sem grandes pausas
-            2 - A fala não sofreu cortes nem no fim nem no começo do áudio
+Escute o audio gravado e verifique se:
+1 - A fala foi natural e sem grandes pausas
+2 - A fala não sofreu cortes nem no fim nem no começo do áudio
             '''
         )
         update.message.reply_text(
@@ -212,7 +213,7 @@ class Register:
 
         logger.debug('\t\tUser confirmed the audio')
 
-        audio = chat[chat_id]['mfcc_audio_speaking_name']
+        audio = chat[chat_id]['audio_speaking_name']
 
         logger.debug('\tDownloading audio file ...')
         audio_file_path = audio.get_file().download()
@@ -224,21 +225,11 @@ class Register:
         logger.debug('\t\tDone')
 
         logger.debug('\tOpening the audio file...')
-        samplerate, data = read(wav_audio_file_path)
+        data, samplerate = librosa.load(wav_audio_file_path, sr=16000, mono=True)
         logger.debug('\t\tDone')
 
-        logger.debug('\tExtracting MFCC features from audio file ...')
-        mfcc_audio_speaking_name = mfcc(
-            data,
-            samplerate=samplerate,
-            nfft=1200,
-            winfunc=numpy.hamming
-        )
-        logger.debug('\t\tDone')
-
-        logger.debug("\tTurning into JSON and putting in the chat's dictionary ...")
-        mfcc_audio_speaking_name = json.dumps(mfcc_audio_speaking_name.tolist())
-        chat[chat_id]['mfcc_audio_speaking_name'] = mfcc_audio_speaking_name
+        logger.debug("\tPutting in the chat's dictionary ...")
+        chat[chat_id]['audio_speaking_name'] = data.tolist()
         logger.debug('\t\tDone')
 
         logger.debug('\tDeleting the audio file ...')
@@ -345,8 +336,7 @@ class Register:
             $apartment: String!,
             $block: String!,
             $voiceData: String,
-            $mfccData: String,
-            $mfccAudioSpeakingName: String,
+            $audioSpeakingName: String,
             ){
             createResident(
                 completeName: $completeName,
@@ -356,8 +346,7 @@ class Register:
                 apartment: $apartment,
                 block: $block,
                 voiceData: $voiceData,
-                mfccData: $mfccData,
-                mfccAudioSpeakingName: $mfccAudioSpeakingName
+                audioSpeakingName: $audioSpeakingName
             ){
                 resident{
                     completeName
@@ -383,8 +372,7 @@ class Register:
                 'apartment': chat[chat_id]['apartment'],
                 'block': chat[chat_id]['block'],
                 'voiceData': chat[chat_id]['voice_reg'],
-                'mfccData': chat[chat_id]['voice_mfcc'],
-                'mfccAudioSpeakingName': chat[chat_id]['mfcc_audio_speaking_name']
+                'mfccAudioSpeakingName': chat[chat_id]['audio_speaking_name']
                 }
 
         response = requests.post(PATH, json={'query':query, 'variables':variables})
