@@ -250,38 +250,19 @@ Escute o audio gravado e verifique se:
 
     def voice_register(update, context):
         chat_id = update.message.chat_id
-        voice_register = update.message.voice
+        audio = update.message.voice
 
         if not ValidateForm.voice(voice_register, update):
             return VOICE_REGISTER
 
-        update.message.reply_text('Ótimo!')
-
-        f_reg = voice_register.get_file()
-
-        src = f_reg.download()
-        dest = src.split('.')[0] + ".wav"
-
-        subprocess.run(['ffmpeg', '-i', src, dest])
-
-        samplerate, voice_data = read(dest)
-
-        mfcc_data = mfcc(voice_data, samplerate=samplerate,
-                         nfft=1200, winfunc=numpy.hamming)
-        mfcc_data = mfcc_data.tolist()
-        mfcc_data = json.dumps(mfcc_data)
-
-        chat[chat_id]['voice_reg'] = None
-        chat[chat_id]['voice_mfcc'] = mfcc_data
-        logger.debug(f"'voice_reg': '{chat[chat_id]['voice_reg']}'")
-        logger.debug(f"'voice_mfcc': '{chat[chat_id]['voice_mfcc'][:1]}...{chat[chat_id]['voice_mfcc'][-1:]}'")
+        chat[chat_id]['voice_data'] = audio
 
         # Repeat and confirm buttons
         repeat_keyboard = KeyboardButton('Repetir')
         confirm_keyboard = KeyboardButton('Confirmar')
         keyboard = [[repeat_keyboard],[confirm_keyboard]]
         choice = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
-        update.message.reply_text('Escute o seu áudio e confirme se está com boa qualidade', reply_markup = choice)
+        update.message.reply_text('Escute o seu áudio e confirme se está com boa qualidade', reply_markup=choice)
 
         logger.info("Asking to confirm or repeat voice audio")
 
@@ -297,6 +278,16 @@ Escute o audio gravado e verifique se:
             return VOICE_REGISTER
 
         logger.debug("Confirming voice audio")
+
+        audio_file_path = chat[chat_id]['voice_data'].get_file().download()
+        wav_audio_file_path = audio_file_path.split('.')[0] + '.wav'
+        data, samplerate = librosa.load(wav_audio_file_path, sr=16000, mono=True)
+        subprocess.run(['ffmpeg', '-i', audio_file_path, wav_audio_file_path], check=True)
+
+        chat[chat_id]['voice_data'] = data.tolist()
+
+        os.remove(audio_file_path)
+        os.remove(wav_audio_file_path)
 
         response = Register.register_resident(chat_id)
 
@@ -371,8 +362,8 @@ Escute o audio gravado e verifique se:
                 'cpf': chat[chat_id]['cpf'],
                 'apartment': chat[chat_id]['apartment'],
                 'block': chat[chat_id]['block'],
-                'voiceData': chat[chat_id]['voice_reg'],
-                'mfccAudioSpeakingName': chat[chat_id]['audio_speaking_name']
+                'voiceData': chat[chat_id]['voice_data'],
+                'audioSpeakingName': chat[chat_id]['audio_speaking_name']
                 }
 
         response = requests.post(PATH, json={'query':query, 'variables':variables})
