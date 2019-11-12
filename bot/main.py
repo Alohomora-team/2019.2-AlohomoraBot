@@ -62,7 +62,7 @@ if __name__ == '__main__':
             CONFIRM_AUDIO_SPEAKING_NAME:[
                 MessageHandler(Filters.text, Register.confirm_audio_speaking_name)
             ],
-            VOICE_REGISTER: [MessageHandler(Filters.voice, Register.voice_register)],
+            VOICE_REGISTER:[MessageHandler(Filters.voice, Register.voice_register)],
             REPEAT_VOICE:[MessageHandler(Filters.text, Register.repeat_voice)]
             },
 

@@ -1,7 +1,7 @@
+import librosa
 from checks import CheckResident, CheckCondo
 from python_speech_features import mfcc
 from scipy.io.wavfile import read
-import librosa
 from settings import LOG_NAME
 from settings import NAME, PHONE, EMAIL, CPF, BLOCK, APARTMENT, VOICE_REGISTER, REPEAT_VOICE
 from settings import PATH, CATCH_AUDIO_SPEAKING_NAME, CONFIRM_AUDIO_SPEAKING_NAME
@@ -252,7 +252,7 @@ Escute o audio gravado e verifique se:
         chat_id = update.message.chat_id
         audio = update.message.voice
 
-        if not ValidateForm.voice(voice_register, update):
+        if not ValidateForm.voice(audio, update):
             return VOICE_REGISTER
 
         chat[chat_id]['voice_data'] = audio
@@ -264,7 +264,7 @@ Escute o audio gravado e verifique se:
         choice = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
         update.message.reply_text('Escute o seu áudio e confirme se está com boa qualidade', reply_markup=choice)
 
-        logger.info("Asking to confirm or repeat voice audio")
+        logger.info("Asking to confirm or repeat voice audio ...")
 
         return REPEAT_VOICE
 
@@ -273,16 +273,24 @@ Escute o audio gravado e verifique se:
         choice = update.message.text
 
         if choice == "Repetir":
-            logger.debug("Repeating voice audio")
+            logger.debug("Repeating voice audio ...")
             update.message.reply_text('Por favor, grave novamente:')
             return VOICE_REGISTER
 
-        logger.debug("Confirming voice audio")
+        logger.debug("\tAudio confirmed")
 
+        logger.debug('Downloading audio ...')
         audio_file_path = chat[chat_id]['voice_data'].get_file().download()
         wav_audio_file_path = audio_file_path.split('.')[0] + '.wav'
-        data, samplerate = librosa.load(wav_audio_file_path, sr=16000, mono=True)
+        logger.debug('\tDone')
+
+        logger.debug('Converting into wav ...')
         subprocess.run(['ffmpeg', '-i', audio_file_path, wav_audio_file_path], check=True)
+        logger.debug('\tDone')
+
+        logger.debug('Opening audio and resampling ...')
+        data, samplerate = librosa.load(wav_audio_file_path, sr=16000, mono=True)
+        logger.debug('\tDone')
 
         chat[chat_id]['voice_data'] = data.tolist()
 
@@ -314,7 +322,6 @@ Escute o audio gravado e verifique se:
         logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
 
         return ConversationHandler.END
-
 
     def register_resident(chat_id):
         logger.info("Registering resident")
@@ -371,4 +378,3 @@ Escute o audio gravado e verifique se:
         logger.debug(f"Response: {response.json()}")
 
         return response
-
