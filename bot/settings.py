@@ -43,8 +43,7 @@ API_LOG_LEVEL = logging.CRITICAL
 LOG_NAME = 'Alohomora'
 
 # Bot token
-#TOKEN = "801020772:AAGiaVK52MBf7is4InDnESbB0XE1m9QRcAo"
-TOKEN = '916144454:AAHW77nw0ediIcqbryoAK7aW_4TLctfSFkA'
+TOKEN = "801020772:AAGiaVK52MBf7is4InDnESbB0XE1m9QRcAo"
 
 #Log file name
 FILE_NAME = 'file.log'
