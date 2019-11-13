@@ -1,18 +1,29 @@
-from settings import LOG_NAME, PATH
-from settings import VISITOR_REGISTER_NAME, VISITOR_REGISTER_CPF, VISITOR_BLOCK
-from checks import CheckVisitor
-from telegram.ext import ConversationHandler
-from validator import ValidateForm
+"""
+Interactions to register a visitor
+"""
+
 import logging
 import requests
+
+from checks import CheckVisitor
+from settings import LOG_NAME, PATH
+from settings import VISITOR_REGISTER_NAME, VISITOR_REGISTER_CPF, VISITOR_BLOCK
+from telegram.ext import ConversationHandler
+from validator import ValidateForm
 
 logger = logging.getLogger(LOG_NAME)
 
 chat = {}
 
 class RegisterVisitor:
+    """
+    Register visitor
+    """
 
     def name(update, context):
+        """
+        Get name interaction
+        """
         chat_id = update.message.chat_id
         name = update.message.text
 
@@ -30,6 +41,9 @@ class RegisterVisitor:
         return VISITOR_REGISTER_CPF
 
     def cpf(update, context):
+        """
+        Get cpf interaction
+        """
         chat_id = update.message.chat_id
         cpf = update.message.text
 
@@ -68,6 +82,10 @@ class RegisterVisitor:
         return ConversationHandler.END
 
     def register_visitor(chat_id):
+        """
+        Register a registor interaction
+        """
+
         logger.info("Registering visitor")
         query = """
         mutation createVisitor(
