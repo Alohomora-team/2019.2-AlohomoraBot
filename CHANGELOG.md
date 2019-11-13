@@ -9,6 +9,7 @@ Informações sobre atualizações no projeto serão registradas aqui.
 +  Novo comando para enviar feedbacks sobre o sistema.
 +  Interação de visitante para solicitar uma entrada.
 +  Interação do morador para lidar com a entrada do visitante.
++ Criação de um sistema de notificação para administradores, que recebe uma mensagem para aprovar ou rejeitar o cadastro de um morador.
 
 ### Alterado
 + mudança do docker alpine para debian slim

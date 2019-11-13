@@ -1,11 +1,22 @@
-from settings import LOG_NAME
+"""
+Validate user input
+"""
+
 import logging
+
+from settings import LOG_NAME
 
 logger = logging.getLogger(LOG_NAME)
 
 class ValidateForm:
+    """
+    Validate user information functions
+    """
 
     def name(name, update):
+        """
+        Validate user name
+        """
         if("nome" in name.lower()):
             update.message.reply_text('Por favor, digite apenas o seu nome:')
             logger.error("Resident informing his name in a sentence - asking again")
@@ -29,6 +40,10 @@ class ValidateForm:
         return True
 
     def phone(phone, contact, update):
+        """
+        Validate user phone
+        """
+
         if(phone is not None):
             if("-" in phone):
                 logger.debug("Removing dashes from phone")
@@ -61,6 +76,10 @@ class ValidateForm:
         return phone
 
     def email(email, update):
+        """
+        Validate e-mail
+        """
+
         if("@" not in email or " " in email or len(email) < 4 or "." not in email):
             logger.error("Invalid email - asking again")
             update.message.reply_text('Por favor, digite um email válido:')
@@ -75,6 +94,10 @@ class ValidateForm:
         return True
 
     def cpf(cpf, update):
+        """
+        Validate user cpf
+        """
+
         if(len(cpf) > 11 and cpf[3] == "." and cpf[7] == "." and cpf[11] == "-"):
             logger.debug("Removing dots and dash from CPF")
             cpf = cpf.replace('.', '').replace('-', '')
@@ -82,7 +105,9 @@ class ValidateForm:
 
         if(any(i.isalpha() for i in cpf) or "." in cpf or "-" in cpf or len(cpf) != 11):
             logger.error("CPF in wrong formatation - asking again")
-            update.message.reply_text('Por favor, digite o CPF com os 11 digitos: (Ex: 123.456.789-10)')
+            update.message.reply_text(
+                'Por favor, digite o CPF com os 11 digitos: (Ex: 123.456.789-10)'
+            )
             logger.error("CPF in wrong formatation - asking again")
             return False
 
@@ -108,12 +133,14 @@ class ValidateForm:
                      int(cpf[9])*2) % 11
 
         # Validating CPF
-        if((int(cpf[9]) != 0 and authCPF_J != 0 and authCPF_J != 1) and (int(cpf[9]) != (11 - authCPF_J))):
+        if((int(cpf[9]) != 0 and authCPF_J != 0 and
+            authCPF_J != 1) and (int(cpf[9]) != (11 - authCPF_J))):
             update.message.reply_text('CPF inválido, tente novamente:')
             logger.error("Invalid CPF - asking again")
             return False
 
-        if((int(cpf[10]) != 0 and authCPF_K != 0 and authCPF_K != 1) and (int(cpf[10]) != (11 - authCPF_K))):
+        if((int(cpf[10]) != 0 and authCPF_K != 0 and
+            authCPF_K != 1) and (int(cpf[10]) != (11 - authCPF_K))):
             logger.error("Invalid CPF - asking again")
             update.message.reply_text('CPF inválido, tente novamente:')
             return False
@@ -121,6 +148,10 @@ class ValidateForm:
         return cpf
 
     def block(block, update):
+        """
+        Validate apartment block
+        """
+
         if("bloco" in block.lower() or " " in block):
             logger.error("Resident informing the block number in a sentence - asking again")
             update.message.reply_text(
@@ -135,6 +166,10 @@ class ValidateForm:
         return True
 
     def apartment(apartment, update):
+        """
+        Validate apartment number
+        """
+
         if(any(i.isalpha() for i in apartment) or " " in apartment):
             loggin.error("Alphabetic character in apartment number - asking again")
             update.message.reply_text(
@@ -150,6 +185,10 @@ class ValidateForm:
         return True
 
     def voice(voice_register, update):
+        """
+        Validate voice duration
+        """
+
         if((voice_register.duration) < 1.0):
             logger.error("Audio too short - asking again")
             update.message.reply_text(
@@ -166,6 +205,10 @@ class ValidateForm:
         return True
 
     def boolean_value(value, update):
+        """
+        Convert user input in boolean value
+        """
+
         if(value != "Sim" and value != "Não"):
             logger.error("Boolean value isn't in valid format")
             update.message.reply_text('Você deve apenas apertar o botão "Sim" ou "Não".')
@@ -174,6 +217,9 @@ class ValidateForm:
         return True
 
     def number(value, update):
+        """
+        Validate if value is a number
+        """
         if not str.isdigit(value):
             logger.error("Incorrect format number")
             update.message.reply_text("Comando incorreto. Digite no formato /numero")

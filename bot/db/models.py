@@ -1,3 +1,7 @@
+"""
+Models to persist chat_id
+"""
+
 from sqlalchemy import *
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -5,6 +9,10 @@ from sqlalchemy.orm import sessionmaker
 Base = declarative_base()
 
 class Resident(Base):
+    """
+    Saves a resident chat_id
+    """
+
     __tablename__ = 'residents'
 
     id = Column(Integer, primary_key=True)
@@ -14,6 +22,9 @@ class Resident(Base):
     chat_id = Column(Integer, unique=True)
 
 class Visitor(Base):
+    """
+    Visitor models, saves chat_id
+    """
     __tablename__ = 'visitors'
 
     id = Column(Integer, primary_key=True)
@@ -21,6 +32,9 @@ class Visitor(Base):
     chat_id = Column(Integer, unique=True)
 
 class Admin(Base):
+    """
+    Save a admin chat_id
+    """
     __tablename__ = 'admins'
 
     id = Column(Integer, primary_key=True)
