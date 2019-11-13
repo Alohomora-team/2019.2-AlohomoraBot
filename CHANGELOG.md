@@ -21,6 +21,10 @@ Em: https://github.com/fga-eps-mds/2019.2-Alohomora/releases
 *  Interação de visitante para solicitar uma entrada.
 *  Interação do morador para lidar com a entrada do visitante.
 
+## [0.1.0] - 2019-11-12
+### Adicionado
+* Interação para visitantes e moradores terem seus comando listados.
+
  ---
  Modelo padrão do changelog disponível [aqui](https://keepachangelog.com/en/0.3.0/).
 
