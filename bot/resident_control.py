@@ -7,7 +7,7 @@ from python_speech_features import mfcc
 from scipy.io.wavfile import read
 from telegram.ext import ConversationHandler
 from telegram import KeyboardButton, ReplyKeyboardMarkup
-from settings import CPF_AUTH, VOICE_AUTH, HANDLE_VISITORS_PENDING
+from settings import CPF_AUTH, VOICE_AUTH, HANDLE_VISITORS_PENDING, CHOOSE_AUTH
 from settings import PATH, LOG_NAME
 from validator import ValidateForm
 from helpers import format_datetime
@@ -47,10 +47,47 @@ class Auth:
         CHAT[chat_id]['cpf'] = cpf
         LOGGER.debug(f"'auth-cpf': '{CHAT[chat_id]['cpf']}'")
 
-        update.message.reply_text('Grave um áudio de no mínimo 1 segundo dizendo "Juro que sou eu"')
-        LOGGER.info("Requesting voice audio")
+        pwd_keyboard = KeyboardButton('Senha')
+        voice_keyboard = KeyboardButton('Voz')
+        keyboard = [[pwd_keyboard], [voice_keyboard]]
+        choice = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
+        update.message.reply_text('De que maneira deseja se autenticar?', reply_markup=choice)
 
-        return VOICE_AUTH
+        return CHOOSE_AUTH
+
+    def choose_auth(update, context):
+        chat_id = update.message.chat_id
+        choice = update.message.text
+
+        if choice == "Senha":
+            CHAT[chat_id]['choice'] = choice
+            LOGGER.debug(f"'1-choice': '{CHAT[chat_id]['choice']}'")
+
+            LOGGER.info("Replied to authenticate by password")
+            update.message.reply_text('Ok! Informe sua senha:')
+            LOGGER.info("Requesting password")
+            return PASSWORD_AUTH
+        elif choice == "Voz":
+            CHAT[chat_id]['choice'] = choice
+            LOGGER.debug(f"'2-choice': '{CHAT[chat_id]['choice']}'")
+
+            LOGGER.info("Replied to authenticate by voice")
+            update.message.reply_text('Grave um áudio de no mínimo 1 segundo dizendo "Juro que sou eu"')
+            LOGGER.info("Requesting voice audio")
+            return VOICE_AUTH
+        else:
+            CHAT[chat_id]['choice'] = choice
+            LOGGER.debug(f"'3-choice': '{CHAT[chat_id]['choice']}'")
+
+            update.message.reply_text('Por favor, apenas aperte um dos botões.')
+            return CHOOSE_AUTH
+
+        CHAT[chat_id]['choice'] = choice
+        LOGGER.debug(f"'4-choice': '{CHAT[chat_id]['choice']}'")
+
+    def password(update, context):
+        pass
+
     @staticmethod
     def voice(update, context):
         chat_id = update.message.chat_id

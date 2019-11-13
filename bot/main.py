@@ -85,8 +85,10 @@ if __name__ == '__main__':
         entry_points=[CommandHandler('autorizar', Auth.index)],
 
         states={
+            CHOOSE_AUTH: [MessageHandler(Filters.text, Auth.choose_auth)],
             CPF_AUTH:[MessageHandler(Filters.text, Auth.cpf)],
             VOICE_AUTH: [MessageHandler(Filters.voice, Auth.voice)],
+            PASSWORD_AUTH: [MessageHandler(Filters.voice, Auth.password)],
             HANDLE_VISITORS_PENDING: [MessageHandler(Filters.text, HandleEntryVisitor.index)]
             },
 
