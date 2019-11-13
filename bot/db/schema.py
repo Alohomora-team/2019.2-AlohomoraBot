@@ -1,7 +1,14 @@
+"""
+Util functions that create information in database
+"""
+
 from models import Resident, Visitor, Admin
 from models import Session
 
 def create_resident(cpf, block, apartment, chat_id):
+    """
+    Insert a resident in database
+    """
     session = Session()
 
     resident = Resident(
@@ -21,6 +28,9 @@ def create_resident(cpf, block, apartment, chat_id):
     session.close()
 
 def create_visitor(cpf, chat_id):
+    """
+    Insert a visitor in database
+    """
     session = Session()
 
     visitor = Visitor(
@@ -38,6 +48,9 @@ def create_visitor(cpf, chat_id):
     session.close()
 
 def create_admin(email, chat_id):
+    """
+    Insert a administrador in database
+    """
     session = Session()
 
     admin = Admin(
@@ -55,6 +68,9 @@ def create_admin(email, chat_id):
     session.close()
 
 def delete_resident(cpf):
+    """
+    Remove a resident from database
+    """
     session = Session()
 
     resident = session.query(Resident).\
@@ -69,6 +85,9 @@ def delete_resident(cpf):
     session.close()
 
 def delete_visitor(cpf):
+    """
+    Remove a visitor from database
+    """
     session = Session()
 
     visitor = session.query(Visitor).\
@@ -83,6 +102,9 @@ def delete_visitor(cpf):
     session.close()
 
 def delete_admin(email):
+    """
+    Remove a admin from database
+    """
     session = Session()
 
     admin = session.query(Admin).\
@@ -97,6 +119,9 @@ def delete_admin(email):
     session.close()
 
 def update_resident(cpf, **kwargs):
+    """
+    Update resident information
+    """
     new_cpf = kwargs.get('new_cpf')
     block = kwargs.get('blcok')
     apartment = kwargs.get('apartment')
@@ -125,6 +150,9 @@ def update_resident(cpf, **kwargs):
     session.close()
 
 def update_visitor(cpf, **kwargs):
+    """
+    Update visitor information from database
+    """
     new_cpf = kwargs.get('new_cpf')
     chat_id = kwargs.get('chat_id')
 
@@ -145,6 +173,9 @@ def update_visitor(cpf, **kwargs):
     session.close()
 
 def update_admin(email, **kwargs):
+    """
+    Update admin information
+    """
     new_email = kwargs.get('new_email')
     chat_id = kwargs.get('chat_id')
 
@@ -165,6 +196,9 @@ def update_admin(email, **kwargs):
     session.close()
 
 def get_resident_chat_id(cpf):
+    """
+    Get a chat_id of a resident
+    """
     session = Session()
 
     resident = session.query(Resident).\
@@ -179,6 +213,9 @@ def get_resident_chat_id(cpf):
         return None
 
 def get_residents_chat_ids(block, apartment):
+    """
+    List resident chat ids
+    """
     session = Session()
 
     residents_chat_ids = [resident.chat_id for resident in session.query(Resident).\
@@ -189,6 +226,9 @@ def get_residents_chat_ids(block, apartment):
     return residents_chat_ids
 
 def get_visitor_chat_id(cpf):
+    """
+    Get a chat_id of a visitor
+    """
     session = Session()
 
     visitor = session.query(Visitor).\
@@ -203,6 +243,10 @@ def get_visitor_chat_id(cpf):
         return None
 
 def get_admin_chat_id(email):
+    """
+    Get a administrador chat_id
+    """
+
     session = Session()
 
     admin = session.query(Admin).\
@@ -217,6 +261,10 @@ def get_admin_chat_id(email):
         return None
 
 def get_all_admins_chat_ids():
+    """
+    List all chat ids of admin
+    """
+
     session = Session()
 
     admins_chat_ids = [admin.chat_id for admin in session.query(Admin)]
