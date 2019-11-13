@@ -12,7 +12,8 @@ from feedback import Feedback
 from notify import NotifyAdmin
 from visit import Visit
 from settings import *
-from telegram.ext import Updater, CommandHandler, MessageHandler, ConversationHandler, Filters, CallbackQueryHandler
+from telegram.ext import Updater, CommandHandler, MessageHandler, ConversationHandler, Filters
+from telegram.ext import CallbackQueryHandler
 
 # Remove logs from APIs
 logging.getLogger("telegram").setLevel(API_LOG_LEVEL)
