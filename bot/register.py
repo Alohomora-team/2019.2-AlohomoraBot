@@ -9,6 +9,8 @@ import numpy
 import requests
 
 from checks import CheckResident, CheckCondo
+from db.schema import create_resident
+from notify import NotifyAdmin
 from python_speech_features import mfcc
 from scipy.io.wavfile import read
 from settings import LOG_NAME
@@ -276,16 +278,23 @@ class Register:
 
         logger.debug("Confirming voice audio")
 
+        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
         response = Register.register_resident(chat_id)
 
         if(response.status_code == 200 and 'errors' not in response.json().keys()):
-            logger.info("resident registered in database")
-            update.message.reply_text('Morador cadastrado no sistema!')
+            logger.info("Resident registered in database")
+            update.message.reply_text("Cadastro feito!\nAguarde aprovação dos administradores.")
+
+            create_resident(
+                    cpf=chat[chat_id]['cpf'],
+                    block=chat[chat_id]['block'],
+                    apartment=chat[chat_id]['apartment'],
+                    chat_id=chat_id
+                    )
+            NotifyAdmin.send_message(context, chat[chat_id])
         else:
             logger.error("Registration failed")
             update.message.reply_text('Falha ao cadastrar no sistema!')
-
-        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
 
         chat[chat_id] = {}
 

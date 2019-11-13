@@ -3,6 +3,7 @@
 ## [Unreleased]
 + mudança do docker alpine para debian slim
 + A api é acessada agora via registry do projeto em suas versões de homologação e deploy
++ Criação de um sistema de notificação para administradores, que recebe uma mensagem para aprovar ou rejeitar o cadastro de um morador.
 
 #### Problemas resolvidos
 + As bibliotecas de processamento de sinais estão devidamentes instaladas

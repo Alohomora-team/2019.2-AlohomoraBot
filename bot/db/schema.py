@@ -1,9 +1,12 @@
 """
 Util functions that create information in database
 """
-
-from models import Resident, Visitor, Admin
-from models import Session
+try:
+    from models import Resident, Visitor, Admin
+    from models import Session
+except:
+    from db.models import Resident, Visitor, Admin
+    from db.models import Session
 
 def create_resident(cpf, block, apartment, chat_id):
     """

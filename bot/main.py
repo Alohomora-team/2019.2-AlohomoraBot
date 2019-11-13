@@ -9,9 +9,11 @@ from resident_control import Auth, HandleEntryVisitor
 from register import Register
 from register_visitor import RegisterVisitor
 from feedback import Feedback
+from notify import NotifyAdmin
 from visit import Visit
 from settings import *
 from telegram.ext import Updater, CommandHandler, MessageHandler, ConversationHandler, Filters
+from telegram.ext import CallbackQueryHandler
 
 # Remove logs from APIs
 logging.getLogger("telegram").setLevel(API_LOG_LEVEL)
@@ -51,7 +53,6 @@ def start(update, context):
     update.message.reply_text(
         'Para dar um feedback pro nosso serviço, digite /feedback'
     )
-
 
 if __name__ == '__main__':
 
@@ -123,6 +124,10 @@ if __name__ == '__main__':
 
         fallbacks=[CommandHandler('cancelar', Feedback.end)]
         ))
+
+    # Admin
+    dp.add_handler(CallbackQueryHandler(NotifyAdmin.approved, pattern='app'))
+    dp.add_handler(CallbackQueryHandler(NotifyAdmin.rejected, pattern='rej'))
 
 
     updater.start_polling()
