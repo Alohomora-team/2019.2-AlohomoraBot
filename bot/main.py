@@ -1,12 +1,20 @@
+"""
+Start program
+"""
+
+import logging
+import os
+
 from resident_control import Auth, HandleEntryVisitor
 from register import Register
 from register_visitor import RegisterVisitor
 from feedback import Feedback
+from notify import NotifyAdmin
 from visit import Visit
+from register_admin import RegisterAdmin
 from settings import *
 from telegram.ext import Updater, CommandHandler, MessageHandler, ConversationHandler, Filters
-import logging
-import os
+from telegram.ext import CallbackQueryHandler
 
 # Remove logs from APIs
 logging.getLogger("telegram").setLevel(API_LOG_LEVEL)
@@ -25,13 +33,30 @@ file_handler.setFormatter(f_format)
 logger.addHandler(file_handler)
 
 def start(update, context):
-    logger.info("Introducing the bot")
-    update.message.reply_text('Olá, bem vindo(a) ao bot do Alohomora!')
-    update.message.reply_text('Caso deseje fazer uma solicitação de visita a algum morador, digite /visitar')
-    update.message.reply_text('Digite /cadastrar para fazer o cadastro de um morador')
-    update.message.reply_text('Digite /autorizar para autorizar entrada de algum visitante')
-    update.message.reply_text('Para dar um feedback pro nosso serviço, digite /feedback')
-
+    """
+    Start interaction
+    """
+    logger.info(
+        "Introducing the bot"
+    )
+    update.message.reply_text(
+        'Olá, bem vindo(a) ao bot do Alohomora!'
+    )
+    update.message.reply_text(
+        'Caso deseje fazer uma solicitação de visita a algum morador, digite /visitar'
+    )
+    update.message.reply_text(
+        'Digite /cadastrar para fazer o cadastro de um morador'
+    )
+    update.message.reply_text(
+        'Digite /autorizar para autorizar entrada de algum visitante'
+    )
+    update.message.reply_text(
+        'Para dar um feedback pro nosso serviço, digite /feedback'
+    )
+    update.message.reply_text(
+        'Para criar um novo administrador do sistema, digite /novoadmin'
+    )
 
 if __name__ == '__main__':
 
@@ -56,7 +81,13 @@ if __name__ == '__main__':
             CPF:[MessageHandler(Filters.text, Register.cpf)],
             APARTMENT:[MessageHandler(Filters.text, Register.apartment)],
             BLOCK:[MessageHandler(Filters.text, Register.block)],
-            VOICE_REGISTER: [MessageHandler(Filters.voice, Register.voice_register)],
+            CATCH_AUDIO_SPEAKING_NAME:[
+                MessageHandler(Filters.voice, Register.catch_audio_speaking_name)
+            ],
+            CONFIRM_AUDIO_SPEAKING_NAME:[
+                MessageHandler(Filters.text, Register.confirm_audio_speaking_name)
+            ],
+            VOICE_REGISTER:[MessageHandler(Filters.voice, Register.voice_register)],
             REPEAT_VOICE:[MessageHandler(Filters.text, Register.repeat_voice)]
             },
 
@@ -105,6 +136,25 @@ if __name__ == '__main__':
 
         fallbacks=[CommandHandler('cancelar', Feedback.end)]
         ))
+
+    # Register admin
+    dp.add_handler(ConversationHandler(
+        entry_points=[CommandHandler('novoadmin', RegisterAdmin.index)],
+
+        states={
+            EMAIL_AUTH_ADMIN: [MessageHandler(Filters.text, RegisterAdmin.auth_email)],
+            PASSWORD_AUTH_ADMIN: [MessageHandler(Filters.text, RegisterAdmin.auth_password)],
+            REPEAT_AUTH_ADMIN: [MessageHandler(Filters.text, RegisterAdmin.repeat_auth_admin)],
+            ADMIN_REGISTER_EMAIL: [MessageHandler(Filters.text, RegisterAdmin.register_email)],
+            ADMIN_REGISTER_PWD: [MessageHandler(Filters.text, RegisterAdmin.register_password)],
+            },
+
+        fallbacks=[CommandHandler('cancelar', RegisterAdmin.end)]
+        ))
+
+    # Admin
+    dp.add_handler(CallbackQueryHandler(NotifyAdmin.approved, pattern='app'))
+    dp.add_handler(CallbackQueryHandler(NotifyAdmin.rejected, pattern='rej'))
 
 
     updater.start_polling()
