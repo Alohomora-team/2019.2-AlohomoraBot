@@ -27,8 +27,11 @@ CPF_AUTH, VOICE_AUTH = range(2)
 # Feedback constants
 FEEDBACK = range(1)
 
-# Auth admin and new admin constants
-EMAIL_AUTH_ADMIN, PASSWORD_AUTH_ADMIN, REPEAT_AUTH_ADMIN, ADMIN_REGISTER_EMAIL, ADMIN_REGISTER_PASSWORD = range(5)
+# Auth admin
+EMAIL_AUTH_ADMIN, PASSWORD_AUTH_ADMIN, REPEAT_AUTH_ADMIN = range(3)
+
+# New admin constants
+ADMIN_REGISTER_EMAIL, ADMIN_REGISTER_PWD = range(2)
 
 # Log format
 FORMAT = '%(asctime)s - %(levelname)s - %(name)s - %(message)s'

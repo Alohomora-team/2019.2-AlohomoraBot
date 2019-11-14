@@ -1,12 +1,17 @@
-import os
+"""
+Interactions to register an admin
+"""
+
 import json
 import logging
-import requests
+import os
 import subprocess
 import numpy
+import requests
 
 from checks import CheckAdmin
-from settings import EMAIL_AUTH_ADMIN, PASSWORD_AUTH_ADMIN, REPEAT_AUTH_ADMIN, ADMIN_REGISTER_EMAIL, ADMIN_REGISTER_PASSWORD
+from settings import EMAIL_AUTH_ADMIN, PASSWORD_AUTH_ADMIN, REPEAT_AUTH_ADMIN
+from settings import ADMIN_REGISTER_EMAIL, ADMIN_REGISTER_PWD
 from settings import PATH, LOG_NAME
 from telegram import KeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import ConversationHandler
@@ -19,8 +24,14 @@ logger = logging.getLogger(LOG_NAME)
 chat = {}
 
 class RegisterAdmin:
+    """
+    Register an admin
+    """
 
     def index(update, context):
+        """
+        Start the conversation
+        """
         logger.info("Introducing registration session")
         chat_id = update.message.chat_id
 
@@ -35,6 +46,9 @@ class RegisterAdmin:
         return EMAIL_AUTH_ADMIN
 
     def auth_email(update, context):
+        """
+        Get email to authenticate admin
+        """
         chat_id = update.message.chat_id
         email = update.message.text
 
@@ -59,6 +73,9 @@ class RegisterAdmin:
             return EMAIL_AUTH_ADMIN
 
     def auth_password(update, context):
+        """
+        Get password to authenticate admin
+        """
         chat_id = update.message.chat_id
         password = update.message.text
 
@@ -82,8 +99,10 @@ class RegisterAdmin:
             return ADMIN_REGISTER_EMAIL
         else:
             logger.error("Failed generating token")
-            update.message.reply_text('Email ou senha incorretos. Não foi possível identificar o administrador.')
-            
+            update.message.reply_text(
+                'Email ou senha incorretos. Não foi possível identificar o administrador.'
+            )
+
             yes_keyboard = KeyboardButton('Sim')
             no_keyboard = KeyboardButton('Não')
             keyboard = [[yes_keyboard], [no_keyboard]]
@@ -93,6 +112,9 @@ class RegisterAdmin:
             return REPEAT_AUTH_ADMIN
 
     def repeat_auth_admin(update, context):
+        """
+        Repeat authentication interaction
+        """
         chat_id = update.message.chat_id
         choice = update.message.text
 
@@ -111,12 +133,15 @@ class RegisterAdmin:
         return ConversationHandler.END
 
     def register_email(update, context):
+        """
+        Get new admin's email
+        """
         chat_id = update.message.chat_id
         email = update.message.text
 
         if not ValidateForm.email(email, update):
             return ADMIN_REGISTER_EMAIL
-        
+
         chat[chat_id]['email'] = email
         logger.debug(f"'email': '{chat[chat_id]['email']}'")
 
@@ -124,7 +149,9 @@ class RegisterAdmin:
 
         # if 'errors' not in check.keys():
         #     logger.error("Email already exists in database - asking again")
-        #     update.message.reply_text('Já existe um administrador com este email, tente novamente:')
+        #     update.message.reply_text(
+        #        'Já existe um administrador com este email, tente novamente:'
+        #    )
         #     return ADMIN_REGISTER_EMAIL
 
         logger.debug("Available email - proceed")
@@ -132,9 +159,12 @@ class RegisterAdmin:
         update.message.reply_text('Senha:')
         logger.info("Asking for password")
 
-        return ADMIN_REGISTER_PASSWORD
+        return ADMIN_REGISTER_PWD
 
     def register_password(update, context):
+        """
+        Get new admin's password
+        """
         chat_id = update.message.chat_id
         password = update.message.text
 
@@ -158,6 +188,9 @@ class RegisterAdmin:
 
 
     def end(update, context):
+        """
+        Cancel interaction
+        """
         logger.info("Canceling admin registration")
         chat_id = update.message.chat_id
 
@@ -169,6 +202,9 @@ class RegisterAdmin:
         return ConversationHandler.END
 
     def generate_token(chat_id):
+        """
+        Generate creator's token
+        """
         logger.info("Generating admin token")
         query = """
             mutation tokenAuth($email: String!, $password: String!){
@@ -188,6 +224,9 @@ class RegisterAdmin:
         return response
 
     def register_admin(chat_id):
+        """
+        Register an admin
+        """
         logger.info("Registering admin")
         query = """
         mutation createAdmin(
@@ -211,7 +250,11 @@ class RegisterAdmin:
                 'password': chat[chat_id]['password']
                 }
 
-        response = requests.post(PATH, headers={'Authorization': 'JWT %s' % chat[chat_id]['token']}, json={'query':query, 'variables':variables})
+        response = requests.post(PATH,
+                                headers={'Authorization': 'JWT %s' % chat[chat_id]['token']},
+                                json={'query':query,
+                                'variables':variables}
+                                )
 
         logger.debug(f"Response: {response.json()}")
 

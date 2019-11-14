@@ -138,7 +138,7 @@ if __name__ == '__main__':
             PASSWORD_AUTH_ADMIN: [MessageHandler(Filters.text, RegisterAdmin.auth_password)],
             REPEAT_AUTH_ADMIN: [MessageHandler(Filters.text, RegisterAdmin.repeat_auth_admin)],
             ADMIN_REGISTER_EMAIL: [MessageHandler(Filters.text, RegisterAdmin.register_email)],
-            ADMIN_REGISTER_PASSWORD: [MessageHandler(Filters.text, RegisterAdmin.register_password)],
+            ADMIN_REGISTER_PWD: [MessageHandler(Filters.text, RegisterAdmin.register_password)],
             },
 
         fallbacks=[CommandHandler('cancelar', RegisterAdmin.end)]

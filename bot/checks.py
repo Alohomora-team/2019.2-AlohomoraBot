@@ -144,8 +144,15 @@ class CheckVisitor:
         return response.json()
 
 class CheckAdmin:
+    """
+    Check admin information
+    """
 
     def auth_email(chat, chat_id):
+        """
+        Check if creator's email exists in database
+        """
+
         logger.debug("Checking if the informed email exists in database")
         query = """
         query admin($adminEmail: String!){
@@ -167,6 +174,10 @@ class CheckAdmin:
         return response.json()
 
     def email(chat, chat_id):
+        """
+        Check if email for new admin exists in database
+        """
+
         logger.debug("Checking if the informed email exists in database")
         query = """
         query admin($adminEmail: String!){
