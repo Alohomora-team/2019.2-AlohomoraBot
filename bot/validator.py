@@ -228,6 +228,9 @@ class ValidateForm:
         return True
 
     def audio_speaking_name(audio, update):
+        """
+        Validate the name audio duration
+        """
         logger.debug('\tValidating audio duration ...')
 
         if audio.duration < 0.9:
