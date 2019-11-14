@@ -1,11 +1,19 @@
+"""
+Util functions
+"""
+
 import logging
+
 from settings import LOG_NAME
 
 logger = logging.getLogger(LOG_NAME)
 
 def format_datetime(value):
+    """
+    Parse date string
+    """
     logger.info(value)
-    
+
     date = value[0:10]
     time = value[11:16]
 
