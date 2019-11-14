@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-import librosa
-=======
 """
 Register a user interaction
 """
@@ -10,13 +7,11 @@ import os
 import subprocess
 import numpy
 import requests
+import librosa
 
->>>>>>> a730943efcbdfe2e38b4c9b1e9cc91a63e500ca6
 from checks import CheckResident, CheckCondo
 from db.schema import create_resident
 from notify import NotifyAdmin
-from python_speech_features import mfcc
-from scipy.io.wavfile import read
 from settings import LOG_NAME
 from settings import NAME, PHONE, EMAIL, CPF, BLOCK, APARTMENT, VOICE_REGISTER, REPEAT_VOICE
 from settings import PATH, CATCH_AUDIO_SPEAKING_NAME, CONFIRM_AUDIO_SPEAKING_NAME
@@ -209,8 +204,12 @@ class Register:
 
         logger.debug("Existing apartment - proceed")
 
-        update.message.reply_text('Agora preciso que você grave um áudio dizendo seu nome completo.')
-        update.message.reply_text('O áudio deve ter no mínimo 1 segundo e no máximo 3 segundos.')
+        update.message.reply_text(
+            'Agora preciso que você grave um áudio dizendo seu nome completo.'
+        )
+        update.message.reply_text(
+            'O áudio deve ter no mínimo 1 segundo e no máximo 3 segundos.'
+        )
 
         return CATCH_AUDIO_SPEAKING_NAME
 
@@ -314,7 +313,10 @@ Escute o audio gravado e verifique se:
         confirm_keyboard = KeyboardButton('Confirmar')
         keyboard = [[repeat_keyboard], [confirm_keyboard]]
         choice = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
-        update.message.reply_text('Escute o seu áudio e confirme se está com boa qualidade', reply_markup=choice)
+        update.message.reply_text(
+            'Escute o seu áudio e confirme se está com boa qualidade',
+            reply_markup=choice
+        )
 
         logger.info("Asking to confirm or repeat voice audio ...")
 
