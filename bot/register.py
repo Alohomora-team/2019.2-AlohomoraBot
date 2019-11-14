@@ -215,6 +215,9 @@ class Register:
         return CATCH_AUDIO_SPEAKING_NAME
 
     def catch_audio_speaking_name(update, context):
+        """
+        Catch the name audio and ask for confirmation
+        """
         chat_id = update.message.chat_id
         audio = update.message.voice
 
@@ -244,6 +247,9 @@ Escute o audio gravado e verifique se:
         return CONFIRM_AUDIO_SPEAKING_NAME
 
     def confirm_audio_speaking_name(update, context):
+        """
+        Confirm the name audio and run all audio processes
+        """
         chat_id = update.message.chat_id
         choice = update.message.text
 
@@ -271,7 +277,8 @@ Escute o audio gravado e verifique se:
         logger.debug('\t\tDone')
 
         logger.debug("\tPutting in the chat's dictionary ...")
-        chat[chat_id]['audio_speaking_name'] = data.tolist()
+        chat[chat_id]['audio_speaking_name'] = list(data)
+        chat[chat_id]['audio_samplerate'] = samplerate
         logger.debug('\t\tDone')
 
         logger.debug('\tDeleting the audio file ...')
@@ -291,13 +298,16 @@ Escute o audio gravado e verifique se:
         return VOICE_REGISTER
 
     def voice_register(update, context):
+        """
+        Catch the phrase audio and ask for confirmation
+        """
         chat_id = update.message.chat_id
         audio = update.message.voice
 
         if not ValidateForm.voice(audio, update):
             return VOICE_REGISTER
 
-        chat[chat_id]['voice_data'] = audio
+        chat[chat_id]['audio_speaking_phrase'] = audio
 
         # Repeat and confirm buttons
         repeat_keyboard = KeyboardButton('Repetir')
@@ -326,7 +336,7 @@ Escute o audio gravado e verifique se:
         logger.debug("\tAudio confirmed")
 
         logger.debug('Downloading audio ...')
-        audio_file_path = chat[chat_id]['voice_data'].get_file().download()
+        audio_file_path = chat[chat_id]['audio_speaking_phrase'].get_file().download()
         wav_audio_file_path = audio_file_path.split('.')[0] + '.wav'
         logger.debug('\tDone')
 
@@ -338,12 +348,15 @@ Escute o audio gravado e verifique se:
         data, samplerate = librosa.load(wav_audio_file_path, sr=16000, mono=True)
         logger.debug('\tDone')
 
-        chat[chat_id]['voice_data'] = data.tolist()
+        logger.debug('Putting into dictionary ...')
+        chat[chat_id]['audio_speaking_phrase'] = list(data)
+        logger.debug('\tDone')
 
+        logger.debug('Removindo audio files ...')
         os.remove(audio_file_path)
         os.remove(wav_audio_file_path)
+        logger.debug('\tDone')
 
-        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
         response = Register.register_resident(chat_id)
 
         if(response.status_code == 200 and 'errors' not in response.json().keys()):
@@ -394,8 +407,9 @@ Escute o audio gravado e verifique se:
             $cpf: String!,
             $apartment: String!,
             $block: String!,
-            $voiceData: String,
-            $audioSpeakingName: String,
+            $audioSpeakingPhrase: [Float]!
+            $audioSpeakingName: [Float]!,
+            $audioSamplerate: Int
             ){
             createResident(
                 completeName: $completeName,
@@ -404,8 +418,9 @@ Escute o audio gravado e verifique se:
                 phone: $phone,
                 apartment: $apartment,
                 block: $block,
-                voiceData: $voiceData,
-                audioSpeakingName: $audioSpeakingName
+                audioSpeakingPhrase: $audioSpeakingPhrase,
+                audioSpeakingName: $audioSpeakingName,
+                audioSamplerate: $audioSamplerate
             ){
                 resident{
                     completeName
@@ -430,8 +445,9 @@ Escute o audio gravado e verifique se:
                 'cpf': chat[chat_id]['cpf'],
                 'apartment': chat[chat_id]['apartment'],
                 'block': chat[chat_id]['block'],
-                'voiceData': chat[chat_id]['voice_data'],
-                'audioSpeakingName': chat[chat_id]['audio_speaking_name']
+                'audioSpeakingPhrase': chat[chat_id]['audio_speaking_phrase'],
+                'audioSpeakingName': chat[chat_id]['audio_speaking_name'],
+                'audioSamplerate': chat[chat_id]['audio_samplerate']
                 }
 
         response = requests.post(PATH, json={'query':query, 'variables':variables})
