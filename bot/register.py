@@ -7,15 +7,14 @@ import os
 import subprocess
 import numpy
 import requests
+import librosa
 
 from checks import CheckResident, CheckCondo
 from db.schema import create_resident
 from notify import NotifyAdmin
-from python_speech_features import mfcc
-from scipy.io.wavfile import read
 from settings import LOG_NAME
 from settings import NAME, PHONE, EMAIL, CPF, BLOCK, APARTMENT, VOICE_REGISTER, REPEAT_VOICE
-from settings import PATH
+from settings import PATH, CATCH_AUDIO_SPEAKING_NAME, CONFIRM_AUDIO_SPEAKING_NAME
 from telegram import KeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import ConversationHandler
 from validator import ValidateForm
@@ -206,48 +205,108 @@ class Register:
         logger.debug("Existing apartment - proceed")
 
         update.message.reply_text(
-            'Vamos agora cadastrar a sua voz! Grave uma breve mensagem de' +
-            ' voz dizendo "Juro que sou eu"'
+            'Agora preciso que você grave um áudio dizendo seu nome completo.'
+        )
+        update.message.reply_text(
+            'O áudio deve ter no mínimo 1 segundo e no máximo 3 segundos.'
         )
 
-        logger.info("Requesting voice audio")
+        return CATCH_AUDIO_SPEAKING_NAME
+
+    def catch_audio_speaking_name(update, context):
+        """
+        Catch the name audio and ask for confirmation
+        """
+        chat_id = update.message.chat_id
+        audio = update.message.voice
+
+        logger.debug('\t\tAudio catched.')
+        if ValidateForm.audio_speaking_name(audio, update) is False:
+            return CATCH_AUDIO_SPEAKING_NAME
+
+        chat[chat_id]['audio_speaking_name'] = audio
+
+        logger.debug('\tRequesting user confirmation ...')
+        next_button = KeyboardButton('Prosseguir')
+        repeat_button = KeyboardButton('Regravar')
+        prompt_buttons = [[repeat_button], [next_button]]
+        prompt = ReplyKeyboardMarkup(prompt_buttons, resize_keyboard=True, one_time_keyboard=True)
+        update.message.reply_text(
+            '''
+Escute o audio gravado e verifique se:
+1 - A fala foi natural e sem grandes pausas
+2 - A fala não sofreu cortes nem no fim nem no começo do áudio
+            '''
+        )
+        update.message.reply_text(
+            'Caso o áudio cumpra essas exigências, prossiga. Caso contrário, por favor, regrave.',
+            reply_markup=prompt
+        )
+
+        return CONFIRM_AUDIO_SPEAKING_NAME
+
+    def confirm_audio_speaking_name(update, context):
+        """
+        Confirm the name audio and run all audio processes
+        """
+        chat_id = update.message.chat_id
+        choice = update.message.text
+
+        if choice == 'Regravar':
+            update.message.reply_text('Ok. Pode regravar.')
+            logger.debug('\t\tUser has requested to record again.')
+            logger.debug('\tWaiting for audio ...')
+            return CATCH_AUDIO_SPEAKING_NAME
+
+        logger.debug('\t\tUser confirmed the audio')
+
+        audio = chat[chat_id]['audio_speaking_name']
+
+        logger.debug('\tDownloading audio file ...')
+        audio_file_path = audio.get_file().download()
+        logger.debug('\t\tDone')
+
+        logger.debug('\tConverting audio file into .wav ...')
+        wav_audio_file_path = audio_file_path.split('.')[0] + '.wav'
+        subprocess.run(['ffmpeg', '-i', audio_file_path, wav_audio_file_path], check=True)
+        logger.debug('\t\tDone')
+
+        logger.debug('\tOpening the audio file...')
+        data, samplerate = librosa.load(wav_audio_file_path, sr=16000, mono=True)
+        logger.debug('\t\tDone')
+
+        logger.debug("\tPutting in the chat's dictionary ...")
+        chat[chat_id]['audio_speaking_name'] = list(data)
+        chat[chat_id]['audio_samplerate'] = samplerate
+        logger.debug('\t\tDone')
+
+        logger.debug('\tDeleting the audio file ...')
+        os.remove(wav_audio_file_path)
+        os.remove(audio_file_path)
+        logger.debug('\t\tDone')
+
+        logger.debug('TASK accomplished successfully')
+
+        update.message.reply_text('Vamos agora catalogar as características da sua voz!')
+        update.message.reply_text(
+            'Grave uma breve mensagem de voz dizendo a frase: "Juro que sou eu".'
+        )
+
+        logger.info("Requesting voice audio ...")
 
         return VOICE_REGISTER
 
     def voice_register(update, context):
         """
-        Get voice from the user
+        Catch the phrase audio and ask for confirmation
         """
-
         chat_id = update.message.chat_id
-        voice_register = update.message.voice
+        audio = update.message.voice
 
-        if not ValidateForm.voice(voice_register, update):
+        if not ValidateForm.voice(audio, update):
             return VOICE_REGISTER
 
-        update.message.reply_text('Ótimo!')
-
-        f_reg = voice_register.get_file()
-
-        src = f_reg.download()
-        dest = src.split('.')[0] + ".wav"
-
-        subprocess.run(['ffmpeg', '-i', src, dest])
-
-        samplerate, voice_data = read(dest)
-
-        mfcc_data = mfcc(voice_data, samplerate=samplerate,
-                         nfft=1200, winfunc=numpy.hamming)
-        mfcc_data = mfcc_data.tolist()
-        mfcc_data = json.dumps(mfcc_data)
-
-        chat[chat_id]['voice_reg'] = None
-        chat[chat_id]['voice_mfcc'] = mfcc_data
-        logger.debug(f"'voice_reg': '{chat[chat_id]['voice_reg']}'")
-        logger.debug(
-            f"'voice_mfcc': '{chat[chat_id]['voice_mfcc'][:1]}.."+
-            ".{chat[chat_id]['voice_mfcc'][-1:]}'"
-        )
+        chat[chat_id]['audio_speaking_phrase'] = audio
 
         # Repeat and confirm buttons
         repeat_keyboard = KeyboardButton('Repetir')
@@ -259,7 +318,7 @@ class Register:
             reply_markup=choice
         )
 
-        logger.info("Asking to confirm or repeat voice audio")
+        logger.info("Asking to confirm or repeat voice audio ...")
 
         return REPEAT_VOICE
 
@@ -272,13 +331,34 @@ class Register:
         choice = update.message.text
 
         if choice == "Repetir":
-            logger.debug("Repeating voice audio")
+            logger.debug("Repeating voice audio ...")
             update.message.reply_text('Por favor, grave novamente:')
             return VOICE_REGISTER
 
-        logger.debug("Confirming voice audio")
+        logger.debug("\tAudio confirmed")
 
-        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
+        logger.debug('Downloading audio ...')
+        audio_file_path = chat[chat_id]['audio_speaking_phrase'].get_file().download()
+        wav_audio_file_path = audio_file_path.split('.')[0] + '.wav'
+        logger.debug('\tDone')
+
+        logger.debug('Converting into wav ...')
+        subprocess.run(['ffmpeg', '-i', audio_file_path, wav_audio_file_path], check=True)
+        logger.debug('\tDone')
+
+        logger.debug('Opening audio and resampling ...')
+        data, samplerate = librosa.load(wav_audio_file_path, sr=16000, mono=True)
+        logger.debug('\tDone')
+
+        logger.debug('Putting into dictionary ...')
+        chat[chat_id]['audio_speaking_phrase'] = list(data)
+        logger.debug('\tDone')
+
+        logger.debug('Removindo audio files ...')
+        os.remove(audio_file_path)
+        os.remove(wav_audio_file_path)
+        logger.debug('\tDone')
+
         response = Register.register_resident(chat_id)
 
         if(response.status_code == 200 and 'errors' not in response.json().keys()):
@@ -315,7 +395,6 @@ class Register:
 
         return ConversationHandler.END
 
-
     def register_resident(chat_id):
         """
         Register a resident
@@ -330,8 +409,9 @@ class Register:
             $cpf: String!,
             $apartment: String!,
             $block: String!,
-            $voiceData: String,
-            $mfccData: String,
+            $audioSpeakingPhrase: [Float]!
+            $audioSpeakingName: [Float]!,
+            $audioSamplerate: Int
             ){
             createResident(
                 completeName: $completeName,
@@ -340,8 +420,9 @@ class Register:
                 phone: $phone,
                 apartment: $apartment,
                 block: $block,
-                voiceData: $voiceData
-                mfccData: $mfccData
+                audioSpeakingPhrase: $audioSpeakingPhrase,
+                audioSpeakingName: $audioSpeakingName,
+                audioSamplerate: $audioSamplerate
             ){
                 resident{
                     completeName
@@ -366,8 +447,9 @@ class Register:
                 'cpf': chat[chat_id]['cpf'],
                 'apartment': chat[chat_id]['apartment'],
                 'block': chat[chat_id]['block'],
-                'voiceData': chat[chat_id]['voice_reg'],
-                'mfccData': chat[chat_id]['voice_mfcc']
+                'audioSpeakingPhrase': chat[chat_id]['audio_speaking_phrase'],
+                'audioSpeakingName': chat[chat_id]['audio_speaking_name'],
+                'audioSamplerate': chat[chat_id]['audio_samplerate']
                 }
 
         response = requests.post(PATH, json={'query':query, 'variables':variables})

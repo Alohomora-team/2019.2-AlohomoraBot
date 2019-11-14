@@ -226,3 +226,22 @@ class ValidateForm:
             return False
 
         return True
+
+    def audio_speaking_name(audio, update):
+        """
+        Validate the name audio duration
+        """
+        logger.debug('\tValidating audio duration ...')
+
+        if audio.duration < 0.9:
+            logger.error('\t\tToo short audio. Trying again.')
+            update.message.reply_text('Seu áudio foi muito curto. Por favor, grave novamente.')
+            return False
+
+        if audio.duration > 3.1:
+            logger.error('\t\tToo long audio. Trying again.')
+            update.message.reply_text('Seu áudio foi muito longo. Por favor, grave novamente.')
+            return False
+
+        logger.debug('\t\tAudio is ok.\n')
+        return True
