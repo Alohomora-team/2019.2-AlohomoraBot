@@ -1,19 +1,29 @@
+"""
+Handler visitor interaction
+"""
+import logging
+import requests
+
 from settings import *
 from telegram.ext import ConversationHandler
 from telegram import KeyboardButton, ReplyKeyboardMarkup
 from validator import ValidateForm
 from checks import CheckVisitor, CheckCondo
-import logging
-import requests
 
 logger = logging.getLogger(LOG_NAME)
 
 chat = {}
 
 class Visit:
+    """
+    Functions that handlers visitors interactions
+    """
 
     def index(update, context):
-        logger.info("Introducing visitor session")
+        """
+        Start interactions
+        """
+        logger.info("introducing visitor session")
         chat_id = update.message.chat_id
 
         update.message.reply_text('Caso deseje interromper o processo digite /cancelar')
@@ -24,18 +34,24 @@ class Visit:
 
         yes_keyboard = KeyboardButton('Sim')
         no_keyboard = KeyboardButton('Não')
-        keyboard = [[yes_keyboard],[no_keyboard]]
+        keyboard = [[yes_keyboard], [no_keyboard]]
         response = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
-        update.message.reply_text('Você já possui cadastro?', reply_markup = response)
+        update.message.reply_text(
+            'Você já possui cadastro?',
+            reply_markup=response
+        )
 
         return VERIFY_REGISTRATION
 
     def verify_registration(update, context):
+        """
+        Verify if visitor is registered
+        """
         chat_id = update.message.chat_id
         response = update.message.text
-        
+
         if not ValidateForm.boolean_value(response, update):
-           return VERIFY_REGISTRATION
+            return VERIFY_REGISTRATION
 
         if response == "Sim":
             logger.info("Visitor replied that he has registration")
@@ -47,8 +63,11 @@ class Visit:
             logger.info("Visitor replied that he hasn't registration")
             update.message.reply_text('Qual o seu nome completo?')
             return VISITOR_REGISTER_NAME
-        
+
     def cpf(update, context):
+        """
+        Validate cpf
+        """
         chat_id = update.message.chat_id
         cpf = update.message.text
 
@@ -61,7 +80,7 @@ class Visit:
         logger.debug(f"'cpf': '{chat[chat_id]['cpf']}'")
 
         check = CheckVisitor.cpf(chat, chat_id)
-        
+
         #if visitor have registration into database
         if 'errors' not in check.keys():
             logger.error("Visit have register")
@@ -76,6 +95,9 @@ class Visit:
 
 
     def block(update, context):
+        """
+        Validate block
+        """
         chat_id = update.message.chat_id
         block = update.message.text
 
@@ -100,6 +122,9 @@ class Visit:
         return VISITOR_APARTMENT
 
     def apartment(update, context):
+        """
+        Validate apartment
+        """
 
         chat_id = update.message.chat_id
         apartment = update.message.text
@@ -123,7 +148,9 @@ class Visit:
 
         if(response.status_code == 200 and 'errors' not in response.json().keys()):
             logger.info("Entry visitor registered in database")
-            update.message.reply_text('Sua solicitação de entrada foi criada. Aguarde resposta do morador!')
+            update.message.reply_text(
+                'Sua solicitação de entrada foi criada. Aguarde resposta do morador!'
+            )
         else:
             logger.error("Entry visitor registration failed")
             update.message.reply_text('Falha no sistema!')
@@ -135,6 +162,9 @@ class Visit:
         return ConversationHandler.END
 
     def create_entry(chat_id):
+        """
+        Create a visitor entry
+        """
         logger.debug("Creating new visitor entry")
 
         query = """
@@ -173,6 +203,9 @@ class Visit:
         return response
 
     def end(update, context):
+        """
+        Cancel interaction
+        """
         logger.info("Canceling visit")
         chat_id = update.message.chat_id
 

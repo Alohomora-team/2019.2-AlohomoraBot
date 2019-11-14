@@ -1,3 +1,13 @@
+"""
+Register a user interaction
+"""
+import json
+import logging
+import os
+import subprocess
+import numpy
+import requests
+
 from checks import CheckResident, CheckCondo
 from python_speech_features import mfcc
 from scipy.io.wavfile import read
@@ -7,20 +17,21 @@ from settings import PATH
 from telegram import KeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import ConversationHandler
 from validator import ValidateForm
-import json
-import logging
-import numpy
-import os
-import requests
-import subprocess
+
 
 logger = logging.getLogger(LOG_NAME)
 
 chat = {}
 
 class Register:
+    """
+    Register a resident
+    """
 
     def index(update, context):
+        """
+        Start the conversation
+        """
         logger.info("Introducing registration session")
         chat_id = update.message.chat_id
 
@@ -35,6 +46,9 @@ class Register:
         return NAME
 
     def name(update, context):
+        """
+        Get name of a resident
+        """
         chat_id = update.message.chat_id
         name = update.message.text
 
@@ -45,8 +59,12 @@ class Register:
         logger.debug(f"'name': '{chat[chat_id]['name']}'")
 
         contact_keyboard = KeyboardButton('Enviar meu número de telefone', request_contact=True)
-        custom_keyboard = [[ contact_keyboard ]]
-        reply_markup = ReplyKeyboardMarkup(custom_keyboard, one_time_keyboard=True, resize_keyboard=True)
+        custom_keyboard = [[contact_keyboard]]
+        reply_markup = ReplyKeyboardMarkup(
+            custom_keyboard,
+            one_time_keyboard=True,
+            resize_keyboard=True
+        )
 
         update.message.reply_text('Telefone:', reply_markup=reply_markup)
         logger.info("Asking for phone")
@@ -54,6 +72,9 @@ class Register:
         return PHONE
 
     def phone(update, context):
+        """
+        Get phone information
+        """
         chat_id = update.message.chat_id
         phone = update.message.text
         contact = update.effective_message.contact
@@ -72,6 +93,10 @@ class Register:
         return EMAIL
 
     def email(update, context):
+        """
+        Get email information
+        """
+
         chat_id = update.message.chat_id
         email = update.message.text
 
@@ -96,6 +121,10 @@ class Register:
         return CPF
 
     def cpf(update, context):
+        """
+        Get cpf information
+        """
+
         chat_id = update.message.chat_id
         cpf = update.message.text
 
@@ -124,6 +153,10 @@ class Register:
 
 
     def block(update, context):
+        """
+        Get block information
+        """
+
         chat_id = update.message.chat_id
         block = update.message.text
 
@@ -148,6 +181,10 @@ class Register:
         return APARTMENT
 
     def apartment(update, context):
+        """
+        Get apartment information
+        """
+
         chat_id = update.message.chat_id
         apartment = update.message.text
 
@@ -167,13 +204,19 @@ class Register:
         logger.debug("Existing apartment - proceed")
 
         update.message.reply_text(
-            'Vamos agora cadastrar a sua voz! Grave uma breve mensagem de voz dizendo "Juro que sou eu"')
+            'Vamos agora cadastrar a sua voz! Grave uma breve mensagem de' +
+            ' voz dizendo "Juro que sou eu"'
+        )
 
         logger.info("Requesting voice audio")
 
         return VOICE_REGISTER
 
     def voice_register(update, context):
+        """
+        Get voice from the user
+        """
+
         chat_id = update.message.chat_id
         voice_register = update.message.voice
 
@@ -199,20 +242,30 @@ class Register:
         chat[chat_id]['voice_reg'] = None
         chat[chat_id]['voice_mfcc'] = mfcc_data
         logger.debug(f"'voice_reg': '{chat[chat_id]['voice_reg']}'")
-        logger.debug(f"'voice_mfcc': '{chat[chat_id]['voice_mfcc'][:1]}...{chat[chat_id]['voice_mfcc'][-1:]}'")
+        logger.debug(
+            f"'voice_mfcc': '{chat[chat_id]['voice_mfcc'][:1]}.."+
+            ".{chat[chat_id]['voice_mfcc'][-1:]}'"
+        )
 
         # Repeat and confirm buttons
         repeat_keyboard = KeyboardButton('Repetir')
         confirm_keyboard = KeyboardButton('Confirmar')
-        keyboard = [[repeat_keyboard],[confirm_keyboard]]
+        keyboard = [[repeat_keyboard], [confirm_keyboard]]
         choice = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
-        update.message.reply_text('Escute o seu áudio e confirme se está com boa qualidade', reply_markup = choice)
+        update.message.reply_text(
+            'Escute o seu áudio e confirme se está com boa qualidade',
+            reply_markup=choice
+        )
 
         logger.info("Asking to confirm or repeat voice audio")
 
         return REPEAT_VOICE
 
     def repeat_voice(update, context):
+        """
+        Repeate voice interaction
+        """
+
         chat_id = update.message.chat_id
         choice = update.message.text
 
@@ -239,6 +292,10 @@ class Register:
         return ConversationHandler.END
 
     def end(update, context):
+        """
+        Cancel interaction
+        """
+
         logger.info("Canceling registration")
         chat_id = update.message.chat_id
 
@@ -251,6 +308,10 @@ class Register:
 
 
     def register_resident(chat_id):
+        """
+        Register a resident
+        """
+
         logger.info("Registering resident")
         query = """
         mutation createResident(
@@ -305,4 +366,3 @@ class Register:
         logger.debug(f"Response: {response.json()}")
 
         return response
-
