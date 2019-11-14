@@ -11,6 +11,7 @@ from register_visitor import RegisterVisitor
 from feedback import Feedback
 from notify import NotifyAdmin
 from visit import Visit
+from register_admin import RegisterAdmin
 from settings import *
 from telegram.ext import Updater, CommandHandler, MessageHandler, ConversationHandler, Filters
 from telegram.ext import CallbackQueryHandler
@@ -52,6 +53,9 @@ def start(update, context):
     )
     update.message.reply_text(
         'Para dar um feedback pro nosso serviço, digite /feedback'
+    )
+    update.message.reply_text(
+        'Para criar um novo administrador do sistema, digite /novoadmin'
     )
 
 if __name__ == '__main__':
@@ -129,6 +133,21 @@ if __name__ == '__main__':
             },
 
         fallbacks=[CommandHandler('cancelar', Feedback.end)]
+        ))
+
+    # Register admin
+    dp.add_handler(ConversationHandler(
+        entry_points=[CommandHandler('novoadmin', RegisterAdmin.index)],
+
+        states={
+            EMAIL_AUTH_ADMIN: [MessageHandler(Filters.text, RegisterAdmin.auth_email)],
+            PASSWORD_AUTH_ADMIN: [MessageHandler(Filters.text, RegisterAdmin.auth_password)],
+            REPEAT_AUTH_ADMIN: [MessageHandler(Filters.text, RegisterAdmin.repeat_auth_admin)],
+            ADMIN_REGISTER_EMAIL: [MessageHandler(Filters.text, RegisterAdmin.register_email)],
+            ADMIN_REGISTER_PWD: [MessageHandler(Filters.text, RegisterAdmin.register_password)],
+            },
+
+        fallbacks=[CommandHandler('cancelar', RegisterAdmin.end)]
         ))
 
     # Admin

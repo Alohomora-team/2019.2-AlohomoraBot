@@ -142,3 +142,58 @@ class CheckVisitor:
         logger.debug(f"Response: {response.json()}")
 
         return response.json()
+
+class CheckAdmin:
+    """
+    Check admin information
+    """
+
+    def auth_email(chat, chat_id):
+        """
+        Check if creator's email exists in database
+        """
+
+        logger.debug("Checking if the informed email exists in database")
+        query = """
+        query admin($adminEmail: String!){
+            admin(adminEmail: $adminEmail){
+                admin {
+                    email
+                }
+            }
+        }
+        """
+
+        variables = {
+                'adminEmail': chat[chat_id]['auth-email']
+                }
+
+        response = requests.post(PATH, json={'query': query, 'variables':variables})
+        logger.debug(f"Response: {response.json()}")
+
+        return response.json()
+
+    def email(chat, chat_id):
+        """
+        Check if email for new admin exists in database
+        """
+
+        logger.debug("Checking if the informed email exists in database")
+        query = """
+        query admin($adminEmail: String!){
+            admin(adminEmail: $adminEmail){
+                admin {
+                    email
+                }
+            }
+        }
+        """
+
+        variables = {
+                'adminEmail': chat[chat_id]['email']
+                }
+
+        response = requests.post(PATH, json={'query': query, 'variables':variables})
+        logger.debug(f"Response: {response.json()}")
+
+        return response.json()
