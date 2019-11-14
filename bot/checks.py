@@ -1,13 +1,21 @@
-from settings import PATH, LOG_NAME
-import os
-import requests
+"""
+Check if visitors information is registeredi in database
+"""
 import logging
+
+from settings import PATH, LOG_NAME
 
 logger = logging.getLogger(LOG_NAME)
 
 class CheckCondo:
+    """
+    Check informations about condominium
+    """
 
     def block(chat, chat_id):
+        """
+        Check if block exists
+        """
         logger.debug("Checking if the informed block exists in database")
         query = """
         query block($number: String!){
@@ -27,6 +35,9 @@ class CheckCondo:
         return response.json()
 
     def apartment(chat, chat_id):
+        """
+        Check if apartments exists in API database
+        """
         logger.debug("Checking if the informed apartment exists in database")
         query = """
         query apartment($number: String!, $block: String!){
@@ -50,8 +61,15 @@ class CheckCondo:
         return response.json()
 
 class CheckResident:
+    """
+    Check resident informations
+    """
 
     def email(chat, chat_id):
+        """
+        Check if API has that e-mail registered
+        """
+
         logger.debug("Checking if the informed email exists in database")
         query = """
         query resident($email: String!){
@@ -71,6 +89,10 @@ class CheckResident:
         return response.json()
 
     def cpf(chat, chat_id):
+        """
+        Checking if cpf exists
+        """
+
         logger.debug("Checking if the informed CPF exists in database")
         query = """
         query resident($cpf: String!){
@@ -91,9 +113,16 @@ class CheckResident:
         return response.json()
 
 
-class CheckVisitor: 
+class CheckVisitor:
+    """
+    Check visitors informations
+    """
 
     def cpf(chat, chat_id):
+        """
+        Check if visitor have cpf registered
+        """
+
         logger.debug("Checking if the informed CPF of visitor exists in database")
         query = """
         query visitor($cpf: String!){

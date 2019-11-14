@@ -1,19 +1,32 @@
-from settings import *
-from telegram.ext import ConversationHandler
+"""
+Feedback interactions
+"""
+
 import logging
 import requests
+
+from settings import *
+from telegram.ext import ConversationHandler
 
 logger = logging.getLogger(LOG_NAME)
 
 chat = {}
 
 class Feedback:
+    """
+    Class with feedback interactions
+    """
 
     def index(update, context):
+        """
+        Start interaction
+        """
         chat_id = update.message.chat_id
 
         logger.info("Introducing feedback session")
-        update.message.reply_text("Ok. Digite a mensagem que deseja enviar como feedback para o nosso sistema:")
+        update.message.reply_text(
+            "Ok. Digite a mensagem que deseja enviar como feedback para o nosso sistema:"
+        )
 
         chat[chat_id] = {}
         logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
@@ -21,6 +34,10 @@ class Feedback:
         return FEEDBACK
 
     def store(update, context):
+        """
+        Save feedback information
+        """
+
         chat_id = update.message.chat_id
         feedback = update.message.text
 
@@ -60,6 +77,9 @@ class Feedback:
         return ConversationHandler.END
 
     def end(update, context):
+        """
+        Cancel interaction
+        """
         chat_id = update.message.chat_id
 
         update.message.reply_text('Feedback cancelado!')

@@ -45,8 +45,12 @@ class Register:
         logger.debug(f"'name': '{chat[chat_id]['name']}'")
 
         contact_keyboard = KeyboardButton('Enviar meu número de telefone', request_contact=True)
-        custom_keyboard = [[ contact_keyboard ]]
-        reply_markup = ReplyKeyboardMarkup(custom_keyboard, one_time_keyboard=True, resize_keyboard=True)
+        custom_keyboard = [[contact_keyboard]]
+        reply_markup = ReplyKeyboardMarkup(
+		custom_keyboard,
+		one_time_keyboard=True,
+		resize_keyboard=True
+	)
 
         update.message.reply_text('Telefone:', reply_markup=reply_markup)
         logger.info("Asking for phone")
@@ -167,7 +171,9 @@ class Register:
         logger.debug("Existing apartment - proceed")
 
         update.message.reply_text(
-            'Vamos agora cadastrar a sua voz! Grave uma breve mensagem de voz dizendo "Juro que sou eu"')
+            'Vamos agora cadastrar a sua voz! Grave uma breve mensagem \\
+	 	de voz dizendo "Juro que sou eu"'
+	)
 
         logger.info("Requesting voice audio")
 

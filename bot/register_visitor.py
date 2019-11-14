@@ -1,8 +1,13 @@
+"""
+    Class that has all functions to register a Visitor
+"""
+
 from settings import LOG_NAME, PATH
 from settings import VISITOR_REGISTER_NAME, VISITOR_REGISTER_CPF, VISITOR_BLOCK
 from checks import CheckVisitor
 from telegram.ext import ConversationHandler
 from validator import ValidateForm
+
 import logging
 import requests
 
@@ -11,6 +16,7 @@ logger = logging.getLogger(LOG_NAME)
 chat = {}
 
 class RegisterVisitor:
+	"""Have all function to register a user"""
 
     def name(update, context):
         chat_id = update.message.chat_id

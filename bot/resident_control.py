@@ -1,25 +1,36 @@
+"""
+Control access interaction
+"""
+
 import json
 import logging
 import subprocess
 import numpy
 import requests
+
+from helpers import format_datetime
 from python_speech_features import mfcc
 from scipy.io.wavfile import read
-from telegram.ext import ConversationHandler
-from telegram import KeyboardButton, ReplyKeyboardMarkup
 from settings import CPF_AUTH, VOICE_AUTH, HANDLE_VISITORS_PENDING
 from settings import PATH, LOG_NAME
+from telegram import KeyboardButton, ReplyKeyboardMarkup
+from telegram.ext import ConversationHandler
 from validator import ValidateForm
-from helpers import format_datetime
 
 LOGGER = logging.getLogger(LOG_NAME)
 
 CHAT = {}
 
 class Auth:
+    """
+    Authentication interaction
+    """
 
     @staticmethod
     def index(update, context):
+        """
+        Start interaction
+        """
         chat_id = update.message.chat_id
 
         LOGGER.info("Introducing authentication session")
@@ -36,6 +47,9 @@ class Auth:
 
     @staticmethod
     def cpf(update, context):
+        """
+        Request cpf
+        """
         chat_id = update.message.chat_id
         cpf = update.message.text
 
@@ -53,6 +67,9 @@ class Auth:
         return VOICE_AUTH
     @staticmethod
     def voice(update, context):
+        """
+        Request voice
+        """
         chat_id = update.message.chat_id
         voice_auth = update.message.voice
 
@@ -138,6 +155,9 @@ class Auth:
 
     @staticmethod
     def authenticate(chat_id):
+        """
+        Authenticate user
+        """
         LOGGER.info("Authenticating resident")
         query = """
             query voiceBelongsResident(
@@ -160,9 +180,15 @@ class Auth:
         return response.json()
 
 class HandleEntryVisitor:
+    """
+    Visitor request interactino
+    """
 
     @staticmethod
     def index(update, context):
+        """
+        Start conversation
+        """
         chat_id = update.message.chat_id
         reply = update.message.text
 
@@ -244,6 +270,10 @@ class HandleEntryVisitor:
 
     @staticmethod
     def get_resident_apartment(chat_id):
+        """
+        Get resident apartment
+        """
+
         LOGGER.debug("Getting resident block and apartment")
         query = """
             query resident(
@@ -272,6 +302,9 @@ class HandleEntryVisitor:
 
     @staticmethod
     def get_entries_pending(chat_id):
+        """
+        Get all pending entries
+        """
         LOGGER.debug("Sending query to get entries pending of visitors")
         query = """
             query entriesVisitorsPending(
@@ -303,6 +336,9 @@ class HandleEntryVisitor:
 
     @staticmethod
     def allow_entry(chat_id):
+        """
+        Allow access to a visitor
+        """
         LOGGER.info("Updating entry")
         query = """
             mutation updateEntryVisitorPending(
@@ -329,6 +365,9 @@ class HandleEntryVisitor:
 
     @staticmethod
     def delete_entries_pending(chat_id):
+        """
+        Remove all pending entries
+        """
         LOGGER.info("Deleting all entries visitors pending")
         query = """
             mutation deleteEntriesVisitorsPending(
@@ -353,6 +392,9 @@ class HandleEntryVisitor:
 
     @staticmethod
     def delete_entry_pending(chat_id):
+        """
+        Remove a entry
+        """
         LOGGER.debug("Deleting a specific entry visitor pending")
         query = """
             mutation deleteEntryVisitorPending(
@@ -376,6 +418,9 @@ class HandleEntryVisitor:
 
     @staticmethod
     def end(update, context):
+        """
+        Cancel interaction
+        """
         chat_id = update.message.chat_id
         update.message.reply_text('Comando de autorização cancelado!')
         LOGGER.info("Canceling command")
