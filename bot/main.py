@@ -77,7 +77,13 @@ if __name__ == '__main__':
             CPF:[MessageHandler(Filters.text, Register.cpf)],
             APARTMENT:[MessageHandler(Filters.text, Register.apartment)],
             BLOCK:[MessageHandler(Filters.text, Register.block)],
-            VOICE_REGISTER: [MessageHandler(Filters.voice, Register.voice_register)],
+            CATCH_AUDIO_SPEAKING_NAME:[
+                MessageHandler(Filters.voice, Register.catch_audio_speaking_name)
+            ],
+            CONFIRM_AUDIO_SPEAKING_NAME:[
+                MessageHandler(Filters.text, Register.confirm_audio_speaking_name)
+            ],
+            VOICE_REGISTER:[MessageHandler(Filters.voice, Register.voice_register)],
             REPEAT_VOICE:[MessageHandler(Filters.text, Register.repeat_voice)]
             },
 
