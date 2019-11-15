@@ -16,17 +16,17 @@ class NotifyResident:
         MESSAGES[visitor_chat_id] = {}
 
         for chat_id in get_residents_chat_ids(block, apartment):
-            
             message = context.bot.send_message(
                     chat_id=chat_id,
-                    text=text(data),
+                    text=NotifyResident.text(data),
                     reply_markup=NotifyResident.buttons(),
                     parse_mode='Markdown'
                     )
 
             MESSAGES[visitor_chat_id][chat_id] = message.message_id
 
-    def accepted(update, context):
+    def authorized(update, context):
+        """Authorize visitor entry"""
         query = update.callback_query
 
         cpf = [i for i in query.message.text.split() if i.isdigit()][0]
@@ -46,9 +46,9 @@ class NotifyResident:
                         message_id=message_id,
                         text="Visitante autorizado por outro morador!"
                         )
-        
+
         text = query.message.text
-        text = text[30:]
+        text = text[31:]
         text = "*AUTORIZADO*" + text
 
         context.bot.edit_message_text(
@@ -63,7 +63,10 @@ class NotifyResident:
                 text="Visita autorizada!"
                 )
 
+        MESSAGES[visitor_chat_id] = {}
+
     def refused(update, context):
+        """Refuse visitor entry"""
         query = update.callback_query
 
         cpf = [i for i in query.message.text.split() if i.isdigit()][0]
@@ -81,11 +84,11 @@ class NotifyResident:
                 context.bot.edit_message_text(
                         chat_id=chat_id,
                         message_id=message_id,
-                        text="Visitante autorizado por outro morador!"
+                        text="Visitante recusado por outro morador!"
                         )
-        
+
         text = query.message.text
-        text = text[30:]
+        text = text[31:]
         text = "*RECUSADO*" + text
 
         context.bot.edit_message_text(
@@ -97,10 +100,13 @@ class NotifyResident:
 
         context.bot.send_message(
                 chat_id=visitor_chat_id,
-                text="Visita autorizada!"
+                text="Visita recusada!"
                 )
 
+        MESSAGES[visitor_chat_id] = {}
+
     def text(data):
+        """Resident notification message text"""
         return f"""
 *Visitante requisitando entrada:*
 
@@ -109,9 +115,10 @@ class NotifyResident:
 """
 
     def buttons():
+        """Create the notification buttons"""
         keyboard = [
-                [InlineKeyboardButton('Autorizar', callback_data='acc')],
-                [InlineKeyboardButton('Recusar', callback_data='rec')],
+                [InlineKeyboardButton('Autorizar', callback_data='aut')],
+                [InlineKeyboardButton('Recusar', callback_data='ref')],
                 ]
-        
+
         return InlineKeyboardMarkup(keyboard)
