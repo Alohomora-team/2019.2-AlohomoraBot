@@ -11,6 +11,8 @@ Informações sobre atualizações no projeto serão registradas aqui.
 + Interação do morador para lidar com a entrada do visitante.
 + Criação de um sistema de notificação para administradores, que recebe uma mensagem para aprovar ou rejeitar o cadastro de um morador.
 + Novo comando para criar administradores do sistema
++ Novo comando para listagem dos comandos ligados aos moradores.
++ Novo comando para listagem dos comandos ligados aos visitantes.
 
 ### Alterado
 + mudança do docker alpine para debian slim
