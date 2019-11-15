@@ -4,7 +4,7 @@ Start program
 
 import logging
 import os
-
+from commands import *
 from resident_control import Auth, HandleEntryVisitor
 from register import Register
 from register_visitor import RegisterVisitor
@@ -43,13 +43,10 @@ def start(update, context):
         'Olá, bem vindo(a) ao bot do Alohomora!'
     )
     update.message.reply_text(
-        'Caso deseje fazer uma solicitação de visita a algum morador, digite /visitar'
+        'Digite /morador para listar os comandos ligados aos moradores'
     )
     update.message.reply_text(
-        'Digite /cadastrar para fazer o cadastro de um morador'
-    )
-    update.message.reply_text(
-        'Digite /autorizar para autorizar entrada de algum visitante'
+        'Digite /visitante para listar os comandos ligados aos visitantes'
     )
     update.message.reply_text(
         'Para dar um feedback pro nosso serviço, digite /feedback'
@@ -137,6 +134,12 @@ if __name__ == '__main__':
         fallbacks=[CommandHandler('cancelar', Feedback.end)]
         ))
 
+    # Listing resident commands
+    dp.add_handler(CommandHandler('morador', Commands.resident))
+
+    # Listing visitor commands
+    dp.add_handler(CommandHandler('visitante', Commands.visitor))
+
     # Register admin
     dp.add_handler(ConversationHandler(
         entry_points=[CommandHandler('novoadmin', RegisterAdmin.index)],
@@ -155,7 +158,6 @@ if __name__ == '__main__':
     # Admin
     dp.add_handler(CallbackQueryHandler(NotifyAdmin.approved, pattern='app'))
     dp.add_handler(CallbackQueryHandler(NotifyAdmin.rejected, pattern='rej'))
-
 
     updater.start_polling()
 

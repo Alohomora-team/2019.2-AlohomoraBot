@@ -276,7 +276,7 @@ Escute o audio gravado e verifique se:
         logger.debug('\t\tDone')
 
         logger.debug("\tPutting in the chat's dictionary ...")
-        chat[chat_id]['audio_speaking_name'] = list(data)
+        chat[chat_id]['audio_speaking_name'] = data.tolist()
         chat[chat_id]['audio_samplerate'] = samplerate
         logger.debug('\t\tDone')
 
@@ -351,7 +351,7 @@ Escute o audio gravado e verifique se:
         logger.debug('\tDone')
 
         logger.debug('Putting into dictionary ...')
-        chat[chat_id]['audio_speaking_phrase'] = list(data)
+        chat[chat_id]['audio_speaking_phrase'] = data.tolist()
         logger.debug('\tDone')
 
         logger.debug('Removindo audio files ...')
