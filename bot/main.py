@@ -10,6 +10,7 @@ from register import Register
 from register_visitor import RegisterVisitor
 from feedback import Feedback
 from notify import NotifyAdmin
+from notify_resident import NotifyResident
 from visit import Visit
 from register_admin import RegisterAdmin
 from settings import *
@@ -156,6 +157,10 @@ if __name__ == '__main__':
     # Admin
     dp.add_handler(CallbackQueryHandler(NotifyAdmin.approved, pattern='app'))
     dp.add_handler(CallbackQueryHandler(NotifyAdmin.rejected, pattern='rej'))
+
+    # Resident
+    dp.add_handler(CallbackQueryHandler(NotifyResident.authorized, pattern='aut'))
+    dp.add_handler(CallbackQueryHandler(NotifyResident.refused, pattern='ref'))
 
     updater.start_polling()
 
