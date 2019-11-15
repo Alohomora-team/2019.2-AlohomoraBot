@@ -4,18 +4,18 @@ Start program
 
 import logging
 import os
+from admin.notify_admin import NotifyAdmin
+from admin.register_admin import RegisterAdmin
 from commands import *
-from resident_auth import Auth
-from register import Register
-from register_visitor import RegisterVisitor
 from feedback import Feedback
-from notify_admin import NotifyAdmin
-from notify_resident import NotifyResident
-from visit import Visit
-from register_admin import RegisterAdmin
+from resident.notify_resident import NotifyResident
+from resident.register import Register
+from resident.resident_auth import Auth
 from settings import *
-from telegram.ext import Updater, CommandHandler, MessageHandler, ConversationHandler, Filters
 from telegram.ext import CallbackQueryHandler
+from telegram.ext import Updater, CommandHandler, MessageHandler, ConversationHandler, Filters
+from visitor.register_visitor import RegisterVisitor
+from visitor.visit import Visit
 
 # Remove logs from APIs
 logging.getLogger("telegram").setLevel(API_LOG_LEVEL)
