@@ -8,6 +8,7 @@ except:
     from db.models import Resident, Visitor, Admin
     from db.models import Session
 
+# Create
 def create_resident(cpf, block, apartment, chat_id):
     """
     Insert a resident in database
@@ -70,6 +71,7 @@ def create_admin(email, chat_id):
 
     session.close()
 
+# Delete
 def delete_resident(cpf):
     """
     Remove a resident from database
@@ -121,6 +123,7 @@ def delete_admin(email):
 
     session.close()
 
+# Update
 def update_resident(cpf, **kwargs):
     """
     Update resident information
@@ -198,6 +201,9 @@ def update_admin(email, **kwargs):
     session.commit()
     session.close()
 
+# Query
+
+# Resident
 def get_resident_chat_id(cpf):
     """
     Get a chat_id of a resident
@@ -245,6 +251,24 @@ def get_residents_chat_ids(block, apartment):
 
     return residents_chat_ids
 
+def resident_exists(chat_id):
+    """
+    Check if a resident exists in database
+    """
+    session = Session()
+
+    resident = session.query(Resident).\
+            filter_by(
+                    chat_id=chat_id).first()
+
+    session.close()
+
+    if resident:
+        return True
+    else:
+        return False
+
+# Visitor
 def get_visitor_chat_id(cpf):
     """
     Get a chat_id of a visitor
@@ -262,6 +286,24 @@ def get_visitor_chat_id(cpf):
     else:
         return None
 
+def visitor_exists(chat_id):
+    """
+    Check if a visitor exists in database
+    """
+    session = Session()
+
+    visitor = session.query(Visitor).\
+            filter_by(
+                    chat_id=chat_id).first()
+
+    session.close()
+
+    if visitor:
+        return True
+    else:
+        return False
+
+# Admin
 def get_admin_chat_id(email):
     """
     Get a administrador chat_id
@@ -292,3 +334,21 @@ def get_all_admins_chat_ids():
     session.close()
 
     return admins_chat_ids
+
+def admin_exists(chat_id):
+    """
+    Check if a admin exists in database
+    """
+    session = Session()
+
+    admin = session.query(Admin).\
+            filter_by(
+                    chat_id=chat_id).first()
+
+    session.close()
+
+    if admin:
+        return True
+    else:
+        return False
+
