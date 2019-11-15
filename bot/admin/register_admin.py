@@ -10,13 +10,12 @@ import numpy
 import requests
 
 from checks import CheckAdmin
-from settings import EMAIL_AUTH_ADMIN, PASSWORD_AUTH_ADMIN, REPEAT_AUTH_ADMIN
 from settings import ADMIN_REGISTER_EMAIL, ADMIN_REGISTER_PWD
+from settings import ADMIN_AUTH_EMAIL, ADMIN_AUTH_PWD, ADMIN_AUTH_REPEAT
 from settings import PATH, LOG_NAME
 from telegram import KeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import ConversationHandler
 from validator import ValidateForm
-
 
 
 logger = logging.getLogger(LOG_NAME)
@@ -35,104 +34,15 @@ class RegisterAdmin:
         logger.info("Introducing registration session")
         chat_id = update.message.chat_id
 
-        update.message.reply_text('Para cadastrar um administrador, você precisa ser um!')
-        update.message.reply_text('Preciso confirmar sua identidade.')
-        update.message.reply_text('Por favor, digite seu email:')
+        update.message.reply_text('Email:')
         logger.info("Asking for email")
 
         chat[chat_id] = {}
         logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
 
-        return EMAIL_AUTH_ADMIN
+        return ADMIN_REGISTER_EMAIL
 
-    def auth_email(update, context):
-        """
-        Get email to authenticate admin
-        """
-        chat_id = update.message.chat_id
-        email = update.message.text
-
-        if not ValidateForm.email(email, update):
-            return EMAIL_AUTH_ADMIN
-
-        chat[chat_id]['auth-email'] = email
-        logger.debug(f"'auth-admin-email': '{chat[chat_id]['auth-email']}'")
-
-        check = CheckAdmin.auth_email(chat, chat_id)
-
-        if 'errors' not in check.keys():
-            logger.error("Email exists in database")
-            update.message.reply_text('Ok, email válido')
-
-            logger.info("Requesting password")
-            update.message.reply_text('Senha:')
-            return PASSWORD_AUTH_ADMIN
-
-        else:
-            update.message.reply_text("Email não encontrado. Por favor, digite novamente")
-            return EMAIL_AUTH_ADMIN
-
-    def auth_password(update, context):
-        """
-        Get password to authenticate admin
-        """
-        chat_id = update.message.chat_id
-        password = update.message.text
-
-        chat[chat_id]['auth-password'] = password
-        logger.debug(f"'auth-admin-password': '{chat[chat_id]['auth-password']}'")
-
-        response = RegisterAdmin.generate_token(chat_id)
-
-        if(response.status_code == 200 and 'errors' not in response.json().keys()):
-            logger.info("Sucess on generating token")
-
-            token = response.json()['data']['tokenAuth']['token']
-            chat[chat_id]['token'] = token
-            logger.debug(f"'auth-admin-token': '{chat[chat_id]['token']}'")
-
-            update.message.reply_text('Muito bem! Podemos agora cadastrar um novo administrador.')
-            update.message.reply_text('Por favor, informe o email do novo administrador:')
-
-            logger.info("Requesting new admin's email")
-
-            return ADMIN_REGISTER_EMAIL
-        else:
-            logger.error("Failed generating token")
-            update.message.reply_text(
-                'Email ou senha incorretos. Não foi possível identificar o administrador.'
-            )
-
-            yes_keyboard = KeyboardButton('Sim')
-            no_keyboard = KeyboardButton('Não')
-            keyboard = [[yes_keyboard], [no_keyboard]]
-            choice = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
-            update.message.reply_text('Deseja inseri-los novamente?', reply_markup=choice)
-
-            return REPEAT_AUTH_ADMIN
-
-    def repeat_auth_admin(update, context):
-        """
-        Repeat authentication interaction
-        """
-        chat_id = update.message.chat_id
-        choice = update.message.text
-
-        if not ValidateForm.boolean_value(choice, update):
-            return REPEAT_AUTH_ADMIN
-
-        if choice == "Sim":
-            logger.info("Replied 'yes'")
-            update.message.reply_text('Ok! Por favor, informe seu email:')
-            return EMAIL_AUTH_ADMIN
-        else:
-            update.message.reply_text('Ok!')
-            logger.info("Replied 'no'")
-            RegisterAdmin.end(update, context)
-
-        return ConversationHandler.END
-
-    def register_email(update, context):
+    def email(update, context):
         """
         Get new admin's email
         """
@@ -147,12 +57,12 @@ class RegisterAdmin:
 
         check = CheckAdmin.email(chat, chat_id)
 
-        # if 'errors' not in check.keys():
-        #     logger.error("Email already exists in database - asking again")
-        #     update.message.reply_text(
-        #        'Já existe um administrador com este email, tente novamente:'
-        #    )
-        #     return ADMIN_REGISTER_EMAIL
+        if 'errors' not in check.keys():
+            logger.error("Email already exists in database - asking again")
+            update.message.reply_text(
+                    'Já existe um administrador com este email, tente novamente:'
+                    )
+            return ADMIN_REGISTER_EMAIL
 
         logger.debug("Available email - proceed")
 
@@ -161,7 +71,7 @@ class RegisterAdmin:
 
         return ADMIN_REGISTER_PWD
 
-    def register_password(update, context):
+    def password(update, context):
         """
         Get new admin's password
         """

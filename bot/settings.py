@@ -18,29 +18,23 @@ CONFIRM_AUDIO_SPEAKING_NAME = 7
 VOICE_REGISTER = 8
 REPEAT_VOICE = 9
 
-#Visitor constants
-VISITOR_REGISTER_NAME = 0
-VISITOR_REGISTER_CPF = 1
-VERIFY_REGISTRATION = 2
-VISITOR_CPF = 3
-VISITOR_BLOCK = 4
-VISITOR_APARTMENT = 5
-CREATE_VISITOR_ENTRY = 6
-
-#Handle entry visitors constants
-HANDLE_VISITORS_PENDING = range(1)
-
-# Auth constants
+# Resident auth constants
 CPF_AUTH, VOICE_AUTH = range(2)
+
+# Visitor register constants
+VISITOR_REGISTER_NAME, VISITOR_REGISTER_CPF = range(2)
+
+# Visit constants
+VISIT_BLOCK, VISIT_APARTMENT = range(2)
+
+# Admin auth constants
+ADMIN_AUTH_EMAIL, ADMIN_AUTH_PWD, ADMIN_AUTH_REPEAT = range(3)
+
+# Admin register constants
+ADMIN_REGISTER_EMAIL, ADMIN_REGISTER_PWD = range(2)
 
 # Feedback constants
 FEEDBACK = range(1)
-
-# Auth admin
-EMAIL_AUTH_ADMIN, PASSWORD_AUTH_ADMIN, REPEAT_AUTH_ADMIN = range(3)
-
-# New admin constants
-ADMIN_REGISTER_EMAIL, ADMIN_REGISTER_PWD = range(2)
 
 # Log format
 FORMAT = '%(asctime)s - %(levelname)s - %(name)s - %(message)s'
@@ -58,7 +52,8 @@ API_LOG_LEVEL = logging.CRITICAL
 LOG_NAME = 'Alohomora'
 
 # Bot token
-TOKEN = "801020772:AAGiaVK52MBf7is4InDnESbB0XE1m9QRcAo"
+#TOKEN = "801020772:AAGiaVK52MBf7is4InDnESbB0XE1m9QRcAo"
+TOKEN = "724918697:AAF_CYQtfDtbrr8YpHU3K6RKvLJQXRJiHWY"
 
 #Log file name
 FILE_NAME = 'file.log'

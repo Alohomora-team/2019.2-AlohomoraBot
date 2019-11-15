@@ -6,6 +6,7 @@ import logging
 import os
 from admin.notify_admin import NotifyAdmin
 from admin.register_admin import RegisterAdmin
+from admin.admin_auth import AdminAuth
 from commands import *
 from feedback import Feedback
 from resident.notify_resident import NotifyResident
@@ -68,7 +69,7 @@ if __name__ == '__main__':
 
     dp.add_handler(CommandHandler("start", start))
 
-    # Registration
+    # Resident register
     dp.add_handler(ConversationHandler(
         entry_points=[CommandHandler('cadastrar', Register.index, pass_args=True)],
 
@@ -92,22 +93,50 @@ if __name__ == '__main__':
         fallbacks=[CommandHandler('cancelar', Register.end)]
         ))
 
-    # Handle visitor (register resident and register entry)
+    # Visitor register
     dp.add_handler(ConversationHandler(
-        entry_points=[CommandHandler('visitar', Visit.index, pass_args=True)],
+        entry_points=[CommandHandler('cadastrar_visitante', Visit.index, pass_args=True)],
 
         states={
-            VERIFY_REGISTRATION:[MessageHandler(Filters.text, Visit.verify_registration)],
             VISITOR_REGISTER_NAME:[MessageHandler(Filters.text, RegisterVisitor.name)],
             VISITOR_REGISTER_CPF:[MessageHandler(Filters.text, RegisterVisitor.cpf)],
-            VISITOR_CPF:[MessageHandler(Filters.text, Visit.cpf)],
-            VISITOR_BLOCK:[MessageHandler(Filters.text, Visit.block)],
-            VISITOR_APARTMENT:[MessageHandler(Filters.text, Visit.apartment)],
-            CREATE_VISITOR_ENTRY:[MessageHandler(Filters.text, Visit.create_entry)],
             },
 
         fallbacks=[CommandHandler('cancelar', Visit.end)]
         ))
+
+    # Admin register
+    dp.add_handler(ConversationHandler(
+        entry_points=[CommandHandler('criar_admin', RegisterAdmin.index)],
+
+        states={
+            ADMIN_REGISTER_EMAIL: [MessageHandler(Filters.text, RegisterAdmin.email)],
+            ADMIN_REGISTER_PWD: [MessageHandler(Filters.text, RegisterAdmin.password)],
+            },
+
+        fallbacks=[CommandHandler('cancelar', RegisterAdmin.end)]
+        ))
+
+    # Admin authentication
+
+    dp.add_handler(ConversationHandler(
+        entry_points=[CommandHandler('autenticar_admin', AdminAuth.index)],
+
+        states={
+            ADMIN_AUTH_EMAIL: [MessageHandler(Filters.text, AdminAuth.email)],
+            ADMIN_AUTH_PWD: [MessageHandler(Filters.text, AdminAuth.password)],
+            ADMIN_AUTH_REPEAT: [MessageHandler(Filters.text, AdminAuth.repeat)],
+            },
+
+        fallbacks=[CommandHandler('cancelar', AdminAuth.end)]
+        ))
+    # Admin notification
+    dp.add_handler(CallbackQueryHandler(NotifyAdmin.approved, pattern='app'))
+    dp.add_handler(CallbackQueryHandler(NotifyAdmin.rejected, pattern='rej'))
+
+    # Resident notification
+    dp.add_handler(CallbackQueryHandler(NotifyResident.authorized, pattern='aut'))
+    dp.add_handler(CallbackQueryHandler(NotifyResident.refused, pattern='ref'))
 
     # Feedback
     dp.add_handler(ConversationHandler(
@@ -125,29 +154,6 @@ if __name__ == '__main__':
 
     # Listing visitor commands
     dp.add_handler(CommandHandler('visitante', Commands.visitor))
-
-    # Register admin
-    dp.add_handler(ConversationHandler(
-        entry_points=[CommandHandler('novoadmin', RegisterAdmin.index)],
-
-        states={
-            EMAIL_AUTH_ADMIN: [MessageHandler(Filters.text, RegisterAdmin.auth_email)],
-            PASSWORD_AUTH_ADMIN: [MessageHandler(Filters.text, RegisterAdmin.auth_password)],
-            REPEAT_AUTH_ADMIN: [MessageHandler(Filters.text, RegisterAdmin.repeat_auth_admin)],
-            ADMIN_REGISTER_EMAIL: [MessageHandler(Filters.text, RegisterAdmin.register_email)],
-            ADMIN_REGISTER_PWD: [MessageHandler(Filters.text, RegisterAdmin.register_password)],
-            },
-
-        fallbacks=[CommandHandler('cancelar', RegisterAdmin.end)]
-        ))
-
-    # Admin
-    dp.add_handler(CallbackQueryHandler(NotifyAdmin.approved, pattern='app'))
-    dp.add_handler(CallbackQueryHandler(NotifyAdmin.rejected, pattern='rej'))
-
-    # Resident
-    dp.add_handler(CallbackQueryHandler(NotifyResident.authorized, pattern='aut'))
-    dp.add_handler(CallbackQueryHandler(NotifyResident.refused, pattern='ref'))
 
     updater.start_polling()
 
