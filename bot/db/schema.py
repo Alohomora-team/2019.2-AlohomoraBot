@@ -215,6 +215,23 @@ def get_resident_chat_id(cpf):
     else:
         return None
 
+def get_resident_apartment(chat_id):
+    """
+    Get the apartment of a resident
+    """
+    session = Session()
+    
+    resident = session.query(Resident).\
+            filter_by(
+                    chat_id=chat_id).first()
+
+    session.close()
+
+    if resident:
+        return [resident.block, resident.apartment]
+    else:
+        return None
+
 def get_residents_chat_ids(block, apartment):
     """
     List resident chat ids
