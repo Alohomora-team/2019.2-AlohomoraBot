@@ -11,7 +11,7 @@ import librosa
 
 from checks import CheckResident, CheckCondo
 from db.schema import create_resident
-from notify import NotifyAdmin
+from admin.notify_admin import NotifyAdmin
 from settings import LOG_NAME
 from settings import NAME, PHONE, EMAIL, CPF, BLOCK, APARTMENT, VOICE_REGISTER, REPEAT_VOICE
 from settings import PATH, CATCH_AUDIO_SPEAKING_NAME, CONFIRM_AUDIO_SPEAKING_NAME

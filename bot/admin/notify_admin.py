@@ -1,6 +1,6 @@
 """Provides a notification system for the bot"""
 import logging
-from admin import Admin
+from admin.admin import Admin
 from db.schema import get_all_admins_chat_ids, get_resident_chat_id, delete_resident
 from settings import LOG_NAME
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
