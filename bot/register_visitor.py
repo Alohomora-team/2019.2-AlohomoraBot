@@ -6,6 +6,7 @@ import logging
 import requests
 
 from checks import CheckVisitor
+from db.schema import create_visitor
 from settings import LOG_NAME, PATH
 from settings import VISITOR_REGISTER_NAME, VISITOR_REGISTER_CPF, VISITOR_BLOCK
 from telegram.ext import ConversationHandler
@@ -71,6 +72,10 @@ class RegisterVisitor:
             logger.info("Visitor registered in database")
             update.message.reply_text('Você foi cadastrado no sistema!')
             update.message.reply_text('Para visitar algum morador, digite /visitar')
+            create_visitor(
+                    cpf=cpf,
+                    chat_id=chat_id
+                    )
 
         else:
             logger.error("Visitor registration failed")
