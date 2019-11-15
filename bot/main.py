@@ -43,10 +43,10 @@ def start(update, context):
         'Olá, bem vindo(a) ao bot do Alohomora!'
     )
     update.message.reply_text(
-        'Caso você seja um morador, digite /morador para listar os comandos ligados aos moradores'
+        'Digite /morador para listar os comandos ligados aos moradores'
     )
     update.message.reply_text(
-        'Caso você seja um visitante, digite /visitante para listar os comandos ligados aos visitantes'
+        'Digite /visitante para listar os comandos ligados aos visitantes'
     )
     update.message.reply_text(
         'Para dar um feedback pro nosso serviço, digite /feedback'
@@ -131,7 +131,7 @@ if __name__ == '__main__':
 
         fallbacks=[CommandHandler('cancelar', Feedback.end)]
         ))
-    
+
     # Listing resident commands
     dp.add_handler(CommandHandler('morador', Commands.resident))
 
