@@ -114,9 +114,10 @@ if __name__ == '__main__':
 
         states={
             CHOOSE_AUTH: [MessageHandler(Filters.text, Auth.choose_auth)],
+            SHOW_VISITORS: [MessageHandler(Filters.text, Auth.show_visitors)],
             CPF_AUTH:[MessageHandler(Filters.text, Auth.cpf)],
             VOICE_AUTH: [MessageHandler(Filters.voice, Auth.voice)],
-            PASSWORD_AUTH: [MessageHandler(Filters.voice, Auth.password)],
+            PASSWORD_AUTH: [MessageHandler(Filters.text, Auth.password)],
             HANDLE_VISITORS_PENDING: [MessageHandler(Filters.text, HandleEntryVisitor.index)]
             },
 

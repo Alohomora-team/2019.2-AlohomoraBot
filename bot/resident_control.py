@@ -12,7 +12,8 @@ from python_speech_features import mfcc
 from scipy.io.wavfile import read
 from telegram.ext import ConversationHandler
 from telegram import KeyboardButton, ReplyKeyboardMarkup
-from settings import CPF_AUTH, VOICE_AUTH, HANDLE_VISITORS_PENDING, CHOOSE_AUTH
+from settings import CPF_AUTH, VOICE_AUTH, PASSWORD_AUTH, CHOOSE_AUTH
+from settings import  SHOW_VISITORS, HANDLE_VISITORS_PENDING, 
 from settings import PATH, LOG_NAME
 from validator import ValidateForm
 from helpers import format_datetime
@@ -70,37 +71,59 @@ class Auth:
         return CHOOSE_AUTH
 
     def choose_auth(update, context):
+        """
+        Ask for the method to authenticate
+        """
         chat_id = update.message.chat_id
         choice = update.message.text
 
-        if choice == "Senha":
-            CHAT[chat_id]['choice'] = choice
-            LOGGER.debug(f"'1-choice': '{CHAT[chat_id]['choice']}'")
+        CHAT[chat_id]['choice'] = choice
+        LOGGER.debug(f"'choice': '{CHAT[chat_id]['choice']}'")
 
+        if choice == "Senha":
             LOGGER.info("Replied to authenticate by password")
             update.message.reply_text('Ok! Informe sua senha:')
             LOGGER.info("Requesting password")
             return PASSWORD_AUTH
         elif choice == "Voz":
-            CHAT[chat_id]['choice'] = choice
-            LOGGER.debug(f"'2-choice': '{CHAT[chat_id]['choice']}'")
-
             LOGGER.info("Replied to authenticate by voice")
-            update.message.reply_text('Grave um áudio de no mínimo 1 segundo dizendo "Juro que sou eu"')
+            update.message.reply_text(
+                'Grave um áudio de no mínimo 1 segundo dizendo "Juro que sou eu"'
+            )
             LOGGER.info("Requesting voice audio")
             return VOICE_AUTH
         else:
-            CHAT[chat_id]['choice'] = choice
-            LOGGER.debug(f"'3-choice': '{CHAT[chat_id]['choice']}'")
-
             update.message.reply_text('Por favor, apenas aperte um dos botões.')
             return CHOOSE_AUTH
 
-        CHAT[chat_id]['choice'] = choice
-        LOGGER.debug(f"'4-choice': '{CHAT[chat_id]['choice']}'")
-
+    @staticmethod
     def password(update, context):
-        pass
+        """
+        Validate password
+        """
+        chat_id = update.message.chat_id
+        password = update.message.text
+
+        CHAT[chat_id]['password'] = password
+        LOGGER.debug(f"'password': '{CHAT[chat_id]['password']}'")
+
+        response = Auth.generate_token(chat_id)
+
+        if(response.status_code == 200 and 'errors' not in response.json().keys()):
+            LOGGER.info("Sucess on generating token")
+
+            token = response.json()['data']['tokenAuth']['token']
+            CHAT[chat_id]['token'] = token
+            LOGGER.debug(f"'auth-resident-token': '{CHAT[chat_id]['token']}'")
+
+            return SHOW_VISITORS
+        else:
+            LOGGER.error("Failed generating token")
+            update.message.reply_text(
+                'Email ou senha incorretos. Não foi possível identificar o morador.'
+            )
+
+        return ConversationHandler.END
 
     @staticmethod
     def voice(update, context):
@@ -139,56 +162,109 @@ class Auth:
         if valid:
             LOGGER.info("resident has been authenticated")
             update.message.reply_text('Autenticado(a) com sucesso!')
-
-            response = HandleEntryVisitor.get_resident_apartment(chat_id)
-
-            resident = response['data']['resident']
-            apartment = resident['apartment']
-
-            CHAT[chat_id]['apartment'] = apartment
-
-            response = HandleEntryVisitor.get_entries_pending(chat_id)
-
-            entries = response['data']['entriesVisitorsPending']
-
-            if entries:
-                update.message.reply_text('Você possui entrada(s) pendente(s):')
-                LOGGER.info("Showing visitors pending to resident")
-            else:
-                update.message.reply_text('Você não possui entrada(s) pendente(s)')
-                LOGGER.info("Apartment don`t have pending entries")
-                return HandleEntryVisitor.end(update, context)
-
-            for entry in entries:
-
-                datetime = format_datetime(entry['date'])
-
-                if entry['pending']:
-                    update.message.reply_text(
-                        "\nNome: "+entry['visitor']['completeName']+
-                        "\nCPF: "+entry['visitor']['cpf']+
-                        "\nData: "+datetime+
-                        "\n\nCódigo: "+str(entry['id'])
-                    )
-
-            remove_keyboard = KeyboardButton('Remover todas')
-            cancel_keyboard = KeyboardButton('Cancelar')
-            keyboard = [[remove_keyboard], [cancel_keyboard]]
-
-            response = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
-
-            update.message.reply_text(
-                'Para liberar ou remover alguma entrada, digite o respectivo código'+
-                '\nPara remover uma entrada especifica, escreva "Remover + seu respectivo código"'
-                , reply_markup=response)
-
-            return HANDLE_VISITORS_PENDING
+            return SHOW_VISITORS
 
         LOGGER.error("Authentication failed")
         update.message.reply_text('Falha na autenticação!')
 
 
         return HandleEntryVisitor.end(update, context)
+
+    def show_visitors(update, context):
+        """
+        Show pending visitors
+        """
+        response = HandleEntryVisitor.get_resident_apartment(chat_id)
+
+        resident = response['data']['resident']
+        apartment = resident['apartment']
+
+        CHAT[chat_id]['apartment'] = apartment
+
+        response = HandleEntryVisitor.get_entries_pending(chat_id)
+
+        entries = response['data']['entriesVisitorsPending']
+
+        if entries:
+            update.message.reply_text('Você possui entrada(s) pendente(s):')
+            LOGGER.info("Showing visitors pending to resident")
+        else:
+            update.message.reply_text('Você não possui entrada(s) pendente(s)')
+            LOGGER.info("Apartment don`t have pending entries")
+            return HandleEntryVisitor.end(update, context)
+
+        for entry in entries:
+
+            datetime = format_datetime(entry['date'])
+
+            if entry['pending']:
+                update.message.reply_text(
+                    "\nNome: "+entry['visitor']['completeName']+
+                    "\nCPF: "+entry['visitor']['cpf']+
+                    "\nData: "+datetime+
+                    "\n\nCódigo: "+str(entry['id'])
+                )
+
+        remove_keyboard = KeyboardButton('Remover todas')
+        cancel_keyboard = KeyboardButton('Cancelar')
+        keyboard = [[remove_keyboard], [cancel_keyboard]]
+
+        response = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
+
+        update.message.reply_text(
+            'Para liberar ou remover alguma entrada, digite o respectivo código'+
+            '\nPara remover uma entrada especifica, escreva "Remover + seu respectivo código"'
+            , reply_markup=response)
+
+        return HANDLE_VISITORS_PENDING
+
+    def get_email(chat_id):
+        """
+        Get resident's email by CPF
+        """
+        LOGGER.info("Getting resident's email by CPF")
+        query = """
+            query resident($cpf: String!){
+                resident(cpf: $cpf){
+                    email
+                }
+            }
+        """
+
+        variables = {
+                'cpf': CHAT[chat_id]['cpf'],
+                }
+        response = requests.post(PATH, json={'query':query, 'variables':variables})
+        LOGGER.debug(f"Response: {response.json()}")
+
+        return response
+
+
+    def generate_token(chat_id):
+        """
+        Generate resident's token
+        """
+        residentEmail = Auth.get_email(chat_id).json()['data']['resident']['email']
+        CHAT[chat_id]['email'] = residentEmail
+        LOGGER.debug(f"'resident-email': '{CHAT[chat_id]['email']}'")
+
+        LOGGER.info("Generating resident token")
+        query = """
+            mutation tokenAuth($email: String!, $password: String!){
+                tokenAuth(email: $email, password: $password){
+                    token
+                }
+            }
+            """
+
+        variables = {
+                'email': CHAT[chat_id]['email'],
+                'password': CHAT[chat_id]['password'],
+                }
+        response = requests.post(PATH, json={'query':query, 'variables':variables})
+        LOGGER.debug(f"Response: {response.json()}")
+
+        return response
 
     @staticmethod
     def authenticate(chat_id):
