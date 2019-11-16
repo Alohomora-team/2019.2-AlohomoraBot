@@ -9,7 +9,7 @@ from telegram.ext import ConversationHandler
 from telegram import KeyboardButton, ReplyKeyboardMarkup
 from validator import ValidateForm
 from checks import CheckVisitor, CheckCondo
-from db.schema import visitor_exists
+from db.schema import visitor_exists, get_visitor_cpf
 from resident.notify_resident import NotifyResident
 
 logger = logging.getLogger(LOG_NAME)
@@ -99,7 +99,14 @@ class Visit:
 
         logger.debug("Existing apartment - proceed")
 
-        #TODO: Pegar o nome e cpf do visitante
+        cpf = get_visitor_cpf(chat_id)
+        name = Visit.get_visitor_name(cpf)
+        name = name['data']['visitor']['completeName']
+
+        chat[chat_id]['cpf'] = cpf
+        chat[chat_id]['name'] = name
+
+        logger.info("Notificating all residents from the apartment")
         NotifyResident.send_notification(context, chat[chat_id])
 
         update.message.reply_text(
@@ -125,3 +132,26 @@ class Visit:
         logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
 
         return ConversationHandler.END
+
+    def get_visitor_name(cpf):
+        """
+        Get in database the visitor name
+        """
+        logger.info("Getting the visitor name")
+        query = """
+        query visitor($cpf: String!){
+            visitor(cpf: $cpf) {
+                completeName
+            }
+        }
+        """
+
+        variables = {
+            'cpf': cpf
+            }
+
+        response = requests.post(PATH, json={'query':query, 'variables':variables})
+
+        logger.debug(f"Response: {response.json()}")
+
+        return response.json()

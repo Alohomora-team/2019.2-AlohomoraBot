@@ -286,6 +286,23 @@ def get_visitor_chat_id(cpf):
     else:
         return None
 
+def get_visitor_cpf(chat_id):
+    """
+    Get the cpf of a visitor
+    """
+    session = Session()
+
+    visitor = session.query(Visitor).\
+            filter_by(
+                    chat_id=chat_id).first()
+
+    session.close()
+
+    if visitor:
+        return visitor.cpf
+    else:
+        return None
+
 def visitor_exists(chat_id):
     """
     Check if a visitor exists in database
