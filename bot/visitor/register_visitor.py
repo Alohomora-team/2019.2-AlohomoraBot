@@ -6,9 +6,9 @@ import logging
 import requests
 
 from checks import CheckVisitor
-from db.schema import create_visitor
+from db.schema import create_visitor, visitor_exists
 from settings import LOG_NAME, PATH
-from settings import VISITOR_REGISTER_NAME, VISITOR_REGISTER_CPF, VISITOR_BLOCK
+from settings import VISITOR_REGISTER_NAME, VISITOR_REGISTER_CPF
 from telegram.ext import ConversationHandler
 from validator import ValidateForm
 
@@ -20,6 +20,25 @@ class RegisterVisitor:
     """
     Register visitor
     """
+    def index(update, context):
+        """
+        Start the conversation
+        """
+        logger.info("Introducing visitor registration session")
+        chat_id = update.message.chat_id
+
+        if visitor_exists(chat_id):
+            update.message.reply_text("Já existe um visitante registrado neste celular!")
+            logger.info("Visitor chat_id already in database. Ending conversation")
+            return ConversationHandler.END
+
+        update.message.reply_text("Por favor, informe seu nome:")
+        logger.info("Asking for name")
+
+        chat[chat_id] = {}
+        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
+
+        return VISITOR_REGISTER_NAME
 
     def name(update, context):
         """
@@ -37,7 +56,8 @@ class RegisterVisitor:
         chat[chat_id]['name'] = name
         logger.debug(f"'name': '{chat[chat_id]['name']}'")
 
-        update.message.reply_text('Ok! Agora nos diga seu CPF:')
+        update.message.reply_text('Agora digite seu CPF:')
+        logger.info("Asking for CPF")
 
         return VISITOR_REGISTER_CPF
 
@@ -85,6 +105,18 @@ class RegisterVisitor:
         chat[chat_id] = {}
 
         return ConversationHandler.END
+
+    def end(update, context):
+        """
+        Cancel interaction
+        """
+        logger.info("Canceling visitor registration")
+        chat_id = update.message.chat_id
+
+        update.message.reply_text('Cadastro cancelado!')
+
+        chat[chat_id] = {}
+        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
 
     def register_visitor(chat_id):
         """
