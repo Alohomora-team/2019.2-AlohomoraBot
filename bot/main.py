@@ -78,6 +78,7 @@ if __name__ == '__main__':
             CPF:[MessageHandler(Filters.text, Register.cpf)],
             APARTMENT:[MessageHandler(Filters.text, Register.apartment)],
             BLOCK:[MessageHandler(Filters.text, Register.block)],
+            PASSWORD: [MessageHandler(Filters.text, Register.password)],
             CATCH_AUDIO_SPEAKING_NAME:[
                 MessageHandler(Filters.voice, Register.catch_audio_speaking_name)
             ],

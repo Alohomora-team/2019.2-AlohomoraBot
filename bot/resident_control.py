@@ -13,7 +13,7 @@ from scipy.io.wavfile import read
 from telegram.ext import ConversationHandler
 from telegram import KeyboardButton, ReplyKeyboardMarkup
 from settings import CPF_AUTH, VOICE_AUTH, PASSWORD_AUTH, CHOOSE_AUTH
-from settings import  SHOW_VISITORS, HANDLE_VISITORS_PENDING, 
+from settings import SHOW_VISITORS, HANDLE_VISITORS_PENDING 
 from settings import PATH, LOG_NAME
 from validator import ValidateForm
 from helpers import format_datetime

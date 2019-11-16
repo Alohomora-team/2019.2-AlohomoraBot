@@ -13,7 +13,7 @@ from checks import CheckResident, CheckCondo
 from db.schema import create_resident
 from notify import NotifyAdmin
 from settings import LOG_NAME
-from settings import NAME, PHONE, EMAIL, CPF, BLOCK, APARTMENT, VOICE_REGISTER, REPEAT_VOICE
+from settings import NAME, PHONE, EMAIL, CPF, BLOCK, APARTMENT, VOICE_REGISTER, PASSWORD, REPEAT_VOICE
 from settings import PATH, CATCH_AUDIO_SPEAKING_NAME, CONFIRM_AUDIO_SPEAKING_NAME
 from telegram import KeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import ConversationHandler
@@ -359,6 +359,25 @@ Escute o audio gravado e verifique se:
         os.remove(wav_audio_file_path)
         logger.debug('\tDone')
 
+        update.message.reply_text(
+            'Vamos também cadastrar uma senha pra você, para servir como outra forma de te autenticar.'
+        )
+        update.message.reply_text('Por favor, informe a senha:')
+        logger.info("Asking for password")
+
+        return PASSWORD
+
+    def password(update, context):
+        """
+        Request password
+        """
+
+        chat_id = update.message.chat_id
+        password = update.message.text
+
+        chat[chat_id]['password'] = password
+        logger.debug(f"'password': '{chat[chat_id]['password']}'")
+
         response = Register.register_resident(chat_id)
 
         if(response.status_code == 200 and 'errors' not in response.json().keys()):
@@ -411,7 +430,8 @@ Escute o audio gravado e verifique se:
             $block: String!,
             $audioSpeakingPhrase: [Float]!
             $audioSpeakingName: [Float]!,
-            $audioSamplerate: Int
+            $audioSamplerate: Int,
+            $password: String!
             ){
             createResident(
                 completeName: $completeName,
@@ -422,7 +442,8 @@ Escute o audio gravado e verifique se:
                 block: $block,
                 audioSpeakingPhrase: $audioSpeakingPhrase,
                 audioSpeakingName: $audioSpeakingName,
-                audioSamplerate: $audioSamplerate
+                audioSamplerate: $audioSamplerate,
+                password: $password
             ){
                 resident{
                     completeName
@@ -435,6 +456,7 @@ Escute o audio gravado e verifique se:
                             number
                         }
                     }
+                    password
                 }
             }
         }
@@ -449,7 +471,8 @@ Escute o audio gravado e verifique se:
                 'block': chat[chat_id]['block'],
                 'audioSpeakingPhrase': chat[chat_id]['audio_speaking_phrase'],
                 'audioSpeakingName': chat[chat_id]['audio_speaking_name'],
-                'audioSamplerate': chat[chat_id]['audio_samplerate']
+                'audioSamplerate': chat[chat_id]['audio_samplerate'],
+                'password': chat[chat_id]['password'],
                 }
 
         response = requests.post(PATH, json={'query':query, 'variables':variables})
