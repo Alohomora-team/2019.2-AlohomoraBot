@@ -1,10 +1,15 @@
 """
 Authenticate a admin
 """
+import logging
 from db.schema import admin_exists, create_admin
 from checks import CheckAdmin
+from settings import LOG_NAME
+from settings import ADMIN_AUTH_EMAIL, ADMIN_AUTH_PWD, ADMIN_AUTH_REPEAT
 
 chat = {}
+
+logger = logging.getLogger(LOG_NAME)
 
 class AdminAuth:
     """

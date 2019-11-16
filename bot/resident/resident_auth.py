@@ -12,7 +12,7 @@ from python_speech_features import mfcc
 from scipy.io.wavfile import read
 from telegram.ext import ConversationHandler
 from telegram import KeyboardButton, ReplyKeyboardMarkup
-from settings import CPF_AUTH, VOICE_AUTH, HANDLE_VISITORS_PENDING
+from settings import CPF_AUTH, VOICE_AUTH
 from settings import PATH, LOG_NAME
 from validator import ValidateForm
 from helpers import format_datetime

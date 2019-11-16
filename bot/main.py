@@ -71,7 +71,7 @@ if __name__ == '__main__':
 
     # Resident register
     dp.add_handler(ConversationHandler(
-        entry_points=[CommandHandler('cadastrar', Register.index, pass_args=True)],
+        entry_points=[CommandHandler('cadastrar', Register.index)],
 
         states={
             NAME:[MessageHandler(Filters.text, Register.name)],
@@ -95,11 +95,23 @@ if __name__ == '__main__':
 
     # Visitor register
     dp.add_handler(ConversationHandler(
-        entry_points=[CommandHandler('cadastrar_visitante', Visit.index, pass_args=True)],
+        entry_points=[CommandHandler('cadastrar_visitante', RegisterVisitor.index)],
 
         states={
             VISITOR_REGISTER_NAME:[MessageHandler(Filters.text, RegisterVisitor.name)],
             VISITOR_REGISTER_CPF:[MessageHandler(Filters.text, RegisterVisitor.cpf)],
+            },
+
+        fallbacks=[CommandHandler('cancelar', RegisterVisitor.end)]
+        ))
+
+    # Visit
+    dp.add_handler(ConversationHandler(
+        entry_points=[CommandHandler('visitar', Visit.index)],
+
+        states={
+            VISIT_BLOCK:[MessageHandler(Filters.text, Visit.block)],
+            VISIT_APARTMENT:[MessageHandler(Filters.text, Visit.apartment)],
             },
 
         fallbacks=[CommandHandler('cancelar', Visit.end)]
@@ -118,7 +130,6 @@ if __name__ == '__main__':
         ))
 
     # Admin authentication
-
     dp.add_handler(ConversationHandler(
         entry_points=[CommandHandler('autenticar_admin', AdminAuth.index)],
 
