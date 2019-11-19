@@ -12,8 +12,9 @@ from python_speech_features import mfcc
 from scipy.io.wavfile import read
 from telegram.ext import ConversationHandler
 from telegram import KeyboardButton, ReplyKeyboardMarkup
+from checks import CheckResident
 from settings import CPF_AUTH, VOICE_AUTH, PASSWORD_AUTH, CHOOSE_AUTH
-from settings import SHOW_VISITORS, HANDLE_VISITORS_PENDING 
+from settings import SHOW_VISITORS, HANDLE_VISITORS_PENDING
 from settings import PATH, LOG_NAME
 from validator import ValidateForm
 from helpers import format_datetime
@@ -62,6 +63,16 @@ class Auth:
         CHAT[chat_id]['cpf'] = cpf
         LOGGER.debug(f"'auth-cpf': '{CHAT[chat_id]['cpf']}'")
 
+        check = CheckResident.cpf(CHAT, chat_id)
+
+        if 'errors' in check.keys():
+            LOGGER.error("CPF does not exists in database")
+            update.message.reply_text(
+                'Sinto muito, não identifiquei nenhum morador com o CPF inserido.'+
+                '\n\nPor favor, informe seu CPF novamente:'
+            )
+            return CPF
+
         pwd_keyboard = KeyboardButton('Senha')
         voice_keyboard = KeyboardButton('Voz')
         keyboard = [[pwd_keyboard], [voice_keyboard]]
@@ -107,7 +118,23 @@ class Auth:
         CHAT[chat_id]['password'] = password
         LOGGER.debug(f"'password': '{CHAT[chat_id]['password']}'")
 
-        response = Auth.generate_token(chat_id)
+        getEmail = Auth.get_email(chat_id)
+
+        if(getEmail.status_code == 200 and 'errors' not in getEmail.json().keys()):
+            LOGGER.info("Sucess on getting email by CPF")
+
+            email = getEmail.json()['data']['resident']['email']
+            CHAT[chat_id]['email'] = email
+            LOGGER.debug(f"'resident-email': '{CHAT[chat_id]['email']}'")
+
+            response = Auth.generate_token(chat_id)
+        else:
+            LOGGER.error("Failed getting email by CPF")
+            update.message.reply_text(
+                'Falha ao buscar informações do morador de CPF %s' % CHAT[chat_id]['cpf']
+            )
+
+            return ConversationHandler.END
 
         if(response.status_code == 200 and 'errors' not in response.json().keys()):
             LOGGER.info("Sucess on generating token")
@@ -120,7 +147,11 @@ class Auth:
         else:
             LOGGER.error("Failed generating token")
             update.message.reply_text(
-                'Email ou senha incorretos. Não foi possível identificar o morador.'
+                'Senha incorreta. Não foi possível autenticar o morador.'
+            )
+            update.message.reply_text(
+                'Se você tem certeza da senha inserida,'+
+                ' é possível que sua conta como morador não esteja ativa.'
             )
 
         return ConversationHandler.END
@@ -244,10 +275,6 @@ class Auth:
         """
         Generate resident's token
         """
-        residentEmail = Auth.get_email(chat_id).json()['data']['resident']['email']
-        CHAT[chat_id]['email'] = residentEmail
-        LOGGER.debug(f"'resident-email': '{CHAT[chat_id]['email']}'")
-
         LOGGER.info("Generating resident token")
         query = """
             mutation tokenAuth($email: String!, $password: String!){

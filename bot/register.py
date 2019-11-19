@@ -13,7 +13,8 @@ from checks import CheckResident, CheckCondo
 from db.schema import create_resident
 from notify import NotifyAdmin
 from settings import LOG_NAME
-from settings import NAME, PHONE, EMAIL, CPF, BLOCK, APARTMENT, VOICE_REGISTER, PASSWORD, REPEAT_VOICE
+from settings import NAME, PHONE, EMAIL, CPF, BLOCK, APARTMENT, PASSWORD
+from settings import VOICE_REGISTER, REPEAT_VOICE
 from settings import PATH, CATCH_AUDIO_SPEAKING_NAME, CONFIRM_AUDIO_SPEAKING_NAME
 from telegram import KeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import ConversationHandler
@@ -360,7 +361,8 @@ Escute o audio gravado e verifique se:
         logger.debug('\tDone')
 
         update.message.reply_text(
-            'Vamos também cadastrar uma senha pra você, para servir como outra forma de te autenticar.'
+            'Vamos também cadastrar uma senha pra você,'+
+            ' para servir como outra forma de te autenticar.'
         )
         update.message.reply_text('Por favor, informe a senha:')
         logger.info("Asking for password")
