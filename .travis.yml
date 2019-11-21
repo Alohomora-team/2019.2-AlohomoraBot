@@ -3,6 +3,7 @@ python:
   - "3.7"
 
 stages:
+  - code_style
   - deploy
 
 env:
@@ -13,3 +14,17 @@ jobs:
     - stage: code_style
       script:
         - docker-compose run lint
+
+    - stage: deploy
+      if: (branch = testedeploybot) AND (type != pull_request)
+      install: skip
+      script: skip
+      deploy:
+        provider: heroku
+        skip_cleanup: true
+        api_key:
+          secure: ${HEROKU_KEY}
+        app: teste-bot-alohomora
+        on:
+          repo: Alohomora-team/2019.2-AlohomoraBot
+          branch: testedeploybot

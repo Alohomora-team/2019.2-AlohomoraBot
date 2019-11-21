@@ -58,6 +58,7 @@ def start(update, context):
 if __name__ == '__main__':
 
     token = TOKEN
+    port = int(os.environ.get('PORT', '8443'))
 
     updater = Updater(token, use_context=True)
 
@@ -157,6 +158,10 @@ if __name__ == '__main__':
     dp.add_handler(CallbackQueryHandler(NotifyAdmin.approved, pattern='app'))
     dp.add_handler(CallbackQueryHandler(NotifyAdmin.rejected, pattern='rej'))
 
-    updater.start_polling()
+    updater.start_webhook(listen="0.0.0.0",
+                      port=port,
+                      url_path=token)
+
+    updater.bot.set_webhook("https://teste-bot-alohomora.herokuapp.com/" + token)
 
     updater.idle()

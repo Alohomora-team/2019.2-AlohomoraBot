@@ -4,7 +4,7 @@ Constants used in all code
 import logging
 
 # API Path
-PATH = "http://api:8000/graphql/"
+PATH = "https://alohomora-hmg.herokuapp.com/graphql/"
 
 # Register constants
 NAME = 0
@@ -58,7 +58,7 @@ API_LOG_LEVEL = logging.CRITICAL
 LOG_NAME = 'Alohomora'
 
 # Bot token
-TOKEN = "801020772:AAGiaVK52MBf7is4InDnESbB0XE1m9QRcAo"
+TOKEN = "977525533:AAHvz6R1F_RcUpdv4FfuJ0kcr0_ly4cP8uo"
 
 #Log file name
 FILE_NAME = 'file.log'
