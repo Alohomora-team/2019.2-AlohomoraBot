@@ -361,10 +361,9 @@ Escute o audio gravado e verifique se:
         logger.debug('\tDone')
 
         update.message.reply_text(
-            'Vamos também cadastrar uma senha pra você,'+
-            ' para servir como outra forma de te autenticar.'
+            'Além da autenticação de moradores por voz, é possível fazê-la por senha.'
         )
-        update.message.reply_text('Por favor, informe a senha:')
+        update.message.reply_text('Por favor, informe a senha que deseja cadastrar:')
         logger.info("Asking for password")
 
         return PASSWORD
