@@ -78,6 +78,7 @@ if __name__ == '__main__':
             CPF:[MessageHandler(Filters.text, Register.cpf)],
             APARTMENT:[MessageHandler(Filters.text, Register.apartment)],
             BLOCK:[MessageHandler(Filters.text, Register.block)],
+            PASSWORD: [MessageHandler(Filters.text, Register.password)],
             CATCH_AUDIO_SPEAKING_NAME:[
                 MessageHandler(Filters.voice, Register.catch_audio_speaking_name)
             ],
@@ -113,8 +114,11 @@ if __name__ == '__main__':
         entry_points=[CommandHandler('autorizar', Auth.index)],
 
         states={
+            CHOOSE_AUTH: [MessageHandler(Filters.text, Auth.choose_auth)],
+            SHOW_VISITORS: [MessageHandler(Filters.text, Auth.show_visitors)],
             CPF_AUTH:[MessageHandler(Filters.text, Auth.cpf)],
             VOICE_AUTH: [MessageHandler(Filters.voice, Auth.voice)],
+            PASSWORD_AUTH: [MessageHandler(Filters.text, Auth.password)],
             HANDLE_VISITORS_PENDING: [MessageHandler(Filters.text, HandleEntryVisitor.index)]
             },
 
