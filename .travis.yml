@@ -3,6 +3,7 @@ python:
   - "3.7"
 
 stages:
+  - code_style
   - deploy
 
 env:
@@ -13,3 +14,33 @@ jobs:
     - stage: code_style
       script:
         - docker-compose run lint
+
+    # Deploy HMG
+    - stage: deploy
+      if: (branch = devel) AND (type != pull_request)
+      install: skip
+      script: skip
+      deploy:
+        provider: heroku
+        skip_cleanup: true
+        api_key:
+          secure: ${HEROKU_KEY}
+        app: alohomora-bot-hmg
+        on:
+          repo: Alohomora-team/2019.2-AlohomoraBot
+          branch: devel
+
+    #Deploy PROD
+    - stage: deploy
+      if: (branch = master) AND (type != pull_request)
+      install: skip
+      script: skip
+      deploy:
+        provider: heroku
+        skip_cleanup: true
+        api_key:
+          secure: ${HEROKU_KEY}
+        app: alohomora-bot
+        on:
+          repo: Alohomora-team/2019.2-AlohomoraBot
+          branch: master

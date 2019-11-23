@@ -1,10 +1,11 @@
 """
 Constants used in all code
 """
+import os
 import logging
 
 # API Path
-PATH = "http://api:8000/graphql/"
+PATH = os.environ.get('URL_PATH', "http://api:8000/graphql/")
 
 # Register constants
 NAME = 0
@@ -59,7 +60,7 @@ API_LOG_LEVEL = logging.CRITICAL
 LOG_NAME = 'Alohomora'
 
 # Bot token
-TOKEN = "801020772:AAGiaVK52MBf7is4InDnESbB0XE1m9QRcAo"
+TOKEN = os.environ.get('TOKEN', "801020772:AAGiaVK52MBf7is4InDnESbB0XE1m9QRcAo")
 
 #Log file name
 FILE_NAME = 'file.log'
