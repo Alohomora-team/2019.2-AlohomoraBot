@@ -158,10 +158,14 @@ if __name__ == '__main__':
     dp.add_handler(CallbackQueryHandler(NotifyAdmin.approved, pattern='app'))
     dp.add_handler(CallbackQueryHandler(NotifyAdmin.rejected, pattern='rej'))
 
-    updater.start_webhook(listen="0.0.0.0",
-                      port=port,
-                      url_path=token)
+    if os.environ['DEPLOY'] == 'True':
+        updater.start_webhook(listen="0.0.0.0",
+                        port=port,
+                        url_path=token)
 
-    updater.bot.set_webhook("https://teste-bot-alohomora.herokuapp.com/" + token)
+        updater.bot.set_webhook("https://teste-bot-alohomora.herokuapp.com/" + token)
+
+    elif os.environ['DEPLOY'] == 'False':
+        updater.start_polling()
 
     updater.idle()
