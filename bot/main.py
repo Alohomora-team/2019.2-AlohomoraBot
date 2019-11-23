@@ -163,7 +163,7 @@ if __name__ == '__main__':
                         port=port,
                         url_path=token)
 
-        updater.bot.set_webhook("https://teste-bot-alohomora.herokuapp.com/" + token)
+        updater.bot.set_webhook(os.environ['URL'] + token)
 
     elif os.environ['DEPLOY'] == 'False':
         updater.start_polling()
