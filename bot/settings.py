@@ -1,6 +1,7 @@
 """
 Constants used in all code
 """
+import os
 import logging
 
 # API Path
@@ -58,7 +59,7 @@ API_LOG_LEVEL = logging.CRITICAL
 LOG_NAME = 'Alohomora'
 
 # Bot token
-TOKEN = "977525533:AAHvz6R1F_RcUpdv4FfuJ0kcr0_ly4cP8uo"
+TOKEN = os.environ.get('TOKEN', "801020772:AAGiaVK52MBf7is4InDnESbB0XE1m9QRcAo")
 
 #Log file name
 FILE_NAME = 'file.log'
