@@ -5,7 +5,7 @@ import os
 import logging
 
 # API Path
-PATH = os.environ.get('PATH', "http://api:8000/graphql/")
+PATH = os.environ.get('URL_PATH', "http://api:8000/graphql/")
 
 # Register constants
 NAME = 0
