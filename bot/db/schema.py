@@ -226,7 +226,7 @@ def get_resident_apartment(chat_id):
     Get the apartment of a resident
     """
     session = Session()
-    
+
     resident = session.query(Resident).\
             filter_by(
                     chat_id=chat_id).first()
@@ -250,6 +250,23 @@ def get_residents_chat_ids(block, apartment):
     session.close()
 
     return residents_chat_ids
+
+def get_resident_cpf(chat_id):
+    """
+    Get a chat_id of a resident
+    """
+    session = Session()
+
+    resident = session.query(Resident).\
+            filter_by(
+                    chat_id=chat_id).first()
+
+    session.close()
+
+    if resident:
+        return resident.cpf
+    else:
+        return None
 
 def resident_exists(chat_id):
     """
