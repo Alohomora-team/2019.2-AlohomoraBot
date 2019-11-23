@@ -17,7 +17,7 @@ jobs:
 
     # Deploy HMG
     - stage: deploy
-      if: (branch = testedeploybot) AND (type != pull_request)
+      if: (branch = devel) AND (type != pull_request)
       install: skip
       script: skip
       deploy:
@@ -28,7 +28,7 @@ jobs:
         app: alohomora-bot-hmg
         on:
           repo: Alohomora-team/2019.2-AlohomoraBot
-          branch: testedeploybot
+          branch: devel
 
     #Deploy PROD
     - stage: deploy
