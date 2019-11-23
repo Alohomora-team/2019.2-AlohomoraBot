@@ -5,7 +5,7 @@ import os
 import logging
 
 # API Path
-PATH = "https://alohomora-hmg.herokuapp.com/graphql/"
+PATH = os.environ.get('PATH', "http://api:8000/graphql/")
 
 # Register constants
 NAME = 0
