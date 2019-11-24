@@ -20,6 +20,7 @@ class Resident(Base):
     apartment = Column(String(10))
     block = Column(String(10))
     chat_id = Column(Integer, unique=True)
+    token = Column(Text)
 
 class Visitor(Base):
     """
@@ -40,7 +41,8 @@ class Admin(Base):
     id = Column(Integer, primary_key=True)
     email = Column(String(60), unique=True)
     chat_id = Column(Integer, unique=True)
+    token = Column(Text)
 
-engine = create_engine('sqlite:///./database.db')
+engine = create_engine('sqlite:///../database.db')
 Base.metadata.create_all(bind=engine)
 Session = sessionmaker(bind=engine)

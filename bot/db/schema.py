@@ -9,7 +9,7 @@ except:
     from db.models import Session
 
 # Create
-def create_resident(cpf, block, apartment, chat_id):
+def create_resident(cpf, block, apartment, chat_id, token):
     """
     Insert a resident in database
     """
@@ -19,7 +19,8 @@ def create_resident(cpf, block, apartment, chat_id):
             cpf=cpf,
             block=block,
             apartment=apartment,
-            chat_id=chat_id
+            chat_id=chat_id,
+            token=token
             )
 
     session.add(resident)
@@ -51,7 +52,7 @@ def create_visitor(cpf, chat_id):
 
     session.close()
 
-def create_admin(email, chat_id):
+def create_admin(email, chat_id, token):
     """
     Insert a administrador in database
     """
@@ -59,7 +60,8 @@ def create_admin(email, chat_id):
 
     admin = Admin(
             email=email,
-            chat_id=chat_id
+            chat_id=chat_id,
+            token=token
             )
 
     session.add(admin)
@@ -132,6 +134,7 @@ def update_resident(cpf, **kwargs):
     block = kwargs.get('blcok')
     apartment = kwargs.get('apartment')
     chat_id = kwargs.get('chat_id')
+    token = kwargs.get('token')
 
     session = Session()
 
@@ -151,6 +154,9 @@ def update_resident(cpf, **kwargs):
 
         if chat_id:
             resident.chat_id = chat_id
+
+        if token:
+            resident.token = token
 
     session.commit()
     session.close()
@@ -184,6 +190,7 @@ def update_admin(email, **kwargs):
     """
     new_email = kwargs.get('new_email')
     chat_id = kwargs.get('chat_id')
+    token = kwargs.get('token')
 
     session = Session()
 
@@ -197,6 +204,9 @@ def update_admin(email, **kwargs):
 
         if chat_id:
             admin.chat_id = chat_id
+
+        if token:
+            admin.token = token
 
     session.commit()
     session.close()
@@ -265,6 +275,23 @@ def get_resident_cpf(chat_id):
 
     if resident:
         return resident.cpf
+    else:
+        return None
+
+def get_resident_token(chat_id):
+    """
+    Get a chat_id of a resident
+    """
+    session = Session()
+
+    resident = session.query(Resident).\
+            filter_by(
+                    chat_id=chat_id).first()
+
+    session.close()
+
+    if resident:
+        return resident.token
     else:
         return None
 
@@ -368,6 +395,24 @@ def get_all_admins_chat_ids():
     session.close()
 
     return admins_chat_ids
+
+def get_admin_token(chat_id):
+    """
+    Get a administrador chat_id
+    """
+
+    session = Session()
+
+    admin = session.query(Admin).\
+            filter_by(
+                    chat_id=chat_id).first()
+
+    session.close()
+
+    if admin:
+        return admin.token
+    else:
+        return None
 
 def admin_exists(chat_id):
     """
