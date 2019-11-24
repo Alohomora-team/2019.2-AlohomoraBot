@@ -10,7 +10,7 @@ import requests
 import librosa
 
 from checks import CheckResident, CheckCondo
-from db.schema import create_resident
+from db.schema import create_resident, resident_exists
 from admin.notify_admin import NotifyAdmin
 from settings import LOG_NAME
 from settings import NAME, PHONE, EMAIL, CPF, BLOCK, APARTMENT, PASSWORD
@@ -25,7 +25,7 @@ logger = logging.getLogger(LOG_NAME)
 
 chat = {}
 
-class Register:
+class RegisterResident:
     """
     Register a resident
     """
@@ -36,6 +36,10 @@ class Register:
         """
         logger.info("Introducing registration session")
         chat_id = update.message.chat_id
+
+        if resident_exists(chat_id):
+            update.message.reply_text('Você já está cadastrado!')
+            return ConversationHandler.END
 
         update.message.reply_text('Ok, vamos iniciar o cadastro!')
         update.message.reply_text('Caso deseje interromper o processo digite /cancelar')
@@ -206,94 +210,8 @@ class Register:
         logger.debug("Existing apartment - proceed")
 
         update.message.reply_text(
-            'Agora preciso que você grave um áudio dizendo seu nome completo.'
-        )
-        update.message.reply_text(
-            'O áudio deve ter no mínimo 1 segundo e no máximo 3 segundos.'
-        )
-
-        return CATCH_AUDIO_SPEAKING_NAME
-
-    def catch_audio_speaking_name(update, context):
-        """
-        Catch the name audio and ask for confirmation
-        """
-        chat_id = update.message.chat_id
-        audio = update.message.voice
-
-        logger.debug('\t\tAudio catched.')
-        if ValidateForm.audio_speaking_name(audio, update) is False:
-            return CATCH_AUDIO_SPEAKING_NAME
-
-        chat[chat_id]['audio_speaking_name'] = audio
-
-        logger.debug('\tRequesting user confirmation ...')
-        next_button = KeyboardButton('Prosseguir')
-        repeat_button = KeyboardButton('Regravar')
-        prompt_buttons = [[repeat_button], [next_button]]
-        prompt = ReplyKeyboardMarkup(prompt_buttons, resize_keyboard=True, one_time_keyboard=True)
-        update.message.reply_text(
-            '''
-Escute o audio gravado e verifique se:
-1 - A fala foi natural e sem grandes pausas
-2 - A fala não sofreu cortes nem no fim nem no começo do áudio
-            '''
-        )
-        update.message.reply_text(
-            'Caso o áudio cumpra essas exigências, prossiga. Caso contrário, por favor, regrave.',
-            reply_markup=prompt
-        )
-
-        return CONFIRM_AUDIO_SPEAKING_NAME
-
-    def confirm_audio_speaking_name(update, context):
-        """
-        Confirm the name audio and run all audio processes
-        """
-        chat_id = update.message.chat_id
-        choice = update.message.text
-
-        if choice == 'Regravar':
-            update.message.reply_text('Ok. Pode regravar.')
-            logger.debug('\t\tUser has requested to record again.')
-            logger.debug('\tWaiting for audio ...')
-            return CATCH_AUDIO_SPEAKING_NAME
-
-        logger.debug('\t\tUser confirmed the audio')
-
-        audio = chat[chat_id]['audio_speaking_name']
-
-        logger.debug('\tDownloading audio file ...')
-        audio_file_path = audio.get_file().download()
-        logger.debug('\t\tDone')
-
-        logger.debug('\tConverting audio file into .wav ...')
-        wav_audio_file_path = audio_file_path.split('.')[0] + '.wav'
-        subprocess.run(['ffmpeg', '-i', audio_file_path, wav_audio_file_path], check=True)
-        logger.debug('\t\tDone')
-
-        logger.debug('\tOpening the audio file...')
-        data, samplerate = librosa.load(wav_audio_file_path, sr=16000, mono=True)
-        logger.debug('\t\tDone')
-
-        logger.debug("\tPutting in the chat's dictionary ...")
-        chat[chat_id]['audio_speaking_name'] = data.tolist()
-        chat[chat_id]['audio_samplerate'] = samplerate
-        logger.debug('\t\tDone')
-
-        logger.debug('\tDeleting the audio file ...')
-        os.remove(wav_audio_file_path)
-        os.remove(audio_file_path)
-        logger.debug('\t\tDone')
-
-        logger.debug('TASK accomplished successfully')
-
-        update.message.reply_text('Vamos agora catalogar as características da sua voz!')
-        update.message.reply_text(
             'Grave uma breve mensagem de voz dizendo a frase: "Juro que sou eu".'
         )
-
-        logger.info("Requesting voice audio ...")
 
         return VOICE_REGISTER
 
@@ -443,7 +361,6 @@ Escute o audio gravado e verifique se:
                 block: $block,
                 audioSpeakingPhrase: $audioSpeakingPhrase,
                 audioSpeakingName: $audioSpeakingName,
-                audioSamplerate: $audioSamplerate,
                 password: $password
             ){
                 resident{
@@ -471,8 +388,7 @@ Escute o audio gravado e verifique se:
                 'apartment': chat[chat_id]['apartment'],
                 'block': chat[chat_id]['block'],
                 'audioSpeakingPhrase': chat[chat_id]['audio_speaking_phrase'],
-                'audioSpeakingName': chat[chat_id]['audio_speaking_name'],
-                'audioSamplerate': chat[chat_id]['audio_samplerate'],
+                'audioSpeakingName': "Nada",
                 'password': chat[chat_id]['password'],
                 }
 

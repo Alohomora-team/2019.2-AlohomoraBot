@@ -10,7 +10,7 @@ from admin.admin_auth import AdminAuth
 from commands import *
 from feedback import Feedback
 from resident.notify_resident import NotifyResident
-from resident.register import Register
+from resident.register_resident import RegisterResident
 from resident.resident_auth import Auth
 from settings import *
 from telegram.ext import CallbackQueryHandler
@@ -71,27 +71,35 @@ if __name__ == '__main__':
 
     # Resident register
     dp.add_handler(ConversationHandler(
-        entry_points=[CommandHandler('cadastrar', Register.index)],
+        entry_points=[CommandHandler('cadastrar', RegisterResident.index)],
 
         states={
-            NAME:[MessageHandler(Filters.text, Register.name)],
-            PHONE:[MessageHandler(Filters.text | Filters.contact, Register.phone)],
-            EMAIL:[MessageHandler(Filters.text, Register.email)],
-            CPF:[MessageHandler(Filters.text, Register.cpf)],
-            APARTMENT:[MessageHandler(Filters.text, Register.apartment)],
-            BLOCK:[MessageHandler(Filters.text, Register.block)],
-            PASSWORD: [MessageHandler(Filters.text, Register.password)],
-            CATCH_AUDIO_SPEAKING_NAME:[
-                MessageHandler(Filters.voice, Register.catch_audio_speaking_name)
-            ],
-            CONFIRM_AUDIO_SPEAKING_NAME:[
-                MessageHandler(Filters.text, Register.confirm_audio_speaking_name)
-            ],
-            VOICE_REGISTER:[MessageHandler(Filters.voice, Register.voice_register)],
-            REPEAT_VOICE:[MessageHandler(Filters.text, Register.repeat_voice)]
+            NAME:[MessageHandler(Filters.text, RegisterResident.name)],
+            PHONE:[MessageHandler(Filters.text | Filters.contact, RegisterResident.phone)],
+            EMAIL:[MessageHandler(Filters.text, RegisterResident.email)],
+            CPF:[MessageHandler(Filters.text, RegisterResident.cpf)],
+            APARTMENT:[MessageHandler(Filters.text, RegisterResident.apartment)],
+            BLOCK:[MessageHandler(Filters.text, RegisterResident.block)],
+            PASSWORD: [MessageHandler(Filters.text, RegisterResident.password)],
+            VOICE_REGISTER:[MessageHandler(Filters.voice, RegisterResident.voice_register)],
+            REPEAT_VOICE:[MessageHandler(Filters.text, RegisterResident.repeat_voice)]
             },
 
-        fallbacks=[CommandHandler('cancelar', Register.end)]
+        fallbacks=[CommandHandler('cancelar', RegisterResident.end)]
+        ))
+
+    # Resident authentication
+
+    dp.add_handler(ConversationHandler(
+        entry_points=[CommandHandler('autenticar', ResidentAuth.index)],
+
+        states={
+            CHOOSE_AUTH:[MessageHandler(Filters.text, ResidentAuth.choose_auth)],
+            VOICE_AUTH:[MessageHandler(Filters.text, ResidentAuth.voice)],
+            PASSWORD_AUTH:[MessageHandler(Filters.text, ResidentAuth.password)],
+            },
+
+        fallbacks=[CommandHandler('cancelar', ResidentAuth.end)]
         ))
 
     # Visitor register
