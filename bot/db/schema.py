@@ -430,4 +430,3 @@ def admin_exists(chat_id):
         return True
     else:
         return False
-

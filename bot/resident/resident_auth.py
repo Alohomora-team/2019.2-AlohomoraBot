@@ -8,27 +8,23 @@ import subprocess
 import numpy
 import requests
 
-from db.schema import resident_exits, get_resident_cpf
+from checks import CheckResident
+from db.schema import resident_exists, get_resident_cpf, update_resident
+from helpers import format_datetime
 from python_speech_features import mfcc
 from scipy.io.wavfile import read
-from telegram.ext import ConversationHandler
-from telegram import KeyboardButton, ReplyKeyboardMarkup
-from checks import CheckResident
-from settings import CPF_AUTH, VOICE_AUTH, PASSWORD_AUTH, CHOOSE_AUTH
-from settings import SHOW_VISITORS, HANDLE_VISITORS_PENDING
+from settings import CHOOSE_AUTH, VOICE_AUTH, PASSWORD_AUTH
 from settings import PATH, LOG_NAME
+from telegram import KeyboardButton, ReplyKeyboardMarkup
+from telegram.ext import ConversationHandler
 from validator import ValidateForm
-from helpers import format_datetime
 
-LOGGER = logging.getLogger(LOG_NAME)
-
-CHAT = {}
+logger = logging.getLogger(LOG_NAME)
 
 class ResidentAuth:
     """
     Authenticate users
     """
-
     @staticmethod
     def index(update, context):
         """
@@ -36,20 +32,17 @@ class ResidentAuth:
         """
         chat_id = update.message.chat_id
 
-        LOGGER.info("Introducing authentication session")
-        update.message.reply_text("")
+        logger.info("Introducing authentication session")
 
         if resident_exists(chat_id):
-            LOGGER.info("Resident in database - proceed")
-            CHAT[chat_id] = {}
-            CHAT[chat_id]['cpf'] = get_resident_cpf(chat_id)
-
+            logger.info("Resident in database - proceed")
+            context.chat_data['cpf'] = get_resident_cpf(chat_id)
         else:
-            LOGGER.info("Resident not in database - canceling")
-            update.message.reply_text("Você não está registrado. Digite /cadastrar para fazer o cadastro.")
+            logger.info("Resident not in database - canceling")
+            update.message.reply_text("Você precisa estar registrado para se autenticar.")
             return ConversationHandler.END
 
-        LOGGER.debug(f"data['{chat_id}']: {CHAT[chat_id]}")
+        logger.debug(f"data: {context.chat_data}")
 
         pwd_keyboard = KeyboardButton('Senha')
         voice_keyboard = KeyboardButton('Voz')
@@ -63,23 +56,22 @@ class ResidentAuth:
         """
         Ask for the method to authenticate
         """
-        chat_id = update.message.chat_id
         choice = update.message.text
 
-        CHAT[chat_id]['choice'] = choice
-        LOGGER.debug(f"'choice': '{CHAT[chat_id]['choice']}'")
+        context.chat_data['choice'] = choice
+        logger.debug(f"'choice': '{context.chat_data['choice']}'")
 
         if choice == "Senha":
-            LOGGER.info("Replied to authenticate by password")
-            update.message.reply_text('Ok! Informe sua senha:')
-            LOGGER.info("Requesting password")
+            logger.info("Replied to authenticate by password")
+            update.message.reply_text('Informe sua senha:')
+            logger.info("Requesting password")
             return PASSWORD_AUTH
         elif choice == "Voz":
-            LOGGER.info("Replied to authenticate by voice")
+            logger.info("Replied to authenticate by voice")
             update.message.reply_text(
                 'Grave um áudio de no mínimo 1 segundo dizendo "Juro que sou eu"'
             )
-            LOGGER.info("Requesting voice audio")
+            logger.info("Requesting voice audio")
             return VOICE_AUTH
         else:
             update.message.reply_text('Por favor, apenas aperte um dos botões.')
@@ -90,46 +82,41 @@ class ResidentAuth:
         """
         Validate password
         """
-        chat_id = update.message.chat_id
         password = update.message.text
 
-        CHAT[chat_id]['password'] = password
-        LOGGER.debug(f"'password': '{CHAT[chat_id]['password']}'")
+        context.chat_data['password'] = password
+        logger.debug(f"'password': '{context.chat_data['password']}'")
 
-        getEmail = Auth.get_email(chat_id)
+        getEmail = ResidentAuth.get_email(context.chat_data['cpf'])
 
         if(getEmail.status_code == 200 and 'errors' not in getEmail.json().keys()):
-            LOGGER.info("Sucess on getting email by CPF")
-
+            logger.info("Sucess on getting email by CPF")
             email = getEmail.json()['data']['resident']['email']
-            CHAT[chat_id]['email'] = email
-            LOGGER.debug(f"'resident-email': '{CHAT[chat_id]['email']}'")
-
-            response = Auth.generate_token(chat_id)
+            context.chat_data['email'] = email
+            logger.debug(f"'email': '{context.chat_data['email']}'")
         else:
-            LOGGER.error("Failed getting email by CPF")
+            logger.error("Failed getting email by CPF")
             update.message.reply_text(
-                'Falha ao buscar informações do morador de CPF %s' % CHAT[chat_id]['cpf']
+                'Falha ao buscar informações do morador de CPF %s' % context.chat_data['cpf']
             )
 
             return ConversationHandler.END
 
+        response = ResidentAuth.generate_token(context.chat_data)
+
         if(response.status_code == 200 and 'errors' not in response.json().keys()):
-            LOGGER.info("Sucess on generating token")
-
+            logger.info("Sucess on generating token")
             token = response.json()['data']['tokenAuth']['token']
-            CHAT[chat_id]['token'] = token
-            LOGGER.debug(f"'auth-resident-token': '{CHAT[chat_id]['token']}'")
+            context.chat_data['token'] = token
+            logger.debug(f"'token': '{context.chat_data['token']}'")
 
-            return SHOW_VISITORS
+            update.message.reply_text('Autenticado(a) com sucesso!')
+
+            update_resident(token=token)
         else:
-            LOGGER.error("Failed generating token")
+            logger.error("Failed generating token")
             update.message.reply_text(
                 'Senha incorreta. Não foi possível autenticar o morador.'
-            )
-            update.message.reply_text(
-                'Se você tem certeza da senha inserida,'+
-                ' é possível que sua conta como morador não esteja ativa.'
             )
 
         return ConversationHandler.END
@@ -139,7 +126,6 @@ class ResidentAuth:
         """
         Validate voice
         """
-        chat_id = update.message.chat_id
         voice_auth = update.message.voice
 
         if not ValidateForm.voice(voice_auth, update):
@@ -158,22 +144,17 @@ class ResidentAuth:
         mfcc_data = mfcc_data.tolist()
         mfcc_data = json.dumps(mfcc_data)
 
-        CHAT[chat_id]['voice_mfcc'] = mfcc_data
-        LOGGER.debug('auth-voice-mfcc:')
-        LOGGER.debug(
-            f"'{CHAT[chat_id]['voice_mfcc'][:1]}...{CHAT[chat_id]['voice_mfcc'][-1:]}'"
-            )
+        context.chat_data['voice_mfcc'] = mfcc_data
 
-        response = Auth.authenticate(chat_id)
+        response = ResidentAuth.authenticate(context.chat_data)
 
         valid = response['data']['voiceBelongsResident']
 
         if valid:
-            LOGGER.info("Resident has been authenticated")
+            logger.info("Resident has been authenticated")
             update.message.reply_text('Autenticado(a) com sucesso!')
-
         else:
-            LOGGER.error("Authentication failed")
+            logger.error("Authentication failed")
             update.message.reply_text('Falha na autenticação!')
 
         return ConversationHandler.END
@@ -184,20 +165,18 @@ class ResidentAuth:
         """
 
         logger.info("Canceling authentication")
-        chat_id = update.message.chat_id
 
         update.message.reply_text('Autenticação cancelada!')
 
-        chat[chat_id] = {}
-        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
+        logger.debug(f"data: {context.chat_data}")
 
         return ConversationHandler.END
 
-    def get_email(chat_id):
+    def get_email(cpf):
         """
         Get resident's email by CPF
         """
-        LOGGER.info("Getting resident's email by CPF")
+        logger.info("Getting resident's email by CPF")
         query = """
             query resident($cpf: String!){
                 resident(cpf: $cpf){
@@ -207,19 +186,19 @@ class ResidentAuth:
         """
 
         variables = {
-                'cpf': CHAT[chat_id]['cpf'],
+                'cpf': cpf,
                 }
         response = requests.post(PATH, json={'query':query, 'variables':variables})
-        LOGGER.debug(f"Response: {response.json()}")
+        logger.debug(f"Response: {response.json()}")
 
         return response
 
 
-    def generate_token(chat_id):
+    def generate_token(data):
         """
         Generate resident's token
         """
-        LOGGER.info("Generating resident token")
+        logger.info("Generating resident token")
         query = """
             mutation tokenAuth($email: String!, $password: String!){
                 tokenAuth(email: $email, password: $password){
@@ -228,22 +207,24 @@ class ResidentAuth:
             }
             """
 
+        print(data['email'])
+        print(data['password'])
+
         variables = {
-                'email': CHAT[chat_id]['email'],
-                'password': CHAT[chat_id]['password'],
+                'email': data['email'],
+                'password': data['password'],
                 }
         response = requests.post(PATH, json={'query':query, 'variables':variables})
-        LOGGER.debug(f"Response: {response.json()}")
+        logger.debug(f"Response: {response.json()}")
 
         return response
 
     @staticmethod
-    def authenticate(chat_id):
+    def authenticate(data):
         """
         Authenticate user
         """
-
-        LOGGER.info("Authenticating resident")
+        logger.info("Authenticating resident")
         query = """
             query voiceBelongsResident(
                 $cpf: String!,
@@ -254,12 +235,12 @@ class ResidentAuth:
         """
 
         variables = {
-            'cpf': CHAT[chat_id]['cpf'],
-            'mfccData': CHAT[chat_id]['voice_mfcc']
+            'cpf': data['cpf'],
+            'mfccData': data['voice_mfcc']
         }
 
         response = requests.post(PATH, json={'query':query, 'variables':variables})
 
-        LOGGER.debug(f"Response: {response.json()}")
+        logger.debug(f"Response: {response.json()}")
 
         return response.json()

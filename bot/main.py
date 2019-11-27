@@ -4,14 +4,15 @@ Start program
 
 import logging
 import os
+
+from commands import *
+from admin.admin_auth import AdminAuth
 from admin.notify_admin import NotifyAdmin
 from admin.register_admin import RegisterAdmin
-from admin.admin_auth import AdminAuth
-from commands import *
 from feedback import Feedback
 from resident.notify_resident import NotifyResident
 from resident.register_resident import RegisterResident
-from resident.resident_auth import Auth
+from resident.resident_auth import ResidentAuth
 from settings import *
 from telegram.ext import CallbackQueryHandler
 from telegram.ext import Updater, CommandHandler, MessageHandler, ConversationHandler, Filters
@@ -78,24 +79,23 @@ if __name__ == '__main__':
             PHONE:[MessageHandler(Filters.text | Filters.contact, RegisterResident.phone)],
             EMAIL:[MessageHandler(Filters.text, RegisterResident.email)],
             CPF:[MessageHandler(Filters.text, RegisterResident.cpf)],
-            APARTMENT:[MessageHandler(Filters.text, RegisterResident.apartment)],
             BLOCK:[MessageHandler(Filters.text, RegisterResident.block)],
-            PASSWORD: [MessageHandler(Filters.text, RegisterResident.password)],
+            APARTMENT:[MessageHandler(Filters.text, RegisterResident.apartment)],
             VOICE_REGISTER:[MessageHandler(Filters.voice, RegisterResident.voice_register)],
-            REPEAT_VOICE:[MessageHandler(Filters.text, RegisterResident.repeat_voice)]
+            REPEAT_VOICE:[MessageHandler(Filters.text, RegisterResident.repeat_voice)],
+            PASSWORD: [MessageHandler(Filters.text, RegisterResident.password)]
             },
 
         fallbacks=[CommandHandler('cancelar', RegisterResident.end)]
         ))
 
     # Resident authentication
-
     dp.add_handler(ConversationHandler(
         entry_points=[CommandHandler('autenticar', ResidentAuth.index)],
 
         states={
             CHOOSE_AUTH:[MessageHandler(Filters.text, ResidentAuth.choose_auth)],
-            VOICE_AUTH:[MessageHandler(Filters.text, ResidentAuth.voice)],
+            VOICE_AUTH:[MessageHandler(Filters.voice, ResidentAuth.voice)],
             PASSWORD_AUTH:[MessageHandler(Filters.text, ResidentAuth.password)],
             },
 

@@ -10,23 +10,19 @@ import numpy
 import requests
 
 from checks import CheckAdmin
+from db.schema import admin_exists, get_admin_token
 from settings import ADMIN_REGISTER_EMAIL, ADMIN_REGISTER_PWD
-from settings import ADMIN_AUTH_EMAIL, ADMIN_AUTH_PWD, ADMIN_AUTH_REPEAT
 from settings import PATH, LOG_NAME
 from telegram import KeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import ConversationHandler
 from validator import ValidateForm
 
-
 logger = logging.getLogger(LOG_NAME)
-
-chat = {}
 
 class RegisterAdmin:
     """
     Register an admin
     """
-
     def index(update, context):
         """
         Start the conversation
@@ -34,11 +30,17 @@ class RegisterAdmin:
         logger.info("Introducing registration session")
         chat_id = update.message.chat_id
 
+        if not admin_exists(chat_id):
+            logger.info("Unauthenticated admin - ending")
+            update.message.reply_text(
+                    'Você precisa estar autenticado para fazer este procedimento!'
+                    )
+            return ConversationHandler.END
+
         update.message.reply_text('Email:')
         logger.info("Asking for email")
 
-        chat[chat_id] = {}
-        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
+        logger.debug("data: {context.chat_data}")
 
         return ADMIN_REGISTER_EMAIL
 
@@ -46,16 +48,15 @@ class RegisterAdmin:
         """
         Get new admin's email
         """
-        chat_id = update.message.chat_id
         email = update.message.text
 
         if not ValidateForm.email(email, update):
             return ADMIN_REGISTER_EMAIL
 
-        chat[chat_id]['email'] = email
-        logger.debug(f"'email': '{chat[chat_id]['email']}'")
+        context.chat_data['email'] = email
+        logger.debug(f"'email': '{context.chat_data['email']}'")
 
-        check = CheckAdmin.email(chat, chat_id)
+        check = CheckAdmin.email(email)
 
         if 'errors' not in check.keys():
             logger.error("Email already exists in database - asking again")
@@ -78,10 +79,10 @@ class RegisterAdmin:
         chat_id = update.message.chat_id
         password = update.message.text
 
-        chat[chat_id]['password'] = password
-        logger.debug(f"'password': '{chat[chat_id]['password']}'")
+        context.chat_data['password'] = password
+        logger.debug(f"'password': '{context.chat_data['password']}'")
 
-        response = RegisterAdmin.register_admin(chat_id)
+        response = RegisterAdmin.register_admin(context, chat_id)
 
         if(response.status_code == 200 and 'errors' not in response.json().keys()):
             logger.info("Admin registered in database")
@@ -90,50 +91,21 @@ class RegisterAdmin:
             logger.error("Registration failed")
             update.message.reply_text('Falha ao cadastrar administrador no sistema!')
 
-        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
-
-        chat[chat_id] = {}
+        logger.debug(f"data: {context.chat_data}")
 
         return ConversationHandler.END
-
 
     def end(update, context):
         """
         Cancel interaction
         """
         logger.info("Canceling admin registration")
-        chat_id = update.message.chat_id
 
         update.message.reply_text('Cadastro de admin cancelado!')
 
-        chat[chat_id] = {}
-        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
-
         return ConversationHandler.END
 
-    def generate_token(chat_id):
-        """
-        Generate creator's token
-        """
-        logger.info("Generating admin token")
-        query = """
-            mutation tokenAuth($email: String!, $password: String!){
-                tokenAuth(email: $email, password: $password){
-                    token
-                }
-            }
-            """
-
-        variables = {
-                'email': chat[chat_id]['auth-email'],
-                'password': chat[chat_id]['auth-password'],
-                }
-        response = requests.post(PATH, json={'query':query, 'variables':variables})
-        logger.debug(f"Response: {response.json()}")
-
-        return response
-
-    def register_admin(chat_id):
+    def register_admin(context, chat_id):
         """
         Register an admin
         """
@@ -156,12 +128,12 @@ class RegisterAdmin:
         """
 
         variables = {
-                'email': chat[chat_id]['email'],
-                'password': chat[chat_id]['password']
+                'email': context.chat_data['email'],
+                'password': context.chat_data['password']
                 }
 
         response = requests.post(PATH,
-                                headers={'Authorization': 'JWT %s' % chat[chat_id]['token']},
+                                headers={'Authorization': 'JWT %s' % get_admin_token(chat_id)},
                                 json={'query':query,
                                 'variables':variables}
                                 )

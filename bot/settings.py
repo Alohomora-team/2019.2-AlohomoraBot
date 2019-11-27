@@ -1,6 +1,7 @@
 """
 Constants used in all code
 """
+
 import logging
 
 # API Path

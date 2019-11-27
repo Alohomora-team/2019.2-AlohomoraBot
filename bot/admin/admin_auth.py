@@ -1,13 +1,15 @@
 """
 Authenticate a admin
 """
-import logging
-from db.schema import admin_exists, create_admin
-from checks import CheckAdmin
-from settings import LOG_NAME
-from settings import ADMIN_AUTH_EMAIL, ADMIN_AUTH_PWD, ADMIN_AUTH_REPEAT
 
-chat = {}
+import logging
+import requests
+
+from checks import CheckAdmin
+from db.schema import admin_exists, create_admin
+from settings import ADMIN_AUTH_EMAIL, ADMIN_AUTH_PWD, ADMIN_AUTH_REPEAT
+from settings import LOG_NAME, PATH
+from validator import ValidateForm
 
 logger = logging.getLogger(LOG_NAME)
 
@@ -23,14 +25,14 @@ class AdminAuth:
         chat_id = update.message.chat_id
 
         if admin_exists(chat_id):
+            logger.info("Admin already authenticated - ending")
             update.message.reply_text('Você já está autenticado!')
             return ConversationHandler.END
 
-        update.message.reply_text('Por favor, digite seu email:')
+        update.message.reply_text('Email:')
         logger.info("Asking for email")
 
-        chat[chat_id] = {}
-        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
+        logger.debug(f"data: {context.chat_data}")
 
         return ADMIN_AUTH_EMAIL
 
@@ -38,27 +40,24 @@ class AdminAuth:
         """
         Get email to authenticate admin
         """
-        chat_id = update.message.chat_id
         email = update.message.text
 
         if not ValidateForm.email(email, update):
             return ADMIN_AUTH_EMAIL
 
-        chat[chat_id]['email'] = email
-        logger.debug(f"'email': '{chat[chat_id]['email']}'")
+        context.chat_data['email'] = email
+        logger.debug(f"'email': '{context.chat_data['email']}'")
 
-        check = CheckAdmin.auth_email(chat, chat_id)
+        check = CheckAdmin.email(email)
 
         if 'errors' not in check.keys():
-            logger.error("Email exists in database")
-            update.message.reply_text('Ok, email válido')
-
-            logger.info("Requesting password")
+            logger.debug("Email exists in database - proceed")
             update.message.reply_text('Senha:')
+            logger.info("Requesting password")
             return ADMIN_AUTH_PWD
 
         else:
-            update.message.reply_text("Email não encontrado. Por favor, digite novamente")
+            update.message.reply_text("Email não encontrado. Por favor, digite novamente:")
             return ADMIN_AUTH_EMAIL
 
     def password(update, context):
@@ -68,22 +67,24 @@ class AdminAuth:
         chat_id = update.message.chat_id
         password = update.message.text
 
-        chat[chat_id]['password'] = password
-        logger.debug(f"'password': '{chat[chat_id]['password']}'")
+        context.chat_data['password'] = password
+        logger.debug(f"'password': '{context.chat_data['password']}'")
 
-        response = RegisterAdmin.generate_token(chat_id)
+        response = AdminAuth.generate_token(context)
 
         if(response.status_code == 200 and 'errors' not in response.json().keys()):
             logger.info("Sucess on generating token")
 
             token = response.json()['data']['tokenAuth']['token']
-            chat[chat_id]['token'] = token
-            logger.debug(f"'token': '{chat[chat_id]['token']}'")
 
-            update.message.reply_text('Muito bem! Autenticado com sucesso.')
+            context.chat_data['token'] = token
+            logger.debug(f"'token': '{context.chat_data['token']}'")
+
+            update.message.reply_text('Autenticado(a) com sucesso!')
             create_admin(
-                    email=chat[chat_id]['email'],
-                    chat_id=chat_id
+                    email=context.chat_data['email'],
+                    chat_id=chat_id,
+                    token=token
                     )
 
             return ConversationHandler.END
@@ -91,7 +92,7 @@ class AdminAuth:
         else:
             logger.error("Failed generating token")
             update.message.reply_text(
-                'Email ou senha incorretos. Não foi possível identificar o administrador.'
+                    'Falha na autenticação: email ou senha incorretos'
             )
 
             yes_keyboard = KeyboardButton('Sim')
@@ -106,7 +107,6 @@ class AdminAuth:
         """
         Repeat authentication interaction
         """
-        chat_id = update.message.chat_id
         choice = update.message.text
 
         if not ValidateForm.boolean_value(choice, update):
@@ -128,12 +128,32 @@ class AdminAuth:
         Cancel interaction
         """
         logger.info("Canceling admin authentication")
-        chat_id = update.message.chat_id
 
         update.message.reply_text('Autenticação cancelada!')
 
-        chat[chat_id] = {}
-        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
+        logger.debug(f"data: {context.chat_data}")
 
         return ConversationHandler.END
 
+    def generate_token(context):
+        """
+        Generate creator's token
+        """
+        logger.info("Generating admin token")
+        query = """
+            mutation tokenAuth($email: String!, $password: String!){
+                tokenAuth(email: $email, password: $password){
+                    token
+                }
+            }
+            """
+
+        variables = {
+                'email': context.chat_data['email'],
+                'password': context.chat_data['password'],
+                }
+
+        response = requests.post(PATH, json={'query':query, 'variables':variables})
+        logger.debug(f"Response: {response.json()}")
+
+        return response

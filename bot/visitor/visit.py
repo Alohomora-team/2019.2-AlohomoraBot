@@ -1,26 +1,25 @@
 """
-Handler visitor interaction
+Handler visit interaction
 """
+
 import logging
 import requests
 
-from settings import *
-from telegram.ext import ConversationHandler
-from telegram import KeyboardButton, ReplyKeyboardMarkup
-from validator import ValidateForm
 from checks import CheckVisitor, CheckCondo
 from db.schema import visitor_exists, get_visitor_cpf
 from resident.notify_resident import NotifyResident
+from settings import PATH, LOG_NAME
+from settings import VISIT_BLOCK, VISIT_APARTMENT
+from telegram import KeyboardButton, ReplyKeyboardMarkup
+from telegram.ext import ConversationHandler
+from validator import ValidateForm
 
 logger = logging.getLogger(LOG_NAME)
-
-chat = {}
 
 class Visit:
     """
     Functions that handlers visitors interactions
     """
-
     def index(update, context):
         """
         Start interactions
@@ -28,30 +27,25 @@ class Visit:
         logger.info("introducing visitor session")
         chat_id = update.message.chat_id
 
-
-        update.message.reply_text(
-                'Iniciando procedimento de visita. Digite /cancelar para interromper'
-                )
-
         if not visitor_exists(chat_id):
-            logger.info("Visitor is not registered - canceling")
+            logger.info("Visitor is not registered - ending")
             update.message.reply_text(
-                    'Você não está cadastrado. Digite /cadastrar_visitante para se registrar'
+                    'Você precisa ter um cadastro para fazer uma visita.'
                     )
             return ConversationHandler.END
 
         logger.info("Visitor is registered - proceed")
 
-        update.message.reply_text('Informe o bloco do morador:')
+        update.message.reply_text('Bloco do morador:')
+        logger.info("Asking resident block")
 
-        chat[chat_id] = {}
-        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
+        logger.debug(f"data: {context.chat_data}")
 
         return VISIT_BLOCK
 
     def block(update, context):
         """
-        Validate block
+         Handle resident block
         """
         chat_id = update.message.chat_id
         block = update.message.text
@@ -59,10 +53,10 @@ class Visit:
         if not ValidateForm.block(block, update):
             return VISIT_BLOCK
 
-        chat[chat_id]['block'] = block
-        logger.debug(f"'block': '{chat[chat_id]['block']}'")
+        context.chat_data['block'] = block
+        logger.debug(f"'block': '{context.chat_data['block']}'")
 
-        check = CheckCondo.block(chat, chat_id)
+        check = CheckCondo.block(block)
 
         if 'errors' in check.keys():
             logger.error("Block not found - asking again")
@@ -83,14 +77,15 @@ class Visit:
 
         chat_id = update.message.chat_id
         apartment = update.message.text
+        block = context.chat_data['block']
 
         if not ValidateForm.apartment(apartment, update):
             return VISIT_APARTMENT
 
-        chat[chat_id]['apartment'] = apartment
-        logger.debug(f"'apartment': '{chat[chat_id]['apartment']}'")
+        context.chat_data['apartment'] = apartment
+        logger.debug(f"'apartment': '{context.chat_data['apartment']}'")
 
-        check = CheckCondo.apartment(chat, chat_id)
+        check = CheckCondo.apartment(block, apartment)
 
         if 'errors' in check.keys():
             logger.error("Apartment not found - asking again")
@@ -103,19 +98,17 @@ class Visit:
         name = Visit.get_visitor_name(cpf)
         name = name['data']['visitor']['completeName']
 
-        chat[chat_id]['cpf'] = cpf
-        chat[chat_id]['name'] = name
+        context.chat_data['cpf'] = cpf
+        context.chat_data['name'] = name
 
         logger.info("Notificating all residents from the apartment")
-        NotifyResident.send_notification(context, chat[chat_id])
+        NotifyResident.send_notification(context, context.chat_data)
 
         update.message.reply_text(
             'Sua entrada foi solicitada. Aguarde resposta do morador!'
         )
 
-        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
-
-        chat[chat_id] = {}
+        logger.debug(f"data: {context.chat_data}")
 
         return ConversationHandler.END
 
@@ -124,12 +117,8 @@ class Visit:
         Cancel interaction
         """
         logger.info("Canceling visit")
-        chat_id = update.message.chat_id
 
         update.message.reply_text('Visita cancelada!')
-
-        chat[chat_id] = {}
-        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
 
         return ConversationHandler.END
 

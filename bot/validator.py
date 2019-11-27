@@ -12,19 +12,18 @@ class ValidateForm:
     """
     Validate user information functions
     """
-
     def name(name, update):
         """
         Validate user name
         """
         if("nome" in name.lower()):
-            update.message.reply_text('Por favor, digite apenas o seu nome:')
             logger.error("Resident informing his name in a sentence - asking again")
+            update.message.reply_text('Por favor, digite apenas o seu nome:')
             return False
         if(any(i.isdigit() for i in name)):
             logger.error("Numbers in name - asking again")
             update.message.reply_text(
-                'Por favor, não digite números no nome, tente novamente:')
+                'Por favor, não digite números, tente novamente:')
             return False
         if("@" in name or len(name) < 3):
             logger.error("Email instead name - asking again")
@@ -43,7 +42,6 @@ class ValidateForm:
         """
         Validate user phone
         """
-
         if(phone is not None):
             if("-" in phone):
                 logger.debug("Removing dashes from phone")
@@ -79,7 +77,6 @@ class ValidateForm:
         """
         Validate e-mail
         """
-
         if("@" not in email or " " in email or len(email) < 4 or "." not in email):
             logger.error("Invalid email - asking again")
             update.message.reply_text('Por favor, digite um email válido:')
@@ -97,7 +94,6 @@ class ValidateForm:
         """
         Validate user cpf
         """
-
         if(len(cpf) > 11 and cpf[3] == "." and cpf[7] == "." and cpf[11] == "-"):
             logger.debug("Removing dots and dash from CPF")
             cpf = cpf.replace('.', '').replace('-', '')
@@ -151,7 +147,6 @@ class ValidateForm:
         """
         Validate apartment block
         """
-
         if("bloco" in block.lower() or " " in block):
             logger.error("Resident informing the block number in a sentence - asking again")
             update.message.reply_text(
@@ -169,7 +164,6 @@ class ValidateForm:
         """
         Validate apartment number
         """
-
         if(any(i.isalpha() for i in apartment) or " " in apartment):
             loggin.error("Alphabetic character in apartment number - asking again")
             update.message.reply_text(
@@ -188,7 +182,6 @@ class ValidateForm:
         """
         Validate voice duration
         """
-
         if((voice_register.duration) < 1.0):
             logger.error("Audio too short - asking again")
             update.message.reply_text(
@@ -208,7 +201,6 @@ class ValidateForm:
         """
         Convert user input in boolean value
         """
-
         if(value != "Sim" and value != "Não"):
             logger.error("Boolean value isn't in valid format")
             update.message.reply_text('Você deve apenas apertar o botão "Sim" ou "Não".')
@@ -225,23 +217,4 @@ class ValidateForm:
             update.message.reply_text("Comando incorreto. Digite no formato /numero")
             return False
 
-        return True
-
-    def audio_speaking_name(audio, update):
-        """
-        Validate the name audio duration
-        """
-        logger.debug('\tValidating audio duration ...')
-
-        if audio.duration < 0.9:
-            logger.error('\t\tToo short audio. Trying again.')
-            update.message.reply_text('Seu áudio foi muito curto. Por favor, grave novamente.')
-            return False
-
-        if audio.duration > 3.1:
-            logger.error('\t\tToo long audio. Trying again.')
-            update.message.reply_text('Seu áudio foi muito longo. Por favor, grave novamente.')
-            return False
-
-        logger.debug('\t\tAudio is ok.\n')
         return True

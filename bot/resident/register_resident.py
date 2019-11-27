@@ -1,35 +1,32 @@
 """
 Register a user interaction
 """
+
 import json
 import logging
-import os
 import subprocess
+import os
+import librosa
 import numpy
 import requests
-import librosa
 
+from admin.notify_admin import NotifyAdmin
 from checks import CheckResident, CheckCondo
 from db.schema import create_resident, resident_exists
-from admin.notify_admin import NotifyAdmin
-from settings import LOG_NAME
 from settings import NAME, PHONE, EMAIL, CPF, BLOCK, APARTMENT, PASSWORD
 from settings import VOICE_REGISTER, REPEAT_VOICE
-from settings import PATH, CATCH_AUDIO_SPEAKING_NAME, CONFIRM_AUDIO_SPEAKING_NAME
+from settings import LOG_NAME, PATH
 from telegram import KeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import ConversationHandler
 from validator import ValidateForm
-
+from resident.resident_auth import ResidentAuth
 
 logger = logging.getLogger(LOG_NAME)
-
-chat = {}
 
 class RegisterResident:
     """
     Register a resident
     """
-
     def index(update, context):
         """
         Start the conversation
@@ -41,13 +38,10 @@ class RegisterResident:
             update.message.reply_text('Você já está cadastrado!')
             return ConversationHandler.END
 
-        update.message.reply_text('Ok, vamos iniciar o cadastro!')
-        update.message.reply_text('Caso deseje interromper o processo digite /cancelar')
         update.message.reply_text('Nome:')
         logger.info("Asking for name")
 
-        chat[chat_id] = {}
-        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
+        logger.debug(f"data: {context.chat_data}")
 
         return NAME
 
@@ -55,14 +49,13 @@ class RegisterResident:
         """
         Get name of a resident
         """
-        chat_id = update.message.chat_id
         name = update.message.text
 
         if not ValidateForm.name(name, update):
             return NAME
 
-        chat[chat_id]['name'] = name
-        logger.debug(f"'name': '{chat[chat_id]['name']}'")
+        context.chat_data['name'] = name
+        logger.debug(f"'name': '{context.chat_data['name']}'")
 
         contact_keyboard = KeyboardButton('Enviar meu número de telefone', request_contact=True)
         custom_keyboard = [[contact_keyboard]]
@@ -81,7 +74,6 @@ class RegisterResident:
         """
         Get phone information
         """
-        chat_id = update.message.chat_id
         phone = update.message.text
         contact = update.effective_message.contact
 
@@ -90,8 +82,8 @@ class RegisterResident:
 
         phone = ValidateForm.phone(phone, contact, update)
 
-        chat[chat_id]['phone'] = phone
-        logger.debug(f"'phone': '{chat[chat_id]['phone']}'")
+        context.chat_data['phone'] = phone
+        logger.debug(f"'phone': '{context.chat_data['phone']}'")
 
         update.message.reply_text('Email:')
         logger.info("Asking for email")
@@ -102,17 +94,15 @@ class RegisterResident:
         """
         Get email information
         """
-
-        chat_id = update.message.chat_id
         email = update.message.text
 
         if not ValidateForm.email(email, update):
             return EMAIL
 
-        chat[chat_id]['email'] = email
-        logger.debug(f"'email': '{chat[chat_id]['email']}'")
+        context.chat_data['email'] = email
+        logger.debug(f"'email': '{context.chat_data['email']}'")
 
-        check = CheckResident.email(chat, chat_id)
+        check = CheckResident.email(email)
 
         if 'errors' not in check.keys():
             logger.error("Email already exists in database - asking again")
@@ -130,8 +120,6 @@ class RegisterResident:
         """
         Get cpf information
         """
-
-        chat_id = update.message.chat_id
         cpf = update.message.text
 
         if not ValidateForm.cpf(cpf, update):
@@ -139,10 +127,10 @@ class RegisterResident:
 
         cpf = ValidateForm.cpf(cpf, update)
 
-        chat[chat_id]['cpf'] = cpf
-        logger.debug(f"'cpf': '{chat[chat_id]['cpf']}'")
+        context.chat_data['cpf'] = cpf
+        logger.debug(f"'cpf': '{context.chat_data['cpf']}'")
 
-        check = CheckResident.cpf(chat, chat_id)
+        check = CheckResident.cpf(cpf)
 
         if 'errors' not in check.keys():
             logger.error("CPF already exists in database - asking again")
@@ -151,28 +139,24 @@ class RegisterResident:
 
         logger.debug("Available CPF - proceed")
 
+        update.message.reply_text('Bloco:')
         logger.info("Asking for block number")
 
-        update.message.reply_text('Bloco:')
-
         return BLOCK
-
 
     def block(update, context):
         """
         Get block information
         """
-
-        chat_id = update.message.chat_id
         block = update.message.text
 
         if not ValidateForm.block(block, update):
             return BLOCK
 
-        chat[chat_id]['block'] = block
-        logger.debug(f"'block': '{chat[chat_id]['block']}'")
+        context.chat_data['block'] = block
+        logger.debug(f"'block': '{context.chat_data['block']}'")
 
-        check = CheckCondo.block(chat, chat_id)
+        check = CheckCondo.block(block)
 
         if 'errors' in check.keys():
             logger.error("Block not found - asking again")
@@ -190,17 +174,16 @@ class RegisterResident:
         """
         Get apartment information
         """
-
-        chat_id = update.message.chat_id
         apartment = update.message.text
+        block = context.chat_data['block']
 
         if not ValidateForm.apartment(apartment, update):
             return APARTMENT
 
-        chat[chat_id]['apartment'] = apartment
-        logger.debug(f"'apartment': '{chat[chat_id]['apartment']}'")
+        context.chat_data['apartment'] = apartment
+        logger.debug(f"'apartment': '{context.chat_data['apartment']}'")
 
-        check = CheckCondo.apartment(chat, chat_id)
+        check = CheckCondo.apartment(block, apartment)
 
         if 'errors' in check.keys():
             logger.error("Apartment not found - asking again")
@@ -219,13 +202,12 @@ class RegisterResident:
         """
         Catch the phrase audio and ask for confirmation
         """
-        chat_id = update.message.chat_id
         audio = update.message.voice
 
         if not ValidateForm.voice(audio, update):
             return VOICE_REGISTER
 
-        chat[chat_id]['audio_speaking_phrase'] = audio
+        context.chat_data['audio_speaking_phrase'] = audio
 
         # Repeat and confirm buttons
         repeat_keyboard = KeyboardButton('Repetir')
@@ -245,8 +227,6 @@ class RegisterResident:
         """
         Repeate voice interaction
         """
-
-        chat_id = update.message.chat_id
         choice = update.message.text
 
         if choice == "Repetir":
@@ -257,7 +237,7 @@ class RegisterResident:
         logger.debug("\tAudio confirmed")
 
         logger.debug('Downloading audio ...')
-        audio_file_path = chat[chat_id]['audio_speaking_phrase'].get_file().download()
+        audio_file_path = context.chat_data['audio_speaking_phrase'].get_file().download()
         wav_audio_file_path = audio_file_path.split('.')[0] + '.wav'
         logger.debug('\tDone')
 
@@ -270,7 +250,7 @@ class RegisterResident:
         logger.debug('\tDone')
 
         logger.debug('Putting into dictionary ...')
-        chat[chat_id]['audio_speaking_phrase'] = data.tolist()
+        context.chat_data['audio_speaking_phrase'] = data.tolist()
         logger.debug('\tDone')
 
         logger.debug('Removindo audio files ...')
@@ -290,31 +270,29 @@ class RegisterResident:
         """
         Request password
         """
-
         chat_id = update.message.chat_id
         password = update.message.text
 
-        chat[chat_id]['password'] = password
-        logger.debug(f"'password': '{chat[chat_id]['password']}'")
+        context.chat_data['password'] = password
+        logger.debug(f"'password': '{context.chat_data['password']}'")
 
-        response = Register.register_resident(chat_id)
+        response = RegisterResident.register_resident(context.chat_data)
 
         if(response.status_code == 200 and 'errors' not in response.json().keys()):
             logger.info("Resident registered in database")
             update.message.reply_text("Cadastro feito!\nAguarde aprovação dos administradores.")
 
             create_resident(
-                    cpf=chat[chat_id]['cpf'],
-                    block=chat[chat_id]['block'],
-                    apartment=chat[chat_id]['apartment'],
-                    chat_id=chat_id
+                    cpf=context.chat_data['cpf'],
+                    block=context.chat_data['block'],
+                    apartment=context.chat_data['apartment'],
+                    chat_id=chat_id,
+                    token=None
                     )
-            NotifyAdmin.send_message(context, chat[chat_id])
+            NotifyAdmin.send_message(context, context.chat_data)
         else:
             logger.error("Registration failed")
             update.message.reply_text('Falha ao cadastrar no sistema!')
-
-        chat[chat_id] = {}
 
         return ConversationHandler.END
 
@@ -322,22 +300,16 @@ class RegisterResident:
         """
         Cancel interaction
         """
-
         logger.info("Canceling registration")
-        chat_id = update.message.chat_id
 
         update.message.reply_text('Cadastro cancelado!')
 
-        chat[chat_id] = {}
-        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
-
         return ConversationHandler.END
 
-    def register_resident(chat_id):
+    def register_resident(data):
         """
         Register a resident
         """
-
         logger.info("Registering resident")
         query = """
         mutation createResident(
@@ -349,7 +321,6 @@ class RegisterResident:
             $block: String!,
             $audioSpeakingPhrase: [Float]!
             $audioSpeakingName: [Float]!,
-            $audioSamplerate: Int,
             $password: String!
             ){
             createResident(
@@ -374,22 +345,21 @@ class RegisterResident:
                             number
                         }
                     }
-                    password
                 }
             }
         }
         """
 
         variables = {
-                'completeName': chat[chat_id]['name'],
-                'email': chat[chat_id]['email'],
-                'phone': chat[chat_id]['phone'],
-                'cpf': chat[chat_id]['cpf'],
-                'apartment': chat[chat_id]['apartment'],
-                'block': chat[chat_id]['block'],
-                'audioSpeakingPhrase': chat[chat_id]['audio_speaking_phrase'],
-                'audioSpeakingName': "Nada",
-                'password': chat[chat_id]['password'],
+                'completeName': data['name'],
+                'email': data['email'],
+                'phone': data['phone'],
+                'cpf': data['cpf'],
+                'apartment': data['apartment'],
+                'block': data['block'],
+                'audioSpeakingPhrase': data['audio_speaking_phrase'],
+                'audioSpeakingName': [1.0],
+                'password': data['password'],
                 }
 
         response = requests.post(PATH, json={'query':query, 'variables':variables})
