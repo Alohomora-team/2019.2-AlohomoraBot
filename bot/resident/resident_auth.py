@@ -83,7 +83,7 @@ Digite /cancelar caso queira interromper o processo.
         elif choice == "Voz":
             logger.info("Replied to authenticate by voice")
             update.message.reply_text(
-                'Grave um áudio de no mínimo 1 segundo dizendo "Juro que sou eu"'
+                'Grave um áudio de no mínimo 1 segundo dizendo "Vou trancar o curso"'
             )
             logger.info("Requesting voice audio")
             return VOICE_AUTH
@@ -147,20 +147,26 @@ Digite /cancelar caso queira interromper o processo.
         if not ValidateForm.voice(voice_auth, update):
             return VOICE_AUTH
 
+        logger.info('Downloading audio file ...')
         file_auth = voice_auth.get_file()
 
         src = file_auth.download()
         dest = src.split('.')[0] + ".wav"
+        logger.info('\tDone')
 
+        logger.info('Converting to wav ...')
         subprocess.run(['ffmpeg', '-i', src, dest])
+        logger.info('\tDone')
 
-        samplerate, voice_data = read(dest)
+        logger.info('Opening audio file ...')
+        samplerate, data = read(dest)
+        data = data.tolist()
+        logger.info('\tDone')
 
-        mfcc_data = mfcc(voice_data, samplerate=samplerate, nfft=1200, winfunc=numpy.hamming)
-        mfcc_data = mfcc_data.tolist()
-        mfcc_data = json.dumps(mfcc_data)
+        if not ValidateForm.audio_has_good_volume(data, samplerate, update):
+            return VOICE_AUTH
 
-        context.chat_data['audioSpeakingPhrase'] = mfcc_data
+        context.chat_data['audioSpeakingPhrase'] = data
 
         response = ResidentAuth.authenticate(context.chat_data)
 
@@ -171,7 +177,12 @@ Digite /cancelar caso queira interromper o processo.
             update.message.reply_text('Autenticado(a) com sucesso!')
         else:
             logger.error("Authentication failed")
-            update.message.reply_text('Falha na autenticação!')
+            update.message.reply_text(
+                'Não pude te autenticar, pois essa não parece ser a sua voz.'
+            )
+            update.message.reply_text(
+                'Tente novamente gravando o áudio com mais cuidado, ou utilize sua senha.'
+            )
 
         logger.debug(f"data: {context.chat_data}")
         context.chat_data.clear()

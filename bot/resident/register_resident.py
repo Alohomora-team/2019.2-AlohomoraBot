@@ -6,7 +6,7 @@ import json
 import logging
 import subprocess
 import os
-import librosa
+from scipy.io.wavfile import read
 import numpy
 import requests
 
@@ -210,7 +210,10 @@ Digite /cancelar caso queira interromper o processo.
         logger.debug("Existing apartment - proceed")
 
         update.message.reply_text(
-            'Grave uma breve mensagem de voz dizendo a frase: "Juro que sou eu".'
+            'Legal, agora grave um áudio dizendo "Vou trancar o curso".'
+        )
+        update.message.reply_text(
+            'Quando começar a gravar, espere meio segundinho antes de começar a falar, ok?'
         )
 
         return VOICE_REGISTER
@@ -221,7 +224,7 @@ Digite /cancelar caso queira interromper o processo.
         """
         audio = update.message.voice
 
-        if not ValidateForm.voice(audio, update):
+        if not ValidateForm.audio_has_valid_duration(audio, update):
             return VOICE_REGISTER
 
         context.chat_data['audio_speaking_phrase'] = audio
@@ -251,6 +254,7 @@ Digite /cancelar caso queira interromper o processo.
             update.message.reply_text('Por favor, grave novamente:')
             return VOICE_REGISTER
 
+        update.message.reply_text('Certo, vou dar uma conferida no áudio')
         logger.debug("\tAudio confirmed")
 
         logger.debug('Downloading audio ...')
@@ -262,8 +266,8 @@ Digite /cancelar caso queira interromper o processo.
         subprocess.run(['ffmpeg', '-i', audio_file_path, wav_audio_file_path], check=True)
         logger.debug('\tDone')
 
-        logger.debug('Opening audio and resampling ...')
-        data, samplerate = librosa.load(wav_audio_file_path, sr=16000, mono=True)
+        logger.debug('Opening audio ...')
+        samplerate, data = read(wav_audio_file_path)
         logger.debug('\tDone')
 
         logger.debug('Putting into dictionary ...')
@@ -274,6 +278,9 @@ Digite /cancelar caso queira interromper o processo.
         os.remove(audio_file_path)
         os.remove(wav_audio_file_path)
         logger.debug('\tDone')
+
+        if not ValidateForm.audio_has_good_volume(data.tolist(), samplerate, update):
+            return VOICE_REGISTER
 
         update.message.reply_text(
             'Além da autenticação de moradores por voz, é possível fazê-la por senha.'

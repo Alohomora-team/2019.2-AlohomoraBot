@@ -7,4 +7,3 @@ tgintegration
 numpy
 scipy
 SQLAlchemy==1.3.10
-librosa==0.7.1
