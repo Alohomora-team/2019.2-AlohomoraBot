@@ -163,7 +163,7 @@ Digite /cancelar caso queira interromper o processo.
         data = data.tolist()
         logger.info('\tDone')
 
-        if not ValidateForm.audio_has_good_volume(data, update):
+        if not ValidateForm.audio_has_good_volume(data, samplerate, update):
             return VOICE_AUTH
 
         context.chat_data['audioSpeakingPhrase'] = data

@@ -279,7 +279,7 @@ Digite /cancelar caso queira interromper o processo.
         os.remove(wav_audio_file_path)
         logger.debug('\tDone')
 
-        if not ValidateForm.audio_has_good_volume(data.tolist(), update):
+        if not ValidateForm.audio_has_good_volume(data.tolist(), samplerate, update):
             return VOICE_REGISTER
 
         update.message.reply_text(

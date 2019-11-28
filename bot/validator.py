@@ -197,7 +197,7 @@ class ValidateForm:
 
         return True
 
-    def audio_has_good_volume(audio_data, update):
+    def audio_has_good_volume(audio_data, samplerate, update):
         '''
         Check audio volume
         '''
@@ -210,7 +210,7 @@ class ValidateForm:
 
         variables = {
             'audioData': audio_data,
-            'audioSamplerate': 16000
+            'audioSamplerate': samplerate
         }
 
         headers = {
