@@ -202,34 +202,35 @@ class ValidateForm:
         Check audio volume
         '''
         logger.debug('Checking audio volume')
+        query = '''
+        query audioHasGoodVolume ($audioData: [Float]!, $audioSamplerate: Int!) {
+            audioHasGoodVolume (audioData: $audioData, audioSamplerate: $audioSamplerate)
+        }
+        '''
 
-        try:
-            query = '''
-            query audioHasGoodVolume ($audioData: [Float]!, $audioSamplerate: Int!) {
-                audioHasGoodVolume (audioData: $audioData, audioSamplerate: $audioSamplerate)
-            }
-            '''
+        variables = {
+            'audioData': audio_data,
+            'audioSamplerate': 16000
+        }
 
-            variables = {
-                'audioData': audio_data,
-                'audioSamplerate': 16000
-            }
+        headers = {
+            'Authorization': 'JWT %s' % API_TOKEN
+        }
 
-            headers = {
-                'Authorization': 'JWT %s' % API_TOKEN
-            }
+        response = requests.post(
+            PATH,
+            headers=headers,
+            json={'query':query, 'variables':variables}
+        ).json()
 
-            response = requests.post(PATH, headers=headers, json={'query':query, 'variables':variables}).json()
-            print(response)
+        print(response)
 
-            if response["data"]["audioHasGoodVolume"] == False:
-                logger.error("Audio volume is not good - asking for another audio")
-                update.message.reply_text('Ixi! Não consegui escutar direito você falando.')
-                update.message.reply_text('Por favor, fale um pouquinho mais alto.')
+        if response["data"]["audioHasGoodVolume"] == False:
+            logger.error("Audio volume is not good - asking for another audio")
+            update.message.reply_text('Ixi! Não consegui escutar direito você falando.')
+            update.message.reply_text('Por favor, fale um pouquinho mais alto.')
 
-                return False
-        except:
-            logger.exception('An exception occurred')
+            return False
 
         return True
 

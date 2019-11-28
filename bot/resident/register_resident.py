@@ -6,7 +6,7 @@ import json
 import logging
 import subprocess
 import os
-import librosa
+from scipy.io.wavfile import read
 import numpy
 import requests
 
@@ -251,8 +251,8 @@ class RegisterResident:
         subprocess.run(['ffmpeg', '-i', audio_file_path, wav_audio_file_path], check=True)
         logger.debug('\tDone')
 
-        logger.debug('Opening audio and resampling ...')
-        data, samplerate = librosa.load(wav_audio_file_path, sr=16000, mono=True)
+        logger.debug('Opening audio ...')
+        samplerate, data = read(wav_audio_file_path)
         logger.debug('\tDone')
 
         logger.debug('Putting into dictionary ...')
