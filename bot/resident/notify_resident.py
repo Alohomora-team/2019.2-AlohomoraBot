@@ -87,12 +87,12 @@ class NotifyResident:
                 "Notify the others residents that the visit has already been authorized"
                 )
         for chat_id in get_residents_chat_ids(block, apartment):
-            message_id = messages[visitor_chat_id][chat_id]
-
             response = NotifyResident.is_active(get_resident_token(chat_id))
 
             if 'errors' not in response.keys():
                 if response['data']['me']['isActive']:
+                    message_id = messages[visitor_chat_id][chat_id]
+
                     if message_id != query.message.message_id:
                         logger.debug(f"\t| Resident chat_id: {chat_id}")
                         logger.debug(f"\t| Resident message_id: {message_id}")
@@ -151,12 +151,12 @@ class NotifyResident:
                 "Notify the others residents that the visit has already been refused"
                 )
         for chat_id in get_residents_chat_ids(block, apartment):
-            message_id = messages[visitor_chat_id][chat_id]
-
             response = NotifyResident.is_active(get_resident_token(chat_id))
 
             if 'errors' not in response.keys():
                 if response['data']['me']['isActive']:
+                    message_id = messages[visitor_chat_id][chat_id]
+
                     if message_id != query.message.message_id:
                         logger.debug(f"\t| Resident chat_id: {chat_id}")
                         logger.debug(f"\t| Resident message_id: {message_id}")
