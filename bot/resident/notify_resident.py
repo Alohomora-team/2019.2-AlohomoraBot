@@ -89,15 +89,19 @@ class NotifyResident:
         for chat_id in get_residents_chat_ids(block, apartment):
             message_id = messages[visitor_chat_id][chat_id]
 
-            if message_id != query.message.message_id:
-                logger.debug(f"\t| Resident chat_id: {chat_id}")
-                logger.debug(f"\t| Resident message_id: {message_id}")
+            response = NotifyResident.is_active(get_resident_token(chat_id))
 
-                context.bot.edit_message_text(
-                        chat_id=chat_id,
-                        message_id=message_id,
-                        text="Visitante autorizado por outro morador!"
-                        )
+            if 'errors' not in response.keys():
+                if response['data']['me']['isActive']:
+                    if message_id != query.message.message_id:
+                        logger.debug(f"\t| Resident chat_id: {chat_id}")
+                        logger.debug(f"\t| Resident message_id: {message_id}")
+
+                        context.bot.edit_message_text(
+                                chat_id=chat_id,
+                                message_id=message_id,
+                                text="Visitante autorizado por outro morador!"
+                                )
 
         text = query.message.text
         text = text[31:]
@@ -149,15 +153,19 @@ class NotifyResident:
         for chat_id in get_residents_chat_ids(block, apartment):
             message_id = messages[visitor_chat_id][chat_id]
 
-            if message_id != query.message.message_id:
-                logger.debug(f"\t| Resident chat_id: {chat_id}")
-                logger.debug(f"\t| Resident message_id: {message_id}")
+            response = NotifyResident.is_active(get_resident_token(chat_id))
 
-                context.bot.edit_message_text(
-                        chat_id=chat_id,
-                        message_id=message_id,
-                        text="Visitante recusado por outro morador!"
-                        )
+            if 'errors' not in response.keys():
+                if response['data']['me']['isActive']:
+                    if message_id != query.message.message_id:
+                        logger.debug(f"\t| Resident chat_id: {chat_id}")
+                        logger.debug(f"\t| Resident message_id: {message_id}")
+
+                        context.bot.edit_message_text(
+                                chat_id=chat_id,
+                                message_id=message_id,
+                                text="Visitante recusado por outro morador!"
+                                )
 
         text = query.message.text
         text = text[31:]
