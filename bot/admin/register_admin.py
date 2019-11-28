@@ -92,6 +92,7 @@ class RegisterAdmin:
             update.message.reply_text('Falha ao cadastrar administrador no sistema!')
 
         logger.debug(f"data: {context.chat_data}")
+        context.chat_data.clear()
 
         return ConversationHandler.END
 
@@ -102,6 +103,9 @@ class RegisterAdmin:
         logger.info("Canceling admin registration")
 
         update.message.reply_text('Cadastro de admin cancelado!')
+
+        logger.debug(f"data: {context.chat_data}")
+        context.chat_data.clear()
 
         return ConversationHandler.END
 

@@ -9,6 +9,7 @@ from checks import CheckAdmin
 from db.schema import admin_exists, create_admin
 from settings import ADMIN_AUTH_EMAIL, ADMIN_AUTH_PWD, ADMIN_AUTH_REPEAT
 from settings import LOG_NAME, PATH
+from telegram.ext import ConversationHandler
 from validator import ValidateForm
 
 logger = logging.getLogger(LOG_NAME)
@@ -87,6 +88,9 @@ class AdminAuth:
                     token=token
                     )
 
+            logger.debug(f"data: {context.chat_data}")
+            context.chat_data.clear()
+
             return ConversationHandler.END
 
         else:
@@ -132,6 +136,7 @@ class AdminAuth:
         update.message.reply_text('Autenticação cancelada!')
 
         logger.debug(f"data: {context.chat_data}")
+        context.chat_data.clear()
 
         return ConversationHandler.END
 

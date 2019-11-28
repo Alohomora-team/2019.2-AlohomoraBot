@@ -14,7 +14,7 @@ from helpers import format_datetime
 from python_speech_features import mfcc
 from scipy.io.wavfile import read
 from settings import CHOOSE_AUTH, VOICE_AUTH, PASSWORD_AUTH
-from settings import PATH, LOG_NAME
+from settings import PATH, LOG_NAME, API_TOKEN
 from telegram import KeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import ConversationHandler
 from validator import ValidateForm
@@ -107,17 +107,19 @@ class ResidentAuth:
         if(response.status_code == 200 and 'errors' not in response.json().keys()):
             logger.info("Sucess on generating token")
             token = response.json()['data']['tokenAuth']['token']
-            context.chat_data['token'] = token
-            logger.debug(f"'token': '{context.chat_data['token']}'")
+            logger.debug(f"'token': '{token}'")
 
             update.message.reply_text('Autenticado(a) com sucesso!')
 
-            update_resident(token=token)
+            update_resident(cpf=context.chat_data['cpf'], token=token)
         else:
             logger.error("Failed generating token")
             update.message.reply_text(
-                'Senha incorreta. Não foi possível autenticar o morador.'
+                'Senha incorreta ou você ainda não foi autorizado pelos administradores.'
             )
+
+        logger.debug(f"data: {context.chat_data}")
+        context.chat_data.clear()
 
         return ConversationHandler.END
 
@@ -144,7 +146,7 @@ class ResidentAuth:
         mfcc_data = mfcc_data.tolist()
         mfcc_data = json.dumps(mfcc_data)
 
-        context.chat_data['voice_mfcc'] = mfcc_data
+        context.chat_data['audioSpeakingPhrase'] = mfcc_data
 
         response = ResidentAuth.authenticate(context.chat_data)
 
@@ -156,6 +158,9 @@ class ResidentAuth:
         else:
             logger.error("Authentication failed")
             update.message.reply_text('Falha na autenticação!')
+
+        logger.debug(f"data: {context.chat_data}")
+        context.chat_data.clear()
 
         return ConversationHandler.END
 
@@ -169,6 +174,7 @@ class ResidentAuth:
         update.message.reply_text('Autenticação cancelada!')
 
         logger.debug(f"data: {context.chat_data}")
+        context.chat_data.clear()
 
         return ConversationHandler.END
 
@@ -188,7 +194,12 @@ class ResidentAuth:
         variables = {
                 'cpf': cpf,
                 }
-        response = requests.post(PATH, json={'query':query, 'variables':variables})
+
+        headers = {
+                'Authorization': 'JWT %s' % API_TOKEN
+                }
+
+        response = requests.post(PATH, headers=headers, json={'query':query, 'variables':variables})
         logger.debug(f"Response: {response.json()}")
 
         return response
@@ -207,13 +218,11 @@ class ResidentAuth:
             }
             """
 
-        print(data['email'])
-        print(data['password'])
-
         variables = {
                 'email': data['email'],
                 'password': data['password'],
                 }
+
         response = requests.post(PATH, json={'query':query, 'variables':variables})
         logger.debug(f"Response: {response.json()}")
 
@@ -228,18 +237,24 @@ class ResidentAuth:
         query = """
             query voiceBelongsResident(
                 $cpf: String!,
-                $mfccData: String
+                $audioSpeakingPhrase: [Float]!,
             ){
-                voiceBelongsResident(cpf: $cpf, mfccData: $mfccData)
+                voiceBelongsResident(
+                cpf: $cpf,
+                audioSpeakingPhrase: $audioSpeakingPhrase)
             }
         """
 
         variables = {
             'cpf': data['cpf'],
-            'mfccData': data['voice_mfcc']
+            'audioSpeakingPhrase': data['audioSpeakingPhrase']
         }
 
-        response = requests.post(PATH, json={'query':query, 'variables':variables})
+        headers = {
+                'Authorization': 'JWT %s' % API_TOKEN
+                }
+
+        response = requests.post(PATH, headers=headers, json={'query':query, 'variables':variables})
 
         logger.debug(f"Response: {response.json()}")
 

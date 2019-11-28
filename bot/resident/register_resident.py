@@ -11,11 +11,12 @@ import numpy
 import requests
 
 from admin.notify_admin import NotifyAdmin
+from admin.admin import Admin
 from checks import CheckResident, CheckCondo
 from db.schema import create_resident, resident_exists
 from settings import NAME, PHONE, EMAIL, CPF, BLOCK, APARTMENT, PASSWORD
 from settings import VOICE_REGISTER, REPEAT_VOICE
-from settings import LOG_NAME, PATH
+from settings import LOG_NAME, PATH, API_TOKEN
 from telegram import KeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import ConversationHandler
 from validator import ValidateForm
@@ -35,6 +36,7 @@ class RegisterResident:
         chat_id = update.message.chat_id
 
         if resident_exists(chat_id):
+            logger.info("Resident already registered")
             update.message.reply_text('Você já está cadastrado!')
             return ConversationHandler.END
 
@@ -282,17 +284,25 @@ class RegisterResident:
             logger.info("Resident registered in database")
             update.message.reply_text("Cadastro feito!\nAguarde aprovação dos administradores.")
 
+            Admin.activate_resident(context.chat_data['email'])
+            token = ResidentAuth.generate_token(context.chat_data)
+            token = token.json()['data']['tokenAuth']['token']
+            Admin.deactivate_resident(context.chat_data['email'])
+
             create_resident(
                     cpf=context.chat_data['cpf'],
                     block=context.chat_data['block'],
                     apartment=context.chat_data['apartment'],
                     chat_id=chat_id,
-                    token=None
+                    token=token
                     )
             NotifyAdmin.send_message(context, context.chat_data)
         else:
             logger.error("Registration failed")
             update.message.reply_text('Falha ao cadastrar no sistema!')
+
+        logger.debug(f"data: {context.chat_data}")
+        context.chat_data.clear()
 
         return ConversationHandler.END
 
@@ -303,6 +313,9 @@ class RegisterResident:
         logger.info("Canceling registration")
 
         update.message.reply_text('Cadastro cancelado!')
+
+        logger.debug(f"data: {context.chat_data}")
+        context.chat_data.clear()
 
         return ConversationHandler.END
 
@@ -358,11 +371,15 @@ class RegisterResident:
                 'apartment': data['apartment'],
                 'block': data['block'],
                 'audioSpeakingPhrase': data['audio_speaking_phrase'],
-                'audioSpeakingName': [1.0],
+                'audioSpeakingName': data['audio_speaking_phrase'],
                 'password': data['password'],
                 }
 
-        response = requests.post(PATH, json={'query':query, 'variables':variables})
+        headers = {
+                'Authorization': 'JWT %s' % API_TOKEN
+                }
+
+        response = requests.post(PATH, headers=headers, json={'query':query, 'variables':variables})
 
         logger.debug(f"Response: {response.json()}")
 

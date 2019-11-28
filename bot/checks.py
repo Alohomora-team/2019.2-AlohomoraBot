@@ -6,7 +6,7 @@ import logging
 import os
 import requests
 
-from settings import PATH, LOG_NAME
+from settings import PATH, LOG_NAME, API_TOKEN
 
 logger = logging.getLogger(LOG_NAME)
 
@@ -32,7 +32,11 @@ class CheckCondo:
                 'number': block
                 }
 
-        response = requests.post(PATH, json={'query': query, 'variables':variables})
+        headers = {
+                'Authorization': 'JWT %s' % API_TOKEN
+                }
+
+        response = requests.post(PATH, headers=headers, json={'query': query, 'variables':variables})
         logger.debug(f"Response: {response.json()}")
 
         return response.json()
@@ -58,7 +62,11 @@ class CheckCondo:
                 'block': block
                 }
 
-        response = requests.post(PATH, json={'query': query, 'variables':variables})
+        headers = {
+                'Authorization': 'JWT %s' % API_TOKEN
+                }
+
+        response = requests.post(PATH, headers=headers, json={'query': query, 'variables':variables})
         logger.debug(f"Response: {response.json()}")
 
         return response.json()
@@ -86,7 +94,11 @@ class CheckResident:
                 'email': email
                 }
 
-        response = requests.post(PATH, json={'query': query, 'variables':variables})
+        headers = {
+                'Authorization': 'JWT %s' % API_TOKEN
+                }
+
+        response = requests.post(PATH, headers=headers, json={'query': query, 'variables':variables})
         logger.debug(f"Response: {response.json()}")
 
         return response.json()
@@ -110,7 +122,11 @@ class CheckResident:
                 'cpf': cpf
                 }
 
-        response = requests.post(PATH, json={'query': query, 'variables':variables})
+        headers = {
+                'Authorization': 'JWT %s' % API_TOKEN
+                }
+
+        response = requests.post(PATH, headers=headers, json={'query': query, 'variables':variables})
         logger.debug(f"Response: {response.json()}")
 
         return response.json()
@@ -139,7 +155,11 @@ class CheckVisitor:
                 'cpf': cpf
                 }
 
-        response = requests.post(PATH, json={'query': query, 'variables':variables})
+        headers = {
+                'Authorization': 'JWT %s' % API_TOKEN
+                }
+
+        response = requests.post(PATH, headers=headers, json={'query': query, 'variables':variables})
         logger.debug(f"Response: {response.json()}")
 
         return response.json()
@@ -169,7 +189,11 @@ class CheckAdmin:
                 'adminEmail': email
                 }
 
-        response = requests.post(PATH, json={'query': query, 'variables':variables})
+        headers = {
+                'Authorization': 'JWT %s' % API_TOKEN
+                }
+
+        response = requests.post(PATH, headers=headers, json={'query': query, 'variables':variables})
         logger.debug(f"Response: {response.json()}")
 
         return response.json()

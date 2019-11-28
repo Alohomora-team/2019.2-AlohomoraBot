@@ -5,7 +5,7 @@ Interactions for user feedback
 import logging
 import requests
 
-from settings import PATH, LOG_NAME
+from settings import PATH, LOG_NAME, API_TOKEN
 from settings import FEEDBACK
 from telegram.ext import ConversationHandler
 

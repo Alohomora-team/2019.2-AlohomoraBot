@@ -31,6 +31,9 @@ class NotifyAdmin:
         logger.debug(f"\t| Dictionary with message_ids: {messages[resident_chat_id]}")
 
         logger.info("Sending notification to all admins in database")
+
+        count = 0
+
         for chat_id in get_all_admins_chat_ids():
             logger.debug(f"\t| Admin chat_id: {chat_id}")
 
@@ -43,6 +46,14 @@ class NotifyAdmin:
 
             messages[resident_chat_id][chat_id] = message.message_id
             logger.debug(f"\t| Admin message_id: {message.message_id}")
+
+            count+=1
+
+        if count == 0:
+            context.bot.send_message(
+                chat_id=resident_chat_id,
+                text="Não há administradores registrados no momento."
+                )
 
         logger.debug(f"Dictionary with message_ids: {messages[resident_chat_id]}")
 

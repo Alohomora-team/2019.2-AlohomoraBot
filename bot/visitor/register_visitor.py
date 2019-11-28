@@ -7,7 +7,7 @@ import requests
 
 from checks import CheckVisitor
 from db.schema import create_visitor, visitor_exists
-from settings import LOG_NAME, PATH
+from settings import LOG_NAME, PATH, API_TOKEN
 from settings import VISITOR_REGISTER_NAME, VISITOR_REGISTER_CPF
 from telegram.ext import ConversationHandler
 from validator import ValidateForm
@@ -93,6 +93,7 @@ class RegisterVisitor:
             update.message.reply_text('Falha ao cadastrar no sistema!')
 
         logger.debug(f"data: {context.chat_data}")
+        context.chat_data.clear()
 
         return ConversationHandler.END
 
@@ -103,6 +104,9 @@ class RegisterVisitor:
         logger.info("Canceling visitor registration")
 
         update.message.reply_text('Cadastro cancelado!')
+
+        logger.debug(f"data: {context.chat_data}")
+        context.chat_data.clear()
 
         return ConversationHandler.END
 
@@ -135,7 +139,11 @@ class RegisterVisitor:
             'cpf': data['cpf']
             }
 
-        response = requests.post(PATH, json={'query':query, 'variables':variables})
+        headers = {
+                'Authorization': 'JWT %s' % API_TOKEN
+                }
+
+        response = requests.post(PATH, headers=headers, json={'query':query, 'variables':variables})
 
         logger.debug(f"Response: {response.json()}")
 

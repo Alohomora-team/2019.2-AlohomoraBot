@@ -3,10 +3,12 @@ Notification system for residents
 """
 
 import logging
+import requests
 
 from db.schema import get_visitor_chat_id, get_residents_chat_ids, get_resident_apartment
+from db.schema import get_resident_token
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-from settings import LOG_NAME
+from settings import PATH, LOG_NAME
 
 logger = logging.getLogger(LOG_NAME)
 
@@ -31,18 +33,34 @@ class NotifyResident:
         logger.debug(f"\t| Dictionary with message_ids: {messages[visitor_chat_id]}")
 
         logger.info("Sending notification to all resident from the apartment")
+
+        count = 0
+
         for chat_id in get_residents_chat_ids(block, apartment):
             logger.debug(f"\t| Resident chat_id: {chat_id}")
 
-            message = context.bot.send_message(
-                    chat_id=chat_id,
-                    text=NotifyResident.text(data),
-                    reply_markup=NotifyResident.buttons(),
-                    parse_mode='Markdown'
-                    )
+            response = NotifyResident.is_active(get_resident_token(chat_id))
 
-            messages[visitor_chat_id][chat_id] = message.message_id
-            logger.debug(f"\t| Resident message_id: {message.message_id}")
+            if 'errors' not in response.keys():
+                if response['data']['me']['isActive']:
+
+                    message = context.bot.send_message(
+                            chat_id=chat_id,
+                            text=NotifyResident.text(data),
+                            reply_markup=NotifyResident.buttons(),
+                            parse_mode='Markdown'
+                            )
+
+                    messages[visitor_chat_id][chat_id] = message.message_id
+                    logger.debug(f"\t| Resident message_id: {message.message_id}")
+
+                    count+=1
+
+        if count == 0:
+            context.bot.send_message(
+                chat_id=visitor_chat_id,
+                text="Não há moradores registrados nesse apartamento."
+                )
 
         logger.debug(f"Dictionary with message_ids: {messages[visitor_chat_id]}")
 
@@ -187,3 +205,22 @@ class NotifyResident:
                 ]
 
         return InlineKeyboardMarkup(keyboard)
+
+    def is_active(token):
+        """Verify is a resident is active"""
+        query = """
+        query me{
+            me{
+                isActive
+            }
+        }
+        """
+
+        headers = {
+                'Authorization': 'JWT %s' % token
+                }
+
+        response = requests.post(PATH, headers=headers, json={'query':query})
+        print(response.json())
+
+        return response.json()

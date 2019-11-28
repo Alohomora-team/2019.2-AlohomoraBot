@@ -8,7 +8,7 @@ import requests
 from checks import CheckVisitor, CheckCondo
 from db.schema import visitor_exists, get_visitor_cpf
 from resident.notify_resident import NotifyResident
-from settings import PATH, LOG_NAME
+from settings import PATH, LOG_NAME, API_TOKEN
 from settings import VISIT_BLOCK, VISIT_APARTMENT
 from telegram import KeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import ConversationHandler
@@ -102,13 +102,15 @@ class Visit:
         context.chat_data['name'] = name
 
         logger.info("Notificating all residents from the apartment")
-        NotifyResident.send_notification(context, context.chat_data)
 
         update.message.reply_text(
             'Sua entrada foi solicitada. Aguarde resposta do morador!'
         )
 
+        NotifyResident.send_notification(context, context.chat_data)
+
         logger.debug(f"data: {context.chat_data}")
+        context.chat_data.clear()
 
         return ConversationHandler.END
 
@@ -119,6 +121,9 @@ class Visit:
         logger.info("Canceling visit")
 
         update.message.reply_text('Visita cancelada!')
+
+        logger.debug(f"data: {context.chat_data}")
+        context.chat_data.clear()
 
         return ConversationHandler.END
 
@@ -139,7 +144,11 @@ class Visit:
             'cpf': cpf
             }
 
-        response = requests.post(PATH, json={'query':query, 'variables':variables})
+        headers = {
+                'Authorization': 'JWT %s' % API_TOKEN
+                }
+
+        response = requests.post(PATH, headers=headers, json={'query':query, 'variables':variables})
 
         logger.debug(f"Response: {response.json()}")
 

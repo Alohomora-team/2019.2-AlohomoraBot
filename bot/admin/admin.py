@@ -1,7 +1,9 @@
 """
 Provides functionalities to admins
 """
-from settings import PATH
+
+from db.schema import get_admin_token
+from settings import PATH, API_TOKEN
 import requests
 
 class Admin:
@@ -22,11 +24,15 @@ class Admin:
                 'email': email
                 }
 
-        response = requests.post(PATH, json={'query':query, 'variables':variables})
+        headers = {
+                'Authorization': 'JWT %s' % API_TOKEN
+                }
+
+        response = requests.post(PATH, headers=headers, json={'query':query, 'variables':variables})
 
         return response.json()
 
-    def delete_resident(email):
+    def delete_resident(email, chat_id):
         """Delete a resident in database"""
         query = """
         mutation deleteResident($email: String!){
@@ -40,6 +46,34 @@ class Admin:
                 'email': email
                 }
 
-        response = requests.post(PATH, json={'query':query, 'variables':variables})
+        headers = {
+                'Authorization': 'JWT %s' % get_admin_token(chat_id)
+                }
+
+        response = requests.post(PATH, headers=headers, json={'query':query, 'variables':variables})
+
+        return response.json()
+
+    def deactivate_resident(email):
+        """Deactivate a resident in database"""
+        query = """
+        mutation deactivateUser($email: String!){
+            deactivateUser(userEmail: $email){
+                user{
+                    email
+                }
+            }
+        }
+        """
+
+        variables = {
+                'email': email
+                }
+
+        headers = {
+                'Authorization': 'JWT %s' % API_TOKEN
+                }
+
+        response = requests.post(PATH, headers=headers, json={'query':query, 'variables':variables})
 
         return response.json()
