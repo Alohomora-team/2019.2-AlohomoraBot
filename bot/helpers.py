@@ -25,5 +25,4 @@ def format_datetime(value):
 
     logger.info(datetime)
 
-
     return datetime

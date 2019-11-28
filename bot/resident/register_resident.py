@@ -1,49 +1,64 @@
 """
 Register a user interaction
 """
+
 import json
 import logging
-import os
 import subprocess
+import os
+from scipy.io.wavfile import read
 import numpy
 import requests
-import librosa
 
+from admin.notify_admin import NotifyAdmin
+from admin.admin import Admin
 from checks import CheckResident, CheckCondo
-from db.schema import create_resident
-from notify import NotifyAdmin
-from settings import LOG_NAME
+from db.schema import create_resident, resident_exists
 from settings import NAME, PHONE, EMAIL, CPF, BLOCK, APARTMENT, PASSWORD
 from settings import VOICE_REGISTER, REPEAT_VOICE
-from settings import PATH, CATCH_AUDIO_SPEAKING_NAME, CONFIRM_AUDIO_SPEAKING_NAME
+from settings import LOG_NAME, PATH, API_TOKEN
 from telegram import KeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import ConversationHandler
 from validator import ValidateForm
-
+from resident.resident_auth import ResidentAuth
 
 logger = logging.getLogger(LOG_NAME)
 
-chat = {}
-
-class Register:
+class RegisterResident:
     """
     Register a resident
     """
-
     def index(update, context):
         """
         Start the conversation
         """
         logger.info("Introducing registration session")
+        update = update.callback_query
         chat_id = update.message.chat_id
 
-        update.message.reply_text('Ok, vamos iniciar o cadastro!')
-        update.message.reply_text('Caso deseje interromper o processo digite /cancelar')
+        if resident_exists(chat_id):
+            logger.info("Resident already registered")
+            update.message.reply_text('Você já está cadastrado!')
+
+            context.bot.delete_message(
+                    chat_id=chat_id,
+                    message_id=update.message.message_id,
+                    )
+            return ConversationHandler.END
+        else:
+            context.bot.edit_message_text(
+                    chat_id=chat_id,
+                    message_id=update.message.message_id,
+                    text="""
+Preencha o formulário para efetuar o cadastro.
+Digite /cancelar caso queira interromper o processo.
+                    """
+                    )
+
         update.message.reply_text('Nome:')
         logger.info("Asking for name")
 
-        chat[chat_id] = {}
-        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
+        logger.debug(f"data: {context.chat_data}")
 
         return NAME
 
@@ -51,14 +66,13 @@ class Register:
         """
         Get name of a resident
         """
-        chat_id = update.message.chat_id
         name = update.message.text
 
         if not ValidateForm.name(name, update):
             return NAME
 
-        chat[chat_id]['name'] = name
-        logger.debug(f"'name': '{chat[chat_id]['name']}'")
+        context.chat_data['name'] = name
+        logger.debug(f"'name': '{context.chat_data['name']}'")
 
         contact_keyboard = KeyboardButton('Enviar meu número de telefone', request_contact=True)
         custom_keyboard = [[contact_keyboard]]
@@ -77,7 +91,6 @@ class Register:
         """
         Get phone information
         """
-        chat_id = update.message.chat_id
         phone = update.message.text
         contact = update.effective_message.contact
 
@@ -86,8 +99,8 @@ class Register:
 
         phone = ValidateForm.phone(phone, contact, update)
 
-        chat[chat_id]['phone'] = phone
-        logger.debug(f"'phone': '{chat[chat_id]['phone']}'")
+        context.chat_data['phone'] = phone
+        logger.debug(f"'phone': '{context.chat_data['phone']}'")
 
         update.message.reply_text('Email:')
         logger.info("Asking for email")
@@ -98,17 +111,15 @@ class Register:
         """
         Get email information
         """
-
-        chat_id = update.message.chat_id
         email = update.message.text
 
         if not ValidateForm.email(email, update):
             return EMAIL
 
-        chat[chat_id]['email'] = email
-        logger.debug(f"'email': '{chat[chat_id]['email']}'")
+        context.chat_data['email'] = email
+        logger.debug(f"'email': '{context.chat_data['email']}'")
 
-        check = CheckResident.email(chat, chat_id)
+        check = CheckResident.email(email)
 
         if 'errors' not in check.keys():
             logger.error("Email already exists in database - asking again")
@@ -126,8 +137,6 @@ class Register:
         """
         Get cpf information
         """
-
-        chat_id = update.message.chat_id
         cpf = update.message.text
 
         if not ValidateForm.cpf(cpf, update):
@@ -135,10 +144,10 @@ class Register:
 
         cpf = ValidateForm.cpf(cpf, update)
 
-        chat[chat_id]['cpf'] = cpf
-        logger.debug(f"'cpf': '{chat[chat_id]['cpf']}'")
+        context.chat_data['cpf'] = cpf
+        logger.debug(f"'cpf': '{context.chat_data['cpf']}'")
 
-        check = CheckResident.cpf(chat, chat_id)
+        check = CheckResident.cpf(cpf)
 
         if 'errors' not in check.keys():
             logger.error("CPF already exists in database - asking again")
@@ -147,28 +156,24 @@ class Register:
 
         logger.debug("Available CPF - proceed")
 
+        update.message.reply_text('Bloco:')
         logger.info("Asking for block number")
 
-        update.message.reply_text('Bloco:')
-
         return BLOCK
-
 
     def block(update, context):
         """
         Get block information
         """
-
-        chat_id = update.message.chat_id
         block = update.message.text
 
         if not ValidateForm.block(block, update):
             return BLOCK
 
-        chat[chat_id]['block'] = block
-        logger.debug(f"'block': '{chat[chat_id]['block']}'")
+        context.chat_data['block'] = block
+        logger.debug(f"'block': '{context.chat_data['block']}'")
 
-        check = CheckCondo.block(chat, chat_id)
+        check = CheckCondo.block(block)
 
         if 'errors' in check.keys():
             logger.error("Block not found - asking again")
@@ -186,17 +191,16 @@ class Register:
         """
         Get apartment information
         """
-
-        chat_id = update.message.chat_id
         apartment = update.message.text
+        block = context.chat_data['block']
 
         if not ValidateForm.apartment(apartment, update):
             return APARTMENT
 
-        chat[chat_id]['apartment'] = apartment
-        logger.debug(f"'apartment': '{chat[chat_id]['apartment']}'")
+        context.chat_data['apartment'] = apartment
+        logger.debug(f"'apartment': '{context.chat_data['apartment']}'")
 
-        check = CheckCondo.apartment(chat, chat_id)
+        check = CheckCondo.apartment(block, apartment)
 
         if 'errors' in check.keys():
             logger.error("Apartment not found - asking again")
@@ -206,94 +210,11 @@ class Register:
         logger.debug("Existing apartment - proceed")
 
         update.message.reply_text(
-            'Agora preciso que você grave um áudio dizendo seu nome completo.'
+            'Legal, agora grave um áudio dizendo "Vou trancar o curso".'
         )
         update.message.reply_text(
-            'O áudio deve ter no mínimo 1 segundo e no máximo 3 segundos.'
+            'Quando começar a gravar, espere meio segundinho antes de começar a falar, ok?'
         )
-
-        return CATCH_AUDIO_SPEAKING_NAME
-
-    def catch_audio_speaking_name(update, context):
-        """
-        Catch the name audio and ask for confirmation
-        """
-        chat_id = update.message.chat_id
-        audio = update.message.voice
-
-        logger.debug('\t\tAudio catched.')
-        if ValidateForm.audio_speaking_name(audio, update) is False:
-            return CATCH_AUDIO_SPEAKING_NAME
-
-        chat[chat_id]['audio_speaking_name'] = audio
-
-        logger.debug('\tRequesting user confirmation ...')
-        next_button = KeyboardButton('Prosseguir')
-        repeat_button = KeyboardButton('Regravar')
-        prompt_buttons = [[repeat_button], [next_button]]
-        prompt = ReplyKeyboardMarkup(prompt_buttons, resize_keyboard=True, one_time_keyboard=True)
-        update.message.reply_text(
-            '''
-Escute o audio gravado e verifique se:
-1 - A fala foi natural e sem grandes pausas
-2 - A fala não sofreu cortes nem no fim nem no começo do áudio
-            '''
-        )
-        update.message.reply_text(
-            'Caso o áudio cumpra essas exigências, prossiga. Caso contrário, por favor, regrave.',
-            reply_markup=prompt
-        )
-
-        return CONFIRM_AUDIO_SPEAKING_NAME
-
-    def confirm_audio_speaking_name(update, context):
-        """
-        Confirm the name audio and run all audio processes
-        """
-        chat_id = update.message.chat_id
-        choice = update.message.text
-
-        if choice == 'Regravar':
-            update.message.reply_text('Ok. Pode regravar.')
-            logger.debug('\t\tUser has requested to record again.')
-            logger.debug('\tWaiting for audio ...')
-            return CATCH_AUDIO_SPEAKING_NAME
-
-        logger.debug('\t\tUser confirmed the audio')
-
-        audio = chat[chat_id]['audio_speaking_name']
-
-        logger.debug('\tDownloading audio file ...')
-        audio_file_path = audio.get_file().download()
-        logger.debug('\t\tDone')
-
-        logger.debug('\tConverting audio file into .wav ...')
-        wav_audio_file_path = audio_file_path.split('.')[0] + '.wav'
-        subprocess.run(['ffmpeg', '-i', audio_file_path, wav_audio_file_path], check=True)
-        logger.debug('\t\tDone')
-
-        logger.debug('\tOpening the audio file...')
-        data, samplerate = librosa.load(wav_audio_file_path, sr=16000, mono=True)
-        logger.debug('\t\tDone')
-
-        logger.debug("\tPutting in the chat's dictionary ...")
-        chat[chat_id]['audio_speaking_name'] = data.tolist()
-        chat[chat_id]['audio_samplerate'] = samplerate
-        logger.debug('\t\tDone')
-
-        logger.debug('\tDeleting the audio file ...')
-        os.remove(wav_audio_file_path)
-        os.remove(audio_file_path)
-        logger.debug('\t\tDone')
-
-        logger.debug('TASK accomplished successfully')
-
-        update.message.reply_text('Vamos agora catalogar as características da sua voz!')
-        update.message.reply_text(
-            'Grave uma breve mensagem de voz dizendo a frase: "Juro que sou eu".'
-        )
-
-        logger.info("Requesting voice audio ...")
 
         return VOICE_REGISTER
 
@@ -301,13 +222,12 @@ Escute o audio gravado e verifique se:
         """
         Catch the phrase audio and ask for confirmation
         """
-        chat_id = update.message.chat_id
         audio = update.message.voice
 
-        if not ValidateForm.voice(audio, update):
+        if not ValidateForm.audio_has_valid_duration(audio, update):
             return VOICE_REGISTER
 
-        chat[chat_id]['audio_speaking_phrase'] = audio
+        context.chat_data['audio_speaking_phrase'] = audio
 
         # Repeat and confirm buttons
         repeat_keyboard = KeyboardButton('Repetir')
@@ -327,8 +247,6 @@ Escute o audio gravado e verifique se:
         """
         Repeate voice interaction
         """
-
-        chat_id = update.message.chat_id
         choice = update.message.text
 
         if choice == "Repetir":
@@ -336,10 +254,11 @@ Escute o audio gravado e verifique se:
             update.message.reply_text('Por favor, grave novamente:')
             return VOICE_REGISTER
 
+        update.message.reply_text('Certo, vou dar uma conferida no áudio')
         logger.debug("\tAudio confirmed")
 
         logger.debug('Downloading audio ...')
-        audio_file_path = chat[chat_id]['audio_speaking_phrase'].get_file().download()
+        audio_file_path = context.chat_data['audio_speaking_phrase'].get_file().download()
         wav_audio_file_path = audio_file_path.split('.')[0] + '.wav'
         logger.debug('\tDone')
 
@@ -347,18 +266,21 @@ Escute o audio gravado e verifique se:
         subprocess.run(['ffmpeg', '-i', audio_file_path, wav_audio_file_path], check=True)
         logger.debug('\tDone')
 
-        logger.debug('Opening audio and resampling ...')
-        data, samplerate = librosa.load(wav_audio_file_path, sr=16000, mono=True)
+        logger.debug('Opening audio ...')
+        samplerate, data = read(wav_audio_file_path)
         logger.debug('\tDone')
 
         logger.debug('Putting into dictionary ...')
-        chat[chat_id]['audio_speaking_phrase'] = data.tolist()
+        context.chat_data['audio_speaking_phrase'] = data.tolist()
         logger.debug('\tDone')
 
         logger.debug('Removindo audio files ...')
         os.remove(audio_file_path)
         os.remove(wav_audio_file_path)
         logger.debug('\tDone')
+
+        if not ValidateForm.audio_has_good_volume(data.tolist(), samplerate, update):
+            return VOICE_REGISTER
 
         update.message.reply_text(
             'Além da autenticação de moradores por voz, é possível fazê-la por senha.'
@@ -372,31 +294,37 @@ Escute o audio gravado e verifique se:
         """
         Request password
         """
-
         chat_id = update.message.chat_id
         password = update.message.text
 
-        chat[chat_id]['password'] = password
-        logger.debug(f"'password': '{chat[chat_id]['password']}'")
+        context.chat_data['password'] = password
+        logger.debug(f"'password': '{context.chat_data['password']}'")
 
-        response = Register.register_resident(chat_id)
+        response = RegisterResident.register_resident(context.chat_data)
 
         if(response.status_code == 200 and 'errors' not in response.json().keys()):
             logger.info("Resident registered in database")
             update.message.reply_text("Cadastro feito!\nAguarde aprovação dos administradores.")
 
+            Admin.activate_resident(context.chat_data['email'])
+            token = ResidentAuth.generate_token(context.chat_data)
+            token = token.json()['data']['tokenAuth']['token']
+            Admin.deactivate_resident(context.chat_data['email'])
+
             create_resident(
-                    cpf=chat[chat_id]['cpf'],
-                    block=chat[chat_id]['block'],
-                    apartment=chat[chat_id]['apartment'],
-                    chat_id=chat_id
+                    cpf=context.chat_data['cpf'],
+                    block=context.chat_data['block'],
+                    apartment=context.chat_data['apartment'],
+                    chat_id=chat_id,
+                    token=token
                     )
-            NotifyAdmin.send_message(context, chat[chat_id])
+            NotifyAdmin.send_message(context, context.chat_data)
         else:
             logger.error("Registration failed")
             update.message.reply_text('Falha ao cadastrar no sistema!')
 
-        chat[chat_id] = {}
+        logger.debug(f"data: {context.chat_data}")
+        context.chat_data.clear()
 
         return ConversationHandler.END
 
@@ -404,22 +332,19 @@ Escute o audio gravado e verifique se:
         """
         Cancel interaction
         """
-
         logger.info("Canceling registration")
-        chat_id = update.message.chat_id
 
         update.message.reply_text('Cadastro cancelado!')
 
-        chat[chat_id] = {}
-        logger.debug(f"data['{chat_id}']: {chat[chat_id]}")
+        logger.debug(f"data: {context.chat_data}")
+        context.chat_data.clear()
 
         return ConversationHandler.END
 
-    def register_resident(chat_id):
+    def register_resident(data):
         """
         Register a resident
         """
-
         logger.info("Registering resident")
         query = """
         mutation createResident(
@@ -431,7 +356,6 @@ Escute o audio gravado e verifique se:
             $block: String!,
             $audioSpeakingPhrase: [Float]!
             $audioSpeakingName: [Float]!,
-            $audioSamplerate: Int,
             $password: String!
             ){
             createResident(
@@ -443,7 +367,6 @@ Escute o audio gravado e verifique se:
                 block: $block,
                 audioSpeakingPhrase: $audioSpeakingPhrase,
                 audioSpeakingName: $audioSpeakingName,
-                audioSamplerate: $audioSamplerate,
                 password: $password
             ){
                 resident{
@@ -457,26 +380,28 @@ Escute o audio gravado e verifique se:
                             number
                         }
                     }
-                    password
                 }
             }
         }
         """
 
         variables = {
-                'completeName': chat[chat_id]['name'],
-                'email': chat[chat_id]['email'],
-                'phone': chat[chat_id]['phone'],
-                'cpf': chat[chat_id]['cpf'],
-                'apartment': chat[chat_id]['apartment'],
-                'block': chat[chat_id]['block'],
-                'audioSpeakingPhrase': chat[chat_id]['audio_speaking_phrase'],
-                'audioSpeakingName': chat[chat_id]['audio_speaking_name'],
-                'audioSamplerate': chat[chat_id]['audio_samplerate'],
-                'password': chat[chat_id]['password'],
+                'completeName': data['name'],
+                'email': data['email'],
+                'phone': data['phone'],
+                'cpf': data['cpf'],
+                'apartment': data['apartment'],
+                'block': data['block'],
+                'audioSpeakingPhrase': data['audio_speaking_phrase'],
+                'audioSpeakingName': data['audio_speaking_phrase'],
+                'password': data['password'],
                 }
 
-        response = requests.post(PATH, json={'query':query, 'variables':variables})
+        headers = {
+                'Authorization': 'JWT %s' % API_TOKEN
+                }
+
+        response = requests.post(PATH, headers=headers, json={'query':query, 'variables':variables})
 
         logger.debug(f"Response: {response.json()}")
 
