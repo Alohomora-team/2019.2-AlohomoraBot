@@ -16,6 +16,7 @@ Informações sobre atualizações no projeto serão registradas aqui.
 + Nova etapa na interação de cadastro de morador: cadastro de senha.
 + Modo de autenticação por senha.
 + Refatoração do código do bot
++ Criação de paineis com botões para melhor experiência do usuário
 
 ### Alterado
 + mudança do docker alpine para debian slim

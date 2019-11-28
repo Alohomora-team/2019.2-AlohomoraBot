@@ -5,7 +5,7 @@ Start program
 import logging
 import os
 
-from commands import *
+from commands import Commands
 from admin.admin_auth import AdminAuth
 from admin.notify_admin import NotifyAdmin
 from admin.register_admin import RegisterAdmin
@@ -39,24 +39,25 @@ def start(update, context):
     """
     Start interaction
     """
-    logger.info(
-        "Introducing the bot"
+    logger.info("Introducing the bot")
+    chat_id = update.message.chat_id
+
+    context.bot.send_message(
+            chat_id=chat_id,
+            parse_mode='Markdown',
+            text=
+            """
+Olá, bem vindo(a) ao bot do *Alohomora*!
+
+*Comandos*
+/morador - interações para moradores
+/visitante - interações para visitante
+/admin - interações para administradores
+
+Para dar um _feedback_ pro nosso serviço, digite /feedback
+"""
     )
-    update.message.reply_text(
-        'Olá, bem vindo(a) ao bot do Alohomora!'
-    )
-    update.message.reply_text(
-        'Digite /morador para listar os comandos ligados aos moradores'
-    )
-    update.message.reply_text(
-        'Digite /visitante para listar os comandos ligados aos visitantes'
-    )
-    update.message.reply_text(
-        'Para dar um feedback pro nosso serviço, digite /feedback'
-    )
-    update.message.reply_text(
-        'Para criar um novo administrador do sistema, digite /novoadmin'
-    )
+
 
 if __name__ == '__main__':
 
@@ -73,7 +74,7 @@ if __name__ == '__main__':
 
     # Resident register
     dp.add_handler(ConversationHandler(
-        entry_points=[CommandHandler('cadastrar', RegisterResident.index)],
+        entry_points=[CallbackQueryHandler(RegisterResident.index, pattern='r1')],
 
         states={
             NAME:[MessageHandler(Filters.text, RegisterResident.name)],
@@ -92,7 +93,7 @@ if __name__ == '__main__':
 
     # Resident authentication
     dp.add_handler(ConversationHandler(
-        entry_points=[CommandHandler('autenticar', ResidentAuth.index)],
+        entry_points=[CallbackQueryHandler(ResidentAuth.index, pattern='r2')],
 
         states={
             CHOOSE_AUTH:[MessageHandler(Filters.text, ResidentAuth.choose_auth)],
@@ -105,7 +106,7 @@ if __name__ == '__main__':
 
     # Visitor register
     dp.add_handler(ConversationHandler(
-        entry_points=[CommandHandler('cadastrar_visitante', RegisterVisitor.index)],
+        entry_points=[CallbackQueryHandler(RegisterVisitor.index, pattern='v1')],
 
         states={
             VISITOR_REGISTER_NAME:[MessageHandler(Filters.text, RegisterVisitor.name)],
@@ -117,7 +118,7 @@ if __name__ == '__main__':
 
     # Visit
     dp.add_handler(ConversationHandler(
-        entry_points=[CommandHandler('visitar', Visit.index)],
+        entry_points=[CallbackQueryHandler(Visit.index, pattern='v2')],
 
         states={
             VISIT_BLOCK:[MessageHandler(Filters.text, Visit.block)],
@@ -129,7 +130,7 @@ if __name__ == '__main__':
 
     # Admin register
     dp.add_handler(ConversationHandler(
-        entry_points=[CommandHandler('criar_admin', RegisterAdmin.index)],
+        entry_points=[CallbackQueryHandler(RegisterAdmin.index, pattern='a1')],
 
         states={
             ADMIN_REGISTER_EMAIL: [MessageHandler(Filters.text, RegisterAdmin.email)],
@@ -141,7 +142,7 @@ if __name__ == '__main__':
 
     # Admin authentication
     dp.add_handler(ConversationHandler(
-        entry_points=[CommandHandler('autenticar_admin', AdminAuth.index)],
+        entry_points=[CallbackQueryHandler(AdminAuth.index, pattern='a2')],
 
         states={
             ADMIN_AUTH_EMAIL: [MessageHandler(Filters.text, AdminAuth.email)],
@@ -175,6 +176,9 @@ if __name__ == '__main__':
 
     # Listing visitor commands
     dp.add_handler(CommandHandler('visitante', Commands.visitor))
+
+    # Listing admin commands
+    dp.add_handler(CommandHandler('admin', Commands.admin))
 
     if os.environ['DEPLOY'] == 'True':
         updater.start_webhook(listen="0.0.0.0",

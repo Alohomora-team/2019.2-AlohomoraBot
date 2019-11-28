@@ -23,12 +23,27 @@ class RegisterVisitor:
         Start the interaction
         """
         logger.info("Introducing visitor registration session")
+        update = update.callback_query
         chat_id = update.message.chat_id
 
         if visitor_exists(chat_id):
             logger.info("Visitor already registered - ending")
             update.message.reply_text("Você já possui um cadastro!")
+
+            context.bot.delete_message(
+                    chat_id=chat_id,
+                    message_id=update.message.message_id,
+                    )
             return ConversationHandler.END
+        else:
+            context.bot.edit_message_text(
+                    chat_id=chat_id,
+                    message_id=update.message.message_id,
+                    text="""
+Preencha o formulário para efetuar o cadastro.
+Digite /cancelar caso queira interromper o processo.
+                    """
+                    )
 
         update.message.reply_text("Nome:")
         logger.info("Asking for name")
