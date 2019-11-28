@@ -83,7 +83,7 @@ Digite /cancelar caso queira interromper o processo.
         elif choice == "Voz":
             logger.info("Replied to authenticate by voice")
             update.message.reply_text(
-                'Grave um áudio de no mínimo 1 segundo dizendo "Juro que sou eu"'
+                'Grave um áudio de no mínimo 1 segundo dizendo "Vou trancar o curso"'
             )
             logger.info("Requesting voice audio")
             return VOICE_AUTH
