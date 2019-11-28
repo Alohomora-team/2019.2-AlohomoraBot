@@ -4,17 +4,20 @@ Start program
 
 import logging
 import os
-from commands import *
-from resident_control import Auth, HandleEntryVisitor
-from register import Register
-from register_visitor import RegisterVisitor
+
+from commands import Commands
+from admin.admin_auth import AdminAuth
+from admin.notify_admin import NotifyAdmin
+from admin.register_admin import RegisterAdmin
 from feedback import Feedback
-from notify import NotifyAdmin
-from visit import Visit
-from register_admin import RegisterAdmin
+from resident.notify_resident import NotifyResident
+from resident.register_resident import RegisterResident
+from resident.resident_auth import ResidentAuth
 from settings import *
-from telegram.ext import Updater, CommandHandler, MessageHandler, ConversationHandler, Filters
 from telegram.ext import CallbackQueryHandler
+from telegram.ext import Updater, CommandHandler, MessageHandler, ConversationHandler, Filters
+from visitor.register_visitor import RegisterVisitor
+from visitor.visit import Visit
 
 # Remove logs from APIs
 logging.getLogger("telegram").setLevel(API_LOG_LEVEL)
@@ -36,24 +39,25 @@ def start(update, context):
     """
     Start interaction
     """
-    logger.info(
-        "Introducing the bot"
+    logger.info("Introducing the bot")
+    chat_id = update.message.chat_id
+
+    context.bot.send_message(
+            chat_id=chat_id,
+            parse_mode='Markdown',
+            text=
+            """
+Olá, bem vindo(a) ao bot do *Alohomora*!
+
+*Comandos*
+/morador - interações para moradores
+/visitante - interações para visitante
+/admin - interações para administradores
+
+Para dar um _feedback_ pro nosso serviço, digite /feedback
+"""
     )
-    update.message.reply_text(
-        'Olá, bem vindo(a) ao bot do Alohomora!'
-    )
-    update.message.reply_text(
-        'Digite /morador para listar os comandos ligados aos moradores'
-    )
-    update.message.reply_text(
-        'Digite /visitante para listar os comandos ligados aos visitantes'
-    )
-    update.message.reply_text(
-        'Para dar um feedback pro nosso serviço, digite /feedback'
-    )
-    update.message.reply_text(
-        'Para criar um novo administrador do sistema, digite /novoadmin'
-    )
+
 
 if __name__ == '__main__':
 
@@ -68,63 +72,93 @@ if __name__ == '__main__':
 
     dp.add_handler(CommandHandler("start", start))
 
-    # Registration
+    # Resident register
     dp.add_handler(ConversationHandler(
-        entry_points=[CommandHandler('cadastrar', Register.index, pass_args=True)],
+        entry_points=[CallbackQueryHandler(RegisterResident.index, pattern='r1')],
 
         states={
-            NAME:[MessageHandler(Filters.text, Register.name)],
-            PHONE:[MessageHandler(Filters.text | Filters.contact, Register.phone)],
-            EMAIL:[MessageHandler(Filters.text, Register.email)],
-            CPF:[MessageHandler(Filters.text, Register.cpf)],
-            APARTMENT:[MessageHandler(Filters.text, Register.apartment)],
-            BLOCK:[MessageHandler(Filters.text, Register.block)],
-            PASSWORD: [MessageHandler(Filters.text, Register.password)],
-            CATCH_AUDIO_SPEAKING_NAME:[
-                MessageHandler(Filters.voice, Register.catch_audio_speaking_name)
-            ],
-            CONFIRM_AUDIO_SPEAKING_NAME:[
-                MessageHandler(Filters.text, Register.confirm_audio_speaking_name)
-            ],
-            VOICE_REGISTER:[MessageHandler(Filters.voice, Register.voice_register)],
-            REPEAT_VOICE:[MessageHandler(Filters.text, Register.repeat_voice)]
+            NAME:[MessageHandler(Filters.text, RegisterResident.name)],
+            PHONE:[MessageHandler(Filters.text | Filters.contact, RegisterResident.phone)],
+            EMAIL:[MessageHandler(Filters.text, RegisterResident.email)],
+            CPF:[MessageHandler(Filters.text, RegisterResident.cpf)],
+            BLOCK:[MessageHandler(Filters.text, RegisterResident.block)],
+            APARTMENT:[MessageHandler(Filters.text, RegisterResident.apartment)],
+            VOICE_REGISTER:[MessageHandler(Filters.voice, RegisterResident.voice_register)],
+            REPEAT_VOICE:[MessageHandler(Filters.text, RegisterResident.repeat_voice)],
+            PASSWORD: [MessageHandler(Filters.text, RegisterResident.password)]
             },
 
-        fallbacks=[CommandHandler('cancelar', Register.end)]
+        fallbacks=[CommandHandler('cancelar', RegisterResident.end)]
         ))
 
-    # Handle visitor (register resident and register entry)
+    # Resident authentication
     dp.add_handler(ConversationHandler(
-        entry_points=[CommandHandler('visitar', Visit.index, pass_args=True)],
+        entry_points=[CallbackQueryHandler(ResidentAuth.index, pattern='r2')],
 
         states={
-            VERIFY_REGISTRATION:[MessageHandler(Filters.text, Visit.verify_registration)],
+            CHOOSE_AUTH:[MessageHandler(Filters.text, ResidentAuth.choose_auth)],
+            VOICE_AUTH:[MessageHandler(Filters.voice, ResidentAuth.voice)],
+            PASSWORD_AUTH:[MessageHandler(Filters.text, ResidentAuth.password)],
+            },
+
+        fallbacks=[CommandHandler('cancelar', ResidentAuth.end)]
+        ))
+
+    # Visitor register
+    dp.add_handler(ConversationHandler(
+        entry_points=[CallbackQueryHandler(RegisterVisitor.index, pattern='v1')],
+
+        states={
             VISITOR_REGISTER_NAME:[MessageHandler(Filters.text, RegisterVisitor.name)],
             VISITOR_REGISTER_CPF:[MessageHandler(Filters.text, RegisterVisitor.cpf)],
-            VISITOR_CPF:[MessageHandler(Filters.text, Visit.cpf)],
-            VISITOR_BLOCK:[MessageHandler(Filters.text, Visit.block)],
-            VISITOR_APARTMENT:[MessageHandler(Filters.text, Visit.apartment)],
-            CREATE_VISITOR_ENTRY:[MessageHandler(Filters.text, Visit.create_entry)],
+            },
+
+        fallbacks=[CommandHandler('cancelar', RegisterVisitor.end)]
+        ))
+
+    # Visit
+    dp.add_handler(ConversationHandler(
+        entry_points=[CallbackQueryHandler(Visit.index, pattern='v2')],
+
+        states={
+            VISIT_BLOCK:[MessageHandler(Filters.text, Visit.block)],
+            VISIT_APARTMENT:[MessageHandler(Filters.text, Visit.apartment)],
             },
 
         fallbacks=[CommandHandler('cancelar', Visit.end)]
         ))
 
-    # Resident control (manage apartment entries )
+    # Admin register
     dp.add_handler(ConversationHandler(
-        entry_points=[CommandHandler('autorizar', Auth.index)],
+        entry_points=[CallbackQueryHandler(RegisterAdmin.index, pattern='a1')],
 
         states={
-            CHOOSE_AUTH: [MessageHandler(Filters.text, Auth.choose_auth)],
-            SHOW_VISITORS: [MessageHandler(Filters.text, Auth.show_visitors)],
-            CPF_AUTH:[MessageHandler(Filters.text, Auth.cpf)],
-            VOICE_AUTH: [MessageHandler(Filters.voice, Auth.voice)],
-            PASSWORD_AUTH: [MessageHandler(Filters.text, Auth.password)],
-            HANDLE_VISITORS_PENDING: [MessageHandler(Filters.text, HandleEntryVisitor.index)]
+            ADMIN_REGISTER_EMAIL: [MessageHandler(Filters.text, RegisterAdmin.email)],
+            ADMIN_REGISTER_PWD: [MessageHandler(Filters.text, RegisterAdmin.password)],
             },
 
-        fallbacks=[CommandHandler('cancelar', HandleEntryVisitor.end)]
+        fallbacks=[CommandHandler('cancelar', RegisterAdmin.end)]
         ))
+
+    # Admin authentication
+    dp.add_handler(ConversationHandler(
+        entry_points=[CallbackQueryHandler(AdminAuth.index, pattern='a2')],
+
+        states={
+            ADMIN_AUTH_EMAIL: [MessageHandler(Filters.text, AdminAuth.email)],
+            ADMIN_AUTH_PWD: [MessageHandler(Filters.text, AdminAuth.password)],
+            ADMIN_AUTH_REPEAT: [MessageHandler(Filters.text, AdminAuth.repeat)],
+            },
+
+        fallbacks=[CommandHandler('cancelar', AdminAuth.end)]
+        ))
+    # Admin notification
+    dp.add_handler(CallbackQueryHandler(NotifyAdmin.approved, pattern='app'))
+    dp.add_handler(CallbackQueryHandler(NotifyAdmin.rejected, pattern='rej'))
+
+    # Resident notification
+    dp.add_handler(CallbackQueryHandler(NotifyResident.authorized, pattern='aut'))
+    dp.add_handler(CallbackQueryHandler(NotifyResident.refused, pattern='ref'))
 
     # Feedback
     dp.add_handler(ConversationHandler(
@@ -143,24 +177,8 @@ if __name__ == '__main__':
     # Listing visitor commands
     dp.add_handler(CommandHandler('visitante', Commands.visitor))
 
-    # Register admin
-    dp.add_handler(ConversationHandler(
-        entry_points=[CommandHandler('novoadmin', RegisterAdmin.index)],
-
-        states={
-            EMAIL_AUTH_ADMIN: [MessageHandler(Filters.text, RegisterAdmin.auth_email)],
-            PASSWORD_AUTH_ADMIN: [MessageHandler(Filters.text, RegisterAdmin.auth_password)],
-            REPEAT_AUTH_ADMIN: [MessageHandler(Filters.text, RegisterAdmin.repeat_auth_admin)],
-            ADMIN_REGISTER_EMAIL: [MessageHandler(Filters.text, RegisterAdmin.register_email)],
-            ADMIN_REGISTER_PWD: [MessageHandler(Filters.text, RegisterAdmin.register_password)],
-            },
-
-        fallbacks=[CommandHandler('cancelar', RegisterAdmin.end)]
-        ))
-
-    # Admin
-    dp.add_handler(CallbackQueryHandler(NotifyAdmin.approved, pattern='app'))
-    dp.add_handler(CallbackQueryHandler(NotifyAdmin.rejected, pattern='rej'))
+    # Listing admin commands
+    dp.add_handler(CommandHandler('admin', Commands.admin))
 
     if os.environ['DEPLOY'] == 'True':
         updater.start_webhook(listen="0.0.0.0",

@@ -1,11 +1,12 @@
 """
 Check information about condominium
 """
-import os
+
 import logging
+import os
 import requests
 
-from settings import PATH, LOG_NAME
+from settings import PATH, LOG_NAME, API_TOKEN
 
 logger = logging.getLogger(LOG_NAME)
 
@@ -14,10 +15,11 @@ class CheckCondo:
     Check information about blocks and apartments
     """
 
-    def block(chat, chat_id):
+    def block(block):
         """
         Check block information
         """
+
         logger.debug("Checking if the informed block exists in database")
         query = """
         query block($number: String!){
@@ -28,15 +30,23 @@ class CheckCondo:
         """
 
         variables = {
-                'number': chat[chat_id]['block']
+                'number': block
                 }
 
-        response = requests.post(PATH, json={'query': query, 'variables':variables})
+        headers = {
+                'Authorization': 'JWT %s' % API_TOKEN
+                }
+
+        response = requests.post(
+                PATH,
+                headers=headers,
+                json={'query': query, 'variables':variables}
+                )
         logger.debug(f"Response: {response.json()}")
 
         return response.json()
 
-    def apartment(chat, chat_id):
+    def apartment(block, apartment):
         """
         Check apartment information
         """
@@ -53,11 +63,19 @@ class CheckCondo:
         """
 
         variables = {
-                'number': chat[chat_id]['apartment'],
-                'block': chat[chat_id]['block']
+                'number': apartment,
+                'block': block
                 }
 
-        response = requests.post(PATH, json={'query': query, 'variables':variables})
+        headers = {
+                'Authorization': 'JWT %s' % API_TOKEN
+                }
+
+        response = requests.post(
+                PATH,
+                headers=headers,
+                json={'query': query, 'variables':variables}
+                )
         logger.debug(f"Response: {response.json()}")
 
         return response.json()
@@ -67,9 +85,9 @@ class CheckResident:
     Check resident information
     """
 
-    def email(chat, chat_id):
+    def email(email):
         """
-        Check if email exit in database
+        Check email information
         """
 
         logger.debug("Checking if the informed email exists in database")
@@ -82,15 +100,23 @@ class CheckResident:
         """
 
         variables = {
-                'email': chat[chat_id]['email']
+                'email': email
                 }
 
-        response = requests.post(PATH, json={'query': query, 'variables':variables})
+        headers = {
+                'Authorization': 'JWT %s' % API_TOKEN
+                }
+
+        response = requests.post(
+                PATH,
+                headers=headers,
+                json={'query': query, 'variables':variables}
+                )
         logger.debug(f"Response: {response.json()}")
 
         return response.json()
 
-    def cpf(chat, chat_id):
+    def cpf(cpf):
         """
         Check cpf information
         """
@@ -100,16 +126,24 @@ class CheckResident:
         query resident($cpf: String!){
             resident(cpf: $cpf){
                 completeName
-                
+
             }
         }
         """
 
         variables = {
-                'cpf': chat[chat_id]['cpf']
+                'cpf': cpf
                 }
 
-        response = requests.post(PATH, json={'query': query, 'variables':variables})
+        headers = {
+                'Authorization': 'JWT %s' % API_TOKEN
+                }
+
+        response = requests.post(
+                PATH,
+                headers=headers,
+                json={'query': query, 'variables':variables}
+                )
         logger.debug(f"Response: {response.json()}")
 
         return response.json()
@@ -120,7 +154,7 @@ class CheckVisitor:
     check visitor data
     """
 
-    def cpf(chat, chat_id):
+    def cpf(cpf):
         """
         Check if cpf is valid
         """
@@ -135,10 +169,18 @@ class CheckVisitor:
         """
 
         variables = {
-                'cpf': chat[chat_id]['cpf']
+                'cpf': cpf
                 }
 
-        response = requests.post(PATH, json={'query': query, 'variables':variables})
+        headers = {
+                'Authorization': 'JWT %s' % API_TOKEN
+                }
+
+        response = requests.post(
+                PATH,
+                headers=headers,
+                json={'query': query, 'variables':variables}
+                )
         logger.debug(f"Response: {response.json()}")
 
         return response.json()
@@ -148,34 +190,9 @@ class CheckAdmin:
     Check admin information
     """
 
-    def auth_email(chat, chat_id):
+    def email(email):
         """
-        Check if creator's email exists in database
-        """
-
-        logger.debug("Checking if the informed email exists in database")
-        query = """
-        query admin($adminEmail: String!){
-            admin(adminEmail: $adminEmail){
-                admin {
-                    email
-                }
-            }
-        }
-        """
-
-        variables = {
-                'adminEmail': chat[chat_id]['auth-email']
-                }
-
-        response = requests.post(PATH, json={'query': query, 'variables':variables})
-        logger.debug(f"Response: {response.json()}")
-
-        return response.json()
-
-    def email(chat, chat_id):
-        """
-        Check if email for new admin exists in database
+        Check if admin email exists in database
         """
 
         logger.debug("Checking if the informed email exists in database")
@@ -190,10 +207,18 @@ class CheckAdmin:
         """
 
         variables = {
-                'adminEmail': chat[chat_id]['email']
+                'adminEmail': email
                 }
 
-        response = requests.post(PATH, json={'query': query, 'variables':variables})
+        headers = {
+                'Authorization': 'JWT %s' % API_TOKEN
+                }
+
+        response = requests.post(
+                PATH,
+                headers=headers,
+                json={'query': query, 'variables':variables}
+                )
         logger.debug(f"Response: {response.json()}")
 
         return response.json()

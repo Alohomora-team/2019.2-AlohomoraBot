@@ -15,6 +15,9 @@ Informações sobre atualizações no projeto serão registradas aqui.
 + Novo comando para listagem dos comandos ligados aos visitantes.
 + Nova etapa na interação de cadastro de morador: cadastro de senha.
 + Modo de autenticação por senha.
++ Refatoração do código do bot
++ Criação de paineis com botões para melhor experiência do usuário
++ Corrige bug nas notificações de visitantes
 
 ### Alterado
 + mudança do docker alpine para debian slim
