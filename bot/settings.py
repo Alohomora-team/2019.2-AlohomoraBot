@@ -56,7 +56,7 @@ LOG_NAME = 'Alohomora'
 TOKEN = "724918697:AAF_CYQtfDtbrr8YpHU3K6RKvLJQXRJiHWY"
 
 # Bot API token
-API_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImFsb2hvbW9yYUBib3QuY29tIiwiZXhwIjoxNTgzNTMxMTI4LCJvcmlnSWF0IjoxNTc0ODkxMTI4fQ.SIzJkZyamIn8CH58koU1U7Z96wm0HzZDnrUTTl7iwjg"
+API_TOKEN = ""
 
 #Log file name
 FILE_NAME = 'file.log'

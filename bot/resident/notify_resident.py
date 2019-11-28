@@ -54,7 +54,7 @@ class NotifyResident:
                     messages[visitor_chat_id][chat_id] = message.message_id
                     logger.debug(f"\t| Resident message_id: {message.message_id}")
 
-                    count+=1
+                    count += 1
 
         if count == 0:
             context.bot.send_message(

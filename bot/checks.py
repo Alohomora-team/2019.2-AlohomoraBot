@@ -36,7 +36,11 @@ class CheckCondo:
                 'Authorization': 'JWT %s' % API_TOKEN
                 }
 
-        response = requests.post(PATH, headers=headers, json={'query': query, 'variables':variables})
+        response = requests.post(
+                PATH,
+                headers=headers,
+                json={'query': query, 'variables':variables}
+                )
         logger.debug(f"Response: {response.json()}")
 
         return response.json()
@@ -66,7 +70,11 @@ class CheckCondo:
                 'Authorization': 'JWT %s' % API_TOKEN
                 }
 
-        response = requests.post(PATH, headers=headers, json={'query': query, 'variables':variables})
+        response = requests.post(
+                PATH,
+                headers=headers,
+                json={'query': query, 'variables':variables}
+                )
         logger.debug(f"Response: {response.json()}")
 
         return response.json()
@@ -98,7 +106,11 @@ class CheckResident:
                 'Authorization': 'JWT %s' % API_TOKEN
                 }
 
-        response = requests.post(PATH, headers=headers, json={'query': query, 'variables':variables})
+        response = requests.post(
+                PATH,
+                headers=headers,
+                json={'query': query, 'variables':variables}
+                )
         logger.debug(f"Response: {response.json()}")
 
         return response.json()
@@ -126,7 +138,11 @@ class CheckResident:
                 'Authorization': 'JWT %s' % API_TOKEN
                 }
 
-        response = requests.post(PATH, headers=headers, json={'query': query, 'variables':variables})
+        response = requests.post(
+                PATH,
+                headers=headers,
+                json={'query': query, 'variables':variables}
+                )
         logger.debug(f"Response: {response.json()}")
 
         return response.json()
@@ -159,7 +175,11 @@ class CheckVisitor:
                 'Authorization': 'JWT %s' % API_TOKEN
                 }
 
-        response = requests.post(PATH, headers=headers, json={'query': query, 'variables':variables})
+        response = requests.post(
+                PATH,
+                headers=headers,
+                json={'query': query, 'variables':variables}
+                )
         logger.debug(f"Response: {response.json()}")
 
         return response.json()
@@ -193,7 +213,11 @@ class CheckAdmin:
                 'Authorization': 'JWT %s' % API_TOKEN
                 }
 
-        response = requests.post(PATH, headers=headers, json={'query': query, 'variables':variables})
+        response = requests.post(
+                PATH,
+                headers=headers,
+                json={'query': query, 'variables':variables}
+                )
         logger.debug(f"Response: {response.json()}")
 
         return response.json()
