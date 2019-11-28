@@ -144,7 +144,7 @@ Digite /cancelar caso queira interromper o processo.
         """
         voice_auth = update.message.voice
 
-        if not ValidateForm.voice(voice_auth, update):
+        if not ValidateForm.audio_has_valid_duration(voice_auth, update):
             return VOICE_AUTH
 
         logger.info('Downloading audio file ...')
