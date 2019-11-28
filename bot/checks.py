@@ -19,6 +19,7 @@ class CheckCondo:
         """
         Check block information
         """
+
         logger.debug("Checking if the informed block exists in database")
         query = """
         query block($number: String!){
