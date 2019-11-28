@@ -25,6 +25,7 @@ class Visit:
         Start interactions
         """
         logger.info("introducing visitor session")
+        update = update.callback_query
         chat_id = update.message.chat_id
 
         if not visitor_exists(chat_id):
@@ -32,7 +33,20 @@ class Visit:
             update.message.reply_text(
                     'Você precisa ter um cadastro para fazer uma visita.'
                     )
+
+            context.bot.delete_message(
+                    chat_id=chat_id,
+                    message_id=update.message.message_id,
+                    )
             return ConversationHandler.END
+        else:
+            context.bot.edit_message_text(
+                    chat_id=chat_id,
+                    message_id=update.message.message_id,
+                    text="""
+Digite /cancelar caso queira interromper o processo.
+                    """
+                    )
 
         logger.info("Visitor is registered - proceed")
 

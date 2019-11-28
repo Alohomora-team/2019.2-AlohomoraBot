@@ -23,12 +23,26 @@ class AdminAuth:
         Start the conversation
         """
         logger.info("Introducing authentication session")
+        update = update.callback_query
         chat_id = update.message.chat_id
 
         if admin_exists(chat_id):
             logger.info("Admin already authenticated - ending")
             update.message.reply_text('Você já está autenticado!')
+
+            context.bot.delete_message(
+                    chat_id=chat_id,
+                    message_id=update.message.message_id,
+                    )
             return ConversationHandler.END
+        else:
+            context.bot.edit_message_text(
+                    chat_id=chat_id,
+                    message_id=update.message.message_id,
+                    text="""
+Digite /cancelar caso queira interromper o processo.
+                    """
+                    )
 
         update.message.reply_text('Email:')
         logger.info("Asking for email")

@@ -28,6 +28,7 @@ class RegisterAdmin:
         Start the conversation
         """
         logger.info("Introducing registration session")
+        update = update.callback_query
         chat_id = update.message.chat_id
 
         if not admin_exists(chat_id):
@@ -35,7 +36,22 @@ class RegisterAdmin:
             update.message.reply_text(
                     'Você precisa estar autenticado para fazer este procedimento!'
                     )
+
+            context.bot.delete_message(
+                    chat_id=chat_id,
+                    message_id=update.message.message_id,
+                    )
             return ConversationHandler.END
+
+        else:
+            context.bot.edit_message_text(
+                    chat_id=chat_id,
+                    message_id=update.message.message_id,
+                    text="""
+Preencha o formulário para efetuar o cadastro.
+Digite /cancelar caso queira interromper o processo.
+                    """
+                    )
 
         update.message.reply_text('Email:')
         logger.info("Asking for email")

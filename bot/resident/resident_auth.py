@@ -30,16 +30,30 @@ class ResidentAuth:
         """
         Start interaction
         """
-        chat_id = update.message.chat_id
 
         logger.info("Introducing authentication session")
+        update = update.callback_query
+        chat_id = update.message.chat_id
 
         if resident_exists(chat_id):
             logger.info("Resident in database - proceed")
             context.chat_data['cpf'] = get_resident_cpf(chat_id)
+
+            context.bot.edit_message_text(
+                    chat_id=chat_id,
+                    message_id=update.message.message_id,
+                    text="""
+Digite /cancelar caso queira interromper o processo.
+                    """
+                    )
         else:
             logger.info("Resident not in database - canceling")
             update.message.reply_text("Você precisa estar registrado para se autenticar.")
+
+            context.bot.delete_message(
+                    chat_id=chat_id,
+                    message_id=update.message.message_id,
+                    )
             return ConversationHandler.END
 
         logger.debug(f"data: {context.chat_data}")
