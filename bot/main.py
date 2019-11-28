@@ -61,6 +61,7 @@ def start(update, context):
 if __name__ == '__main__':
 
     token = TOKEN
+    port = int(os.environ.get('PORT', '8443'))
 
     updater = Updater(token, use_context=True)
 
@@ -175,6 +176,14 @@ if __name__ == '__main__':
     # Listing visitor commands
     dp.add_handler(CommandHandler('visitante', Commands.visitor))
 
-    updater.start_polling()
+    if os.environ['DEPLOY'] == 'True':
+        updater.start_webhook(listen="0.0.0.0",
+                        port=port,
+                        url_path=token)
+
+        updater.bot.set_webhook(os.environ['URL'] + token)
+
+    elif os.environ['DEPLOY'] == 'False':
+        updater.start_polling()
 
     updater.idle()

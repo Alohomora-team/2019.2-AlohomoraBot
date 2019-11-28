@@ -2,10 +2,11 @@
 Constants used in all code
 """
 
+import os
 import logging
 
 # API Path
-PATH = "http://api:8000/graphql/"
+PATH = os.environ.get('URL_PATH', "http://api:8000/graphql/")
 
 # Reisdent register constants
 (NAME,
@@ -52,8 +53,7 @@ API_LOG_LEVEL = logging.CRITICAL
 LOG_NAME = 'Alohomora'
 
 # Bot token
-#TOKEN = "801020772:AAGiaVK52MBf7is4InDnESbB0XE1m9QRcAo"
-TOKEN = "724918697:AAF_CYQtfDtbrr8YpHU3K6RKvLJQXRJiHWY"
+TOKEN = os.environ.get('TOKEN', "801020772:AAGiaVK52MBf7is4InDnESbB0XE1m9QRcAo")
 
 # Bot API token
 API_TOKEN = ""
