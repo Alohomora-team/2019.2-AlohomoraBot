@@ -3,8 +3,8 @@ Validate user input
 """
 
 import logging
-
-from settings import LOG_NAME
+import requests
+from settings import LOG_NAME, PATH, API_TOKEN
 
 logger = logging.getLogger(LOG_NAME)
 
@@ -178,22 +178,58 @@ class ValidateForm:
 
         return True
 
-    def voice(voice_register, update):
+    def audio_has_valid_duration(voice_register, update):
         """
         Validate voice duration
         """
         if((voice_register.duration) < 1.0):
             logger.error("Audio too short - asking again")
             update.message.reply_text(
-                'Muito curto...O áudio deve ter 1 segundo de duração.')
+                'Muito curto... O áudio deve ter no mínimo 1 segundo de duração.')
             update.message.reply_text('Por favor, grave novamente:')
             return False
-        elif((voice_register.duration) > 2.0):
+        elif((voice_register.duration) > 4.0):
             logger.error("Audio too long - asking again")
             update.message.reply_text(
-                'Muito grande...O áudio deve ter 2 segundo de duração.')
+                'Muito grande... O áudio deve ter no máximo 4 segundos de duração.')
             update.message.reply_text('Por favor, grave novamente:')
             return False
+
+        return True
+
+    def audio_has_good_volume(audio_data, update):
+        '''
+        Check audio volume
+        '''
+        logger.debug('Checking audio volume')
+
+        try:
+            query = '''
+            query audioHasGoodVolume ($audioData: [Float]!, $audioSamplerate: Int!) {
+                audioHasGoodVolume (audioData: $audioData, audioSamplerate: $audioSamplerate)
+            }
+            '''
+
+            variables = {
+                'audioData': audio_data,
+                'audioSamplerate': 16000
+            }
+
+            headers = {
+                'Authorization': 'JWT %s' % API_TOKEN
+            }
+
+            response = requests.post(PATH, headers=headers, json={'query':query, 'variables':variables}).json()
+            print(response)
+
+            if response["data"]["audioHasGoodVolume"] == False:
+                logger.error("Audio volume is not good - asking for another audio")
+                update.message.reply_text('Ixi! Não consegui escutar direito você falando.')
+                update.message.reply_text('Por favor, fale um pouquinho mais alto.')
+
+                return False
+        except:
+            logger.exception('An exception occurred')
 
         return True
 

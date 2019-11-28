@@ -195,7 +195,10 @@ class RegisterResident:
         logger.debug("Existing apartment - proceed")
 
         update.message.reply_text(
-            'Grave uma breve mensagem de voz dizendo a frase: "Juro que sou eu".'
+            'Legal, agora grave um áudio dizendo "Vou trancar o curso".'
+        )
+        update.message.reply_text(
+            'Quando começar a gravar, espere meio segundinho antes de começar a falar, ok?'
         )
 
         return VOICE_REGISTER
@@ -206,7 +209,7 @@ class RegisterResident:
         """
         audio = update.message.voice
 
-        if not ValidateForm.voice(audio, update):
+        if not ValidateForm.audio_has_valid_duration(audio, update):
             return VOICE_REGISTER
 
         context.chat_data['audio_speaking_phrase'] = audio
@@ -236,6 +239,7 @@ class RegisterResident:
             update.message.reply_text('Por favor, grave novamente:')
             return VOICE_REGISTER
 
+        update.message.reply_text('Certo, vou dar uma conferida no áudio')
         logger.debug("\tAudio confirmed")
 
         logger.debug('Downloading audio ...')
@@ -259,6 +263,9 @@ class RegisterResident:
         os.remove(audio_file_path)
         os.remove(wav_audio_file_path)
         logger.debug('\tDone')
+
+        if not ValidateForm.audio_has_good_volume(data.tolist(), update):
+            return VOICE_REGISTER
 
         update.message.reply_text(
             'Além da autenticação de moradores por voz, é possível fazê-la por senha.'
