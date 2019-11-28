@@ -17,6 +17,7 @@ Informações sobre atualizações no projeto serão registradas aqui.
 + Modo de autenticação por senha.
 + Refatoração do código do bot
 + Criação de paineis com botões para melhor experiência do usuário
++ Corrige bug nas notificações de visitantes
 
 ### Alterado
 + mudança do docker alpine para debian slim
