@@ -56,7 +56,7 @@ LOG_NAME = 'Alohomora'
 TOKEN = os.environ.get('TOKEN', "801020772:AAGiaVK52MBf7is4InDnESbB0XE1m9QRcAo")
 
 # Bot API token
-API_TOKEN = ""
+API_TOKEN = os.environ.get('API_TOKEN', '')
 
 #Log file name
 FILE_NAME = 'file.log'
